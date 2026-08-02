@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Search, BookOpen, User, Barcode, PenLine } from "lucide-react";
+import { Search, BookOpen, User, Barcode, PenLine, Camera } from "lucide-react";
 import BookCover from "@/components/BookCover";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
+
+const BarcodeScanner = lazy(() => import("@/components/BarcodeScanner"));
 
 type SearchResult = {
   key: string;
@@ -31,9 +33,16 @@ export default function AddBookPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
+  const handleSearch = async (
+    overrideQuery?: string,
+    overrideType?: SearchType
+  ) => {
+    const searchQuery = overrideQuery ?? query;
+    const searchTypeToUse = overrideType ?? searchType;
+
+    if (!searchQuery.trim()) return;
     setLoading(true);
     setSearched(true);
     setError(null);
@@ -41,7 +50,9 @@ export default function AddBookPage() {
 
     try {
       const response = await fetch(
-        `/api/books/search?q=${encodeURIComponent(query)}&type=${searchType}`
+        `/api/books/search?q=${encodeURIComponent(
+          searchQuery
+        )}&type=${searchTypeToUse}`
       );
       const data = await response.json();
 
@@ -77,6 +88,13 @@ export default function AddBookPage() {
     router.push(`/add/confirm?${params.toString()}`);
   };
 
+  const handleBarcodeResult = (isbn: string) => {
+    setShowScanner(false);
+    setSearchType("isbn");
+    setQuery(isbn);
+    handleSearch(isbn, "isbn");
+  };
+
   const searchTypes: {
     type: SearchType;
     label: string;
@@ -102,7 +120,7 @@ export default function AddBookPage() {
           Add a Book
         </h1>
         <p style={{ color: "#A89070", fontSize: "14px" }}>
-          Search by title, author, or ISBN to add a book to your shelves
+          Search by title, author, or scan the barcode on your book
         </p>
       </div>
 
@@ -154,7 +172,7 @@ export default function AddBookPage() {
         style={{
           display: "flex",
           gap: "10px",
-          marginBottom: "24px",
+          marginBottom: "12px",
         }}
       >
         <div style={{ position: "relative", flex: 1 }}>
@@ -178,7 +196,7 @@ export default function AddBookPage() {
                 ? "Search by book title..."
                 : searchType === "author"
                 ? "Search by author name..."
-                : "Enter ISBN number..."
+                : "Enter ISBN number e.g. 9780747532743"
             }
             style={{
               width: "100%",
@@ -194,7 +212,7 @@ export default function AddBookPage() {
           />
         </div>
         <button
-          onClick={handleSearch}
+          onClick={() => handleSearch()}
           disabled={!query.trim() || loading}
           style={{
             padding: "12px 20px",
@@ -213,6 +231,50 @@ export default function AddBookPage() {
           Search
         </button>
       </div>
+
+      {/* ISBN Helper Row — shown only when ISBN tab is active */}
+      {searchType === "isbn" && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "24px",
+            padding: "12px 16px",
+            backgroundColor: "#2A1C0F",
+            border: "1px solid #4A3020",
+            borderRadius: "12px",
+          }}
+        >
+          <Camera size={16} style={{ color: "#C8813A", flexShrink: 0 }} />
+          <p style={{ color: "#A89070", fontSize: "13px", margin: 0, flex: 1 }}>
+            You can type the ISBN number from the back of the book or use your
+            camera to scan the barcode
+          </p>
+          <button
+            onClick={() => setShowScanner(true)}
+            style={{
+              padding: "8px 14px",
+              backgroundColor: "#C8813A",
+              color: "#F5ECD7",
+              border: "none",
+              borderRadius: "10px",
+              fontSize: "12px",
+              fontWeight: "600",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            Open Camera
+          </button>
+        </div>
+      )}
+
+      {/* Normal spacing when ISBN tab is not active */}
+      {searchType !== "isbn" && (
+        <div style={{ marginBottom: "24px" }} />
+      )}
 
       {/* Manual Entry Link */}
       <div style={{ marginBottom: "24px" }}>
@@ -303,7 +365,6 @@ export default function AddBookPage() {
                   e.currentTarget.style.backgroundColor = "#2A1C0F";
                 }}
               >
-                {/* Book Cover */}
                 <BookCover
                   cover={book.cover}
                   title={book.title}
@@ -311,7 +372,6 @@ export default function AddBookPage() {
                   size="md"
                 />
 
-                {/* Book Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3
                     style={{
@@ -334,7 +394,6 @@ export default function AddBookPage() {
                     {book.author}
                   </p>
 
-                  {/* Meta info */}
                   <div
                     style={{
                       display: "flex",
@@ -363,10 +422,13 @@ export default function AddBookPage() {
                     )}
                   </div>
 
-                  {/* Genres */}
                   {book.genres.length > 0 && (
                     <div
-                      style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}
+                      style={{
+                        display: "flex",
+                        gap: "6px",
+                        flexWrap: "wrap",
+                      }}
                     >
                       {book.genres.slice(0, 3).map((genre) => (
                         <span
@@ -387,7 +449,6 @@ export default function AddBookPage() {
                   )}
                 </div>
 
-                {/* Arrow indicator */}
                 <div
                   style={{
                     display: "flex",
@@ -403,6 +464,16 @@ export default function AddBookPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Barcode Scanner Overlay */}
+      {showScanner && (
+        <Suspense fallback={<LoadingSpinner />}>
+          <BarcodeScanner
+            onResult={handleBarcodeResult}
+            onClose={() => setShowScanner(false)}
+          />
+        </Suspense>
       )}
     </div>
   );

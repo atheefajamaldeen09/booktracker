@@ -1,72 +1,40 @@
 "use client";
 
-import { useState, useRef, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { Upload, X, ChevronLeft } from "lucide-react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Upload, X } from "lucide-react";
+import { addBook } from "@/lib/actions/books";
 import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { addBook } from "@/lib/actions/books";
 
-function ConfirmBookContent() {
-  const searchParams = useSearchParams();
+export default function ManualEntryPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Parse book data from URL params
-  const initialData = {
-    key: searchParams.get("key") || "",
-    title: searchParams.get("title") || "",
-    author: searchParams.get("author") || "",
-    cover: searchParams.get("cover") || null,
-    genres: searchParams.get("genres")?.split(",").filter(Boolean) || [],
-    pageCount: searchParams.get("pageCount")
-      ? parseInt(searchParams.get("pageCount")!)
-      : null,
-    publicationYear: searchParams.get("publicationYear")
-      ? parseInt(searchParams.get("publicationYear")!)
-      : null,
-    isbn: searchParams.get("isbn") || null,
-    series: searchParams.get("series") || null,
-    seriesPosition: searchParams.get("seriesPosition")
-      ? parseFloat(searchParams.get("seriesPosition")!)
-      : null,
-  };
-
-  // Editable fields
-  const [title, setTitle] = useState(initialData.title);
-  const [author, setAuthor] = useState(initialData.author);
-  const [cover, setCover] = useState<string | null>(initialData.cover);
-  const [genres, setGenres] = useState(initialData.genres.join(", "));
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [pageCount, setPageCount] = useState(
-    initialData.pageCount?.toString() || ""
-  );
-  const [publicationYear, setPublicationYear] = useState(
-    initialData.publicationYear?.toString() || ""
-  );
-  const [isbn, setIsbn] = useState(initialData.isbn || "");
-  const [isSeries, setIsSeries] = useState(!!initialData.series);
-  const [seriesName, setSeriesName] = useState(initialData.series || "");
-  const [seriesPosition, setSeriesPosition] = useState(
-    initialData.seriesPosition?.toString() || ""
-  );
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [cover, setCover] = useState<string | null>(null);
+  const [genres, setGenres] = useState("");
+  const [pageCount, setPageCount] = useState("");
+  const [publicationYear, setPublicationYear] = useState("");
+  const [isbn, setIsbn] = useState("");
+  const [isSeries, setIsSeries] = useState(false);
+  const [seriesName, setSeriesName] = useState("");
+  const [seriesPosition, setSeriesPosition] = useState("");
   const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read">("tbr");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Handle cover image upload
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Compress and convert to base64
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        // Max dimensions for cover
         const maxWidth = 300;
         const maxHeight = 450;
         let { width, height } = img;
@@ -81,8 +49,6 @@ function ConfirmBookContent() {
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
-
-        // Compress to JPEG at 80% quality
         const compressed = canvas.toDataURL("image/jpeg", 0.8);
         setCover(compressed);
       };
@@ -151,7 +117,6 @@ function ConfirmBookContent() {
     letterSpacing: "0.05em",
   };
 
-  // Success screen
   if (showSuccess) {
     return (
       <div
@@ -166,13 +131,7 @@ function ConfirmBookContent() {
         }}
       >
         <div style={{ fontSize: "64px" }}>🎉</div>
-        <h1
-          style={{
-            color: "#C8813A",
-            fontSize: "24px",
-            fontWeight: "bold",
-          }}
-        >
+        <h1 style={{ color: "#C8813A", fontSize: "24px", fontWeight: "bold" }}>
           Book Added!
         </h1>
         <p style={{ color: "#A89070", fontSize: "14px", maxWidth: "300px" }}>
@@ -184,7 +143,6 @@ function ConfirmBookContent() {
             ? "Read shelf"
             : "Wishlist"}
         </p>
-
         <div
           style={{
             display: "flex",
@@ -225,23 +183,6 @@ function ConfirmBookContent() {
           >
             Add Another Book
           </button>
-          {shelf === "tbr" && (
-            <button
-              onClick={() => router.push("/bookshelf")}
-              style={{
-                padding: "12px",
-                backgroundColor: "#2A1C0F",
-                color: "#F5ECD7",
-                border: "1px solid #4A3020",
-                borderRadius: "12px",
-                fontWeight: "600",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
-            >
-              View Bookshelf
-            </button>
-          )}
         </div>
       </div>
     );
@@ -277,10 +218,10 @@ function ConfirmBookContent() {
           marginBottom: "6px",
         }}
       >
-        Confirm Book Details
+        Add Book Manually
       </h1>
       <p style={{ color: "#A89070", fontSize: "14px", marginBottom: "28px" }}>
-        Review and edit any details before adding to your shelf
+        Fill in the details for your book
       </p>
 
       {/* Cover + Title Section */}
@@ -292,9 +233,13 @@ function ConfirmBookContent() {
           alignItems: "flex-start",
         }}
       >
-        {/* Cover Image */}
+        {/* Cover Upload */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <BookCover cover={cover} title={title} author={author} size="lg" />
+          <BookCover
+            cover={cover}
+            title={title || "Cover"}
+            size="lg"
+          />
           <button
             onClick={() => fileInputRef.current?.click()}
             style={{
@@ -313,7 +258,7 @@ function ConfirmBookContent() {
             }}
           >
             <Upload size={12} />
-            {cover ? "Change" : "Upload"}
+            {cover ? "Change" : "Upload Cover"}
           </button>
           {cover && (
             <button
@@ -330,7 +275,6 @@ function ConfirmBookContent() {
                 color: "#A89070",
                 fontSize: "11px",
                 cursor: "pointer",
-                width: "100%",
               }}
             >
               <X size={12} />
@@ -347,7 +291,14 @@ function ConfirmBookContent() {
         </div>
 
         {/* Title and Author */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px",
+          }}
+        >
           <div>
             <label style={labelStyle}>Title *</label>
             <input
@@ -430,7 +381,6 @@ function ConfirmBookContent() {
           marginBottom: "20px",
         }}
       >
-        {/* Series Toggle */}
         <div
           style={{
             display: "flex",
@@ -440,14 +390,26 @@ function ConfirmBookContent() {
           }}
         >
           <div>
-            <p style={{ color: "#F5ECD7", fontSize: "14px", fontWeight: "600", margin: 0 }}>
+            <p
+              style={{
+                color: "#F5ECD7",
+                fontSize: "14px",
+                fontWeight: "600",
+                margin: 0,
+              }}
+            >
               Part of a series?
             </p>
-            <p style={{ color: "#A89070", fontSize: "12px", margin: "2px 0 0 0" }}>
+            <p
+              style={{
+                color: "#A89070",
+                fontSize: "12px",
+                margin: "2px 0 0 0",
+              }}
+            >
               Toggle if this book belongs to a series
             </p>
           </div>
-          {/* Toggle Switch */}
           <div
             onClick={() => setIsSeries(!isSeries)}
             style={{
@@ -476,9 +438,14 @@ function ConfirmBookContent() {
           </div>
         </div>
 
-        {/* Series Fields */}
         {isSeries && (
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "2fr 1fr",
+              gap: "12px",
+            }}
+          >
             <div>
               <label style={labelStyle}>Series Name</label>
               <input
@@ -504,61 +471,46 @@ function ConfirmBookContent() {
       </div>
 
       {/* Shelf Selection */}
-    <div style={{ marginBottom: "28px" }}>
-    <label style={labelStyle}>Add To Shelf</label>
-    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-        {[
-        {
-            value: "tbr",
-            label: "📚 TBR",
-            desc: "I own it, haven't read it",
-        },
-        {
-            value: "read",
-            label: "✅ Already Read",
-            desc: "I own it and have read it",
-        },
-        {
-            value: "wishlist",
-            label: "💛 Wishlist",
-            desc: "I want this book",
-        },
-        ].map((option) => (
-        <div
-            key={option.value}
-            onClick={() => setShelf(option.value as "tbr" | "wishlist" | "read")}
-            style={{
-            flex: 1,
-            minWidth: "140px",
-            padding: "14px",
-            backgroundColor:
-                shelf === option.value ? "#3D2B18" : "#2A1C0F",
-            border: `2px solid ${
-                shelf === option.value ? "#C8813A" : "#4A3020"
-            }`,
-            borderRadius: "12px",
-            cursor: "pointer",
-            transition: "all 0.2s",
-            textAlign: "center",
-            }}
-        >
-            <p
-            style={{
-                color: shelf === option.value ? "#C8813A" : "#F5ECD7",
-                fontWeight: "600",
-                fontSize: "14px",
-                margin: "0 0 4px 0",
-            }}
+      <div style={{ marginBottom: "28px" }}>
+        <label style={labelStyle}>Add To Shelf</label>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          {[
+            { value: "tbr", label: "📚 TBR", desc: "I own it, haven't read it" },
+            { value: "read", label: "✅ Already Read", desc: "I own it and have read it" },
+            { value: "wishlist", label: "💛 Wishlist", desc: "I want this book" },
+          ].map((option) => (
+            <div
+              key={option.value}
+              onClick={() => setShelf(option.value as "tbr" | "wishlist" | "read")}
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                padding: "14px",
+                backgroundColor: shelf === option.value ? "#3D2B18" : "#2A1C0F",
+                border: `2px solid ${shelf === option.value ? "#C8813A" : "#4A3020"}`,
+                borderRadius: "12px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                textAlign: "center",
+              }}
             >
-            {option.label}
-            </p>
-            <p style={{ color: "#A89070", fontSize: "12px", margin: 0 }}>
-            {option.desc}
-            </p>
+              <p
+                style={{
+                  color: shelf === option.value ? "#C8813A" : "#F5ECD7",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  margin: "0 0 4px 0",
+                }}
+              >
+                {option.label}
+              </p>
+              <p style={{ color: "#A89070", fontSize: "12px", margin: 0 }}>
+                {option.desc}
+              </p>
+            </div>
+          ))}
         </div>
-        ))}
-    </div>
-    </div>
+      </div>
 
       {/* Error */}
       {error && (
@@ -584,21 +536,13 @@ function ConfirmBookContent() {
         disabled={saving || !title.trim() || !author.trim()}
       >
         {saving
-            ? "Adding Book..."
-            : shelf === "tbr"
-            ? "Add to TBR"
-            : shelf === "read"
-            ? "Add to Read Shelf"
-            : "Add to Wishlist"}
+          ? "Adding Book..."
+          : shelf === "tbr"
+          ? "Add to TBR"
+          : shelf === "read"
+          ? "Add to Read Shelf"
+          : "Add to Wishlist"}
       </Button>
     </div>
-  );
-}
-
-export default function ConfirmBookPage() {
-  return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <ConfirmBookContent />
-    </Suspense>
   );
 }
