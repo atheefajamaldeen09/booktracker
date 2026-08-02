@@ -1,25 +1,12 @@
 import { getAllBooks } from "@/lib/actions/books";
-import BookCard from "@/components/BookCard";
-import EmptyState from "@/components/EmptyState";
+import LibraryView from "@/components/LibraryView";
 import Link from "next/link";
 
 export default async function LibraryPage() {
   const { books } = await getAllBooks();
 
-  // Library only shows your actual owned books — not wishlist
-  const tbr = books.filter((b) => b.shelf === "tbr");
-  const reading = books.filter((b) => b.shelf === "reading");
-  const read = books.filter((b) => b.shelf === "read");
-  const dnf = books.filter((b) => b.shelf === "dnf");
-
-  const ownedBooks = [...tbr, ...reading, ...read, ...dnf];
-
-  const shelfSections = [
-    { label: "📖 Currently Reading", books: reading, color: "#D4A853" },
-    { label: "📚 TBR", books: tbr, color: "#C8813A" },
-    { label: "✅ Read", books: read, color: "#7A9E7E" },
-    { label: "🚫 Did Not Finish", books: dnf, color: "#8B3A3A" },
-  ];
+  // Library only shows owned books — not wishlist
+  const ownedBooks = books.filter((b) => b.shelf !== "wishlist");
 
   return (
     <div style={{ maxWidth: "900px" }}>
@@ -66,98 +53,8 @@ export default async function LibraryPage() {
         </Link>
       </div>
 
-      {/* Quick shelf links */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          marginBottom: "24px",
-          flexWrap: "wrap",
-        }}
-      >
-        {[
-          { href: "/wishlist", label: "💛 Wishlist" },
-          { href: "/dnf", label: "🚫 Did Not Finish" },
-        ].map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            style={{
-              padding: "6px 14px",
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
-              borderRadius: "999px",
-              color: "#A89070",
-              fontSize: "13px",
-              textDecoration: "none",
-              transition: "all 0.2s",
-            }}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </div>
-
-      {/* Empty state */}
-      {ownedBooks.length === 0 && (
-        <EmptyState
-          icon="📚"
-          title="Your library is empty"
-          message="Start by adding your first book. If you are looking for your wishlist it has its own page in the navigation."
-        />
-      )}
-
-      {/* Shelf Sections */}
-      {shelfSections.map((section) => {
-        if (section.books.length === 0) return null;
-        return (
-          <div key={section.label} style={{ marginBottom: "36px" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                marginBottom: "16px",
-              }}
-            >
-              <h2
-                style={{
-                  color: section.color,
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  margin: 0,
-                }}
-              >
-                {section.label}
-              </h2>
-              <span
-                style={{
-                  backgroundColor: "#2A1C0F",
-                  border: "1px solid #4A3020",
-                  color: "#A89070",
-                  fontSize: "11px",
-                  padding: "2px 8px",
-                  borderRadius: "999px",
-                }}
-              >
-                {section.books.length}
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "12px",
-              }}
-            >
-              {section.books.map((book) => (
-                <BookCard key={book.id} book={book} />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+      {/* Library View with Search Filter Sort */}
+      <LibraryView books={ownedBooks} />
     </div>
   );
 }
