@@ -133,3 +133,55 @@ export async function getBookById(id: number) {
     return { success: false, book: null };
   }
 }
+
+export async function updateBook(
+  bookId: number,
+  input: {
+    title?: string;
+    author?: string;
+    cover?: string | null;
+    genres?: string[];
+    pageCount?: number | null;
+    publicationYear?: number | null;
+    isbn?: string | null;
+  }
+) {
+  try {
+    await db
+      .update(books)
+      .set({
+        title: input.title,
+        author: input.author,
+        cover: input.cover,
+        genres: input.genres,
+        pageCount: input.pageCount,
+        publicationYear: input.publicationYear,
+        isbn: input.isbn,
+      })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating book:", error);
+    return { success: false, error: "Failed to update book" };
+  }
+}
+
+export async function getSeriesForBook(bookId: number) {
+  try {
+    const result = await db
+      .select({
+        seriesName: series.name,
+        position: bookSeries.positionInSeries,
+        seriesId: series.id,
+      })
+      .from(bookSeries)
+      .innerJoin(series, eq(bookSeries.seriesId, series.id))
+      .where(eq(bookSeries.bookId, bookId))
+      .limit(1);
+
+    return { success: true, series: result[0] || null };
+  } catch (error) {
+    console.error("Error fetching series:", error);
+    return { success: false, series: null };
+  }
+}

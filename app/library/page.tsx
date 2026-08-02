@@ -66,6 +66,38 @@ export default async function LibraryPage() {
         </Link>
       </div>
 
+      {/* Quick shelf links */}
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          marginBottom: "24px",
+          flexWrap: "wrap",
+        }}
+      >
+        {[
+          { href: "/wishlist", label: "💛 Wishlist" },
+          { href: "/dnf", label: "🚫 Did Not Finish" },
+        ].map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            style={{
+              padding: "6px 14px",
+              backgroundColor: "#2A1C0F",
+              border: "1px solid #4A3020",
+              borderRadius: "999px",
+              color: "#A89070",
+              fontSize: "13px",
+              textDecoration: "none",
+              transition: "all 0.2s",
+            }}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+
       {/* Empty state */}
       {ownedBooks.length === 0 && (
         <EmptyState

@@ -1,6 +1,7 @@
-import { getBookById } from "@/lib/actions/books";
+import { getBookById, getSeriesForBook } from "@/lib/actions/books";
 import BookCover from "@/components/BookCover";
 import BookActions from "@/components/BookActions";
+import EditBookForm from "@/components/EditBookForm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
@@ -15,6 +16,8 @@ export default async function BookDetailPage({
   const { book } = await getBookById(bookId);
 
   if (!book) return notFound();
+
+  const { series: bookSeriesInfo } = await getSeriesForBook(bookId);
 
   const shelfLabels: Record<string, string> = {
     tbr: "📚 TBR",
@@ -32,11 +35,25 @@ export default async function BookDetailPage({
     dnf: "#8B3A3A",
   };
 
+  // Back link depends on which shelf the book is on
+  const backLinks: Record<string, { href: string; label: string }> = {
+    tbr: { href: "/library", label: "Back to Library" },
+    reading: { href: "/library", label: "Back to Library" },
+    read: { href: "/library", label: "Back to Library" },
+    wishlist: { href: "/wishlist", label: "Back to Wishlist" },
+    dnf: { href: "/dnf", label: "Back to Did Not Finish" },
+  };
+
+  const backLink = backLinks[book.shelf] || {
+    href: "/library",
+    label: "Back to Library",
+  };
+
   return (
     <div style={{ maxWidth: "680px" }}>
       {/* Back Button */}
       <Link
-        href="/library"
+        href={backLink.href}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -48,7 +65,7 @@ export default async function BookDetailPage({
         }}
       >
         <ChevronLeft size={16} />
-        Back to Library
+        {backLink.label}
       </Link>
 
       {/* Book Header */}
@@ -106,7 +123,9 @@ export default async function BookDetailPage({
           </span>
 
           {/* Book Meta */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+          >
             {book.pageCount && (
               <p style={{ color: "#A89070", fontSize: "13px" }}>
                 📄 {book.pageCount} pages
@@ -166,6 +185,79 @@ export default async function BookDetailPage({
           </div>
         </div>
       )}
+
+      {/* Series Info */}
+      {bookSeriesInfo && (
+        <div style={{ marginBottom: "28px" }}>
+          <p
+            style={{
+              color: "#A89070",
+              fontSize: "12px",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: "10px",
+            }}
+          >
+            Series
+          </p>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              backgroundColor: "#2A1C0F",
+              border: "1px solid #4A3020",
+              borderRadius: "12px",
+              padding: "12px 16px",
+            }}
+          >
+            <span style={{ fontSize: "20px" }}>📚</span>
+            <div>
+              <p
+                style={{
+                  color: "#F5ECD7",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  margin: 0,
+                }}
+              >
+                {bookSeriesInfo.seriesName}
+              </p>
+              <p
+                style={{
+                  color: "#A89070",
+                  fontSize: "12px",
+                  margin: "2px 0 0 0",
+                }}
+              >
+                Book {bookSeriesInfo.position} in the series
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Divider */}
+      <div
+        style={{
+          borderTop: "1px solid #4A3020",
+          marginBottom: "28px",
+        }}
+      />
+
+      {/* Edit Book Form */}
+      <EditBookForm
+        book={{
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          cover: book.cover,
+          genres: book.genres,
+          pageCount: book.pageCount,
+          publicationYear: book.publicationYear,
+          isbn: book.isbn,
+        }}
+      />
 
       {/* Divider */}
       <div
