@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { books, series, bookSeries } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { books, series, bookSeries, tags, bookTags } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 
 type AddBookInput = {
   title: string;
@@ -183,5 +183,134 @@ export async function getSeriesForBook(bookId: number) {
   } catch (error) {
     console.error("Error fetching series:", error);
     return { success: false, series: null };
+  }
+}
+
+export async function getAllTags() {
+  try {
+    const allTags = await db.select().from(tags);
+    return { success: true, tags: allTags };
+  } catch (error) {
+    console.error("Error fetching tags:", error);
+    return { success: false, tags: [] };
+  }
+}
+
+export async function createTag(name: string, color: string) {
+  try {
+    const [newTag] = await db
+      .insert(tags)
+      .values({ name, color })
+      .returning();
+    return { success: true, tag: newTag };
+  } catch (error) {
+    console.error("Error creating tag:", error);
+    return { success: false, error: "Failed to create tag" };
+  }
+}
+
+export async function deleteTag(tagId: number) {
+  try {
+    await db.delete(tags).where(eq(tags.id, tagId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting tag:", error);
+    return { success: false, error: "Failed to delete tag" };
+  }
+}
+
+export async function getTagsForBook(bookId: number) {
+  try {
+    const result = await db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        color: tags.color,
+      })
+      .from(bookTags)
+      .innerJoin(tags, eq(bookTags.tagId, tags.id))
+      .where(eq(bookTags.bookId, bookId));
+    return { success: true, tags: result };
+  } catch (error) {
+    console.error("Error fetching tags for book:", error);
+    return { success: false, tags: [] };
+  }
+}
+
+export async function addTagToBook(bookId: number, tagId: number) {
+  try {
+    // Check if already exists to avoid duplicates
+    const existing = await db
+      .select()
+      .from(bookTags)
+      .where(and(eq(bookTags.bookId, bookId), eq(bookTags.tagId, tagId)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return { success: true }; // Already assigned
+    }
+
+    await db.insert(bookTags).values({ bookId, tagId });
+    console.log(`Tag ${tagId} added to book ${bookId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding tag to book:", error);
+    return { success: false, error: "Failed to add tag" };
+  }
+}
+
+export async function removeTagFromBook(bookId: number, tagId: number) {
+  try {
+    await db
+      .delete(bookTags)
+      .where(and(eq(bookTags.bookId, bookId), eq(bookTags.tagId, tagId)));
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing tag from book:", error);
+    return { success: false, error: "Failed to remove tag" };
+  }
+}
+
+export async function getAllBooksWithTags() {
+  try {
+    // Get all books first
+    const allBooks = await db.select().from(books);
+
+    // Get all book-tag relationships in one query
+    const allBookTags = await db
+      .select({
+        bookId: bookTags.bookId,
+        tagId: tags.id,
+        tagName: tags.name,
+        tagColor: tags.color,
+      })
+      .from(bookTags)
+      .innerJoin(tags, eq(bookTags.tagId, tags.id));
+
+    // Group tags by bookId
+    const tagsByBookId = new Map<number, { id: number; name: string | null; color: string | null }[]>();
+
+    allBookTags.forEach((row) => {
+      if (!row.bookId) return;
+      if (!tagsByBookId.has(row.bookId)) {
+        tagsByBookId.set(row.bookId, []);
+      }
+      tagsByBookId.get(row.bookId)!.push({
+        id: row.tagId,
+        name: row.tagName,
+        color: row.tagColor,
+      });
+    });
+
+    // Attach tags to each book
+    const booksWithTags = allBooks.map((book) => ({
+      ...book,
+      bookTags: tagsByBookId.get(book.id) || [],
+    }));
+
+    return { success: true, books: booksWithTags };
+  } catch (error) {
+    console.error("Error fetching books with tags:", error);
+    return { success: false, books: [] };
   }
 }

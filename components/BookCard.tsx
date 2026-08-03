@@ -3,6 +3,12 @@
 import { useRouter } from "next/navigation";
 import BookCover from "@/components/BookCover";
 
+type Tag = {
+  id: number;
+  name: string | null;
+  color: string | null;
+};
+
 type Book = {
   id: number;
   title: string;
@@ -12,6 +18,7 @@ type Book = {
   pageCount: number | null;
   rating: number | null;
   shelf: string;
+  bookTags?: Tag[];
 };
 
 export default function BookCard({ book }: { book: Book }) {
@@ -71,12 +78,12 @@ export default function BookCard({ book }: { book: Book }) {
           {book.author}
         </p>
         {book.pageCount && (
-          <p style={{ color: "#A89070", fontSize: "11px" }}>
+          <p style={{ color: "#A89070", fontSize: "11px", marginBottom: "4px" }}>
             📄 {book.pageCount} pages
           </p>
         )}
         {book.rating && (
-          <p style={{ color: "#E8A030", fontSize: "11px" }}>
+          <p style={{ color: "#E8A030", fontSize: "11px", marginBottom: "4px" }}>
             {"★".repeat(Math.floor(book.rating))}
             {book.rating % 1 >= 0.5 ? "½" : ""} {book.rating}
           </p>
@@ -87,7 +94,7 @@ export default function BookCard({ book }: { book: Book }) {
               display: "flex",
               gap: "4px",
               flexWrap: "wrap",
-              marginTop: "6px",
+              marginBottom: "4px",
             }}
           >
             {book.genres.slice(0, 2).map((genre) => (
@@ -103,6 +110,26 @@ export default function BookCard({ book }: { book: Book }) {
                 }}
               >
                 {genre}
+              </span>
+            ))}
+          </div>
+        )}
+        {/* Tags */}
+        {book.bookTags && book.bookTags.length > 0 && (
+          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+            {book.bookTags.slice(0, 2).map((tag) => (
+              <span
+                key={tag.id}
+                style={{
+                  backgroundColor: tag.color || "#C8813A",
+                  color: "#F5ECD7",
+                  fontSize: "10px",
+                  fontWeight: "600",
+                  padding: "2px 6px",
+                  borderRadius: "999px",
+                }}
+              >
+                {tag.name}
               </span>
             ))}
           </div>

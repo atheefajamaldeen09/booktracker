@@ -6,6 +6,12 @@ import BookCard from "@/components/BookCard";
 import EmptyState from "@/components/EmptyState";
 import Link from "next/link";
 
+type Tag = {
+  id: number;
+  name: string | null;
+  color: string | null;
+};
+
 type Book = {
   id: number;
   title: string;
@@ -18,6 +24,7 @@ type Book = {
   dateAdded: Date | null;
   publicationYear: number | null;
   dateCompleted: Date | null;
+  bookTags?: Tag[];
 };
 
 type Props = {
@@ -43,6 +50,7 @@ export default function LibraryView({ books }: Props) {
   const [selectedYear, setSelectedYear] = useState("all");
   const [sortBy, setSortBy] = useState<SortOption>("date_added_desc");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedTag, setSelectedTag] = useState("all");
 
   // Get all unique genres from all books
   const allGenres = useMemo(() => {
@@ -51,6 +59,18 @@ export default function LibraryView({ books }: Props) {
       book.genres?.forEach((genre) => genres.add(genre));
     });
     return Array.from(genres).sort();
+  }, [books]);
+
+  const allTagsList = useMemo(() => {
+    const tagMap = new Map<number, Tag>();
+    books.forEach((book) => {
+      book.bookTags?.forEach((tag) => {
+        tagMap.set(tag.id, tag);
+      });
+    });
+    console.log("All books bookTags:", books.map(b => ({ title: b.title, tags: b.bookTags })));
+    console.log("All tags list:", Array.from(tagMap.values()));
+    return Array.from(tagMap.values());
   }, [books]);
 
   // Get all unique years from books that have been read
@@ -113,6 +133,13 @@ export default function LibraryView({ books }: Props) {
       });
     }
 
+    // Tag filter
+    if (selectedTag !== "all") {
+      filtered = filtered.filter((book) =>
+        book.bookTags?.some((tag) => tag.id === parseInt(selectedTag))
+      );
+    }
+
     // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -152,6 +179,7 @@ export default function LibraryView({ books }: Props) {
     selectedGenre,
     selectedRating,
     selectedYear,
+    selectedTag,
     sortBy,
   ]);
 
@@ -160,6 +188,7 @@ export default function LibraryView({ books }: Props) {
     selectedGenre !== "all" ||
     selectedRating !== "all" ||
     selectedYear !== "all" ||
+    selectedTag !== "all" ||
     search.trim() !== "";
 
   const clearFilters = () => {
@@ -168,6 +197,7 @@ export default function LibraryView({ books }: Props) {
     setSelectedGenre("all");
     setSelectedRating("all");
     setSelectedYear("all");
+    setSelectedTag("all");
     setSortBy("date_added_desc");
   };
 
@@ -416,6 +446,36 @@ export default function LibraryView({ books }: Props) {
               </select>
             </div>
           </div>
+
+          {/* Tag Filter */}
+          {allTagsList.length > 0 && (
+            <div>
+              <label
+                style={{
+                  color: "#A89070",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  display: "block",
+                  marginBottom: "6px",
+                }}
+              >
+                Tag
+              </label>
+              <select
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="all">All Tags</option>
+                {allTagsList.map((tag) => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Row 3 — Sort */}
           <div>

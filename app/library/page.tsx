@@ -1,16 +1,14 @@
-import { getAllBooks } from "@/lib/actions/books";
+import { getAllBooksWithTags } from "@/lib/actions/books";
 import LibraryView from "@/components/LibraryView";
 import Link from "next/link";
 
 export default async function LibraryPage() {
-  const { books } = await getAllBooks();
+  const { books } = await getAllBooksWithTags();
 
-  // Library only shows owned books — not wishlist
   const ownedBooks = books.filter((b) => b.shelf !== "wishlist");
 
   return (
     <div style={{ maxWidth: "900px" }}>
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -53,7 +51,6 @@ export default async function LibraryPage() {
         </Link>
       </div>
 
-      {/* Library View with Search Filter Sort */}
       <LibraryView books={ownedBooks} />
     </div>
   );

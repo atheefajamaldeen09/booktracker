@@ -1,10 +1,11 @@
-import { getBookById, getSeriesForBook } from "@/lib/actions/books";
+import { getBookById, getSeriesForBook, getAllTags, getTagsForBook } from "@/lib/actions/books";
 import BookCover from "@/components/BookCover";
 import BookActions from "@/components/BookActions";
 import EditBookForm from "@/components/EditBookForm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import TagManager from "@/components/TagManager";
 
 export default async function BookDetailPage({
   params,
@@ -18,6 +19,8 @@ export default async function BookDetailPage({
   if (!book) return notFound();
 
   const { series: bookSeriesInfo } = await getSeriesForBook(bookId);
+  const { tags: allTags } = await getAllTags();
+  const { tags: bookTagsList } = await getTagsForBook(bookId);
 
   const shelfLabels: Record<string, string> = {
     tbr: "📚 TBR",
@@ -236,6 +239,13 @@ export default async function BookDetailPage({
           </div>
         </div>
       )}
+
+      {/* Tags */}
+      <TagManager
+        bookId={book.id}
+        allTags={allTags}
+        bookTags={bookTagsList}
+      />
 
       {/* Divider */}
       <div
