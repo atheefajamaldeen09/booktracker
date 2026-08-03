@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { books, series, bookSeries, tags, bookTags } from "@/lib/db/schema";
+import { books, series, bookSeries, tags, bookTags, readingSessions } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
 type AddBookInput = {
@@ -101,6 +101,7 @@ export async function moveBookToShelf(
         shelf: newShelf,
         dateCompleted: newShelf === "read" ? new Date() : undefined,
         dateStarted: newShelf === "reading" ? new Date() : undefined,
+        currentPage: newShelf === "reading" ? 0 : undefined,
       })
       .where(eq(books.id, bookId));
     return { success: true };
@@ -311,6 +312,120 @@ export async function getAllBooksWithTags() {
     return { success: true, books: booksWithTags };
   } catch (error) {
     console.error("Error fetching books with tags:", error);
+    return { success: false, books: [] };
+  }
+}
+
+export async function startReading(bookId: number) {
+  try {
+    await db
+      .update(books)
+      .set({
+        shelf: "reading",
+        dateStarted: new Date(),
+        currentPage: 0,
+      })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error starting book:", error);
+    return { success: false, error: "Failed to start reading" };
+  }
+}
+
+export async function updateReadingProgress(
+  bookId: number,
+  currentPage: number,
+  previousPage: number
+) {
+  try {
+    const pagesRead = Math.max(0, currentPage - previousPage);
+
+    // Update the book's current page
+    await db
+      .update(books)
+      .set({ currentPage })
+      .where(eq(books.id, bookId));
+
+    // Log the reading session
+    await db.insert(readingSessions).values({
+      bookId,
+      pagesRead,
+      currentPageAfter: currentPage,
+      date: new Date(),
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating progress:", error);
+    return { success: false, error: "Failed to update progress" };
+  }
+}
+
+export async function completeBook(
+  bookId: number,
+  pageCount: number | null
+) {
+  try {
+    await db
+      .update(books)
+      .set({
+        shelf: "read",
+        dateCompleted: new Date(),
+        currentPage: pageCount || 0,
+      })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error completing book:", error);
+    return { success: false, error: "Failed to complete book" };
+  }
+}
+
+export async function markDNF(
+  bookId: number,
+  currentPage: number,
+  reason?: string
+) {
+  try {
+    await db
+      .update(books)
+      .set({
+        shelf: "dnf",
+        dnfPage: currentPage,
+        dnfReason: reason || null,
+      })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error marking DNF:", error);
+    return { success: false, error: "Failed to mark as DNF" };
+  }
+}
+
+export async function getReadingSessions(bookId: number) {
+  try {
+    const sessions = await db
+      .select()
+      .from(readingSessions)
+      .where(eq(readingSessions.bookId, bookId))
+      .orderBy(readingSessions.date);
+    return { success: true, sessions };
+  } catch (error) {
+    console.error("Error fetching sessions:", error);
+    return { success: false, sessions: [] };
+  }
+}
+
+export async function getCurrentlyReading() {
+  try {
+    const currentBooks = await db
+      .select()
+      .from(books)
+      .where(eq(books.shelf, "reading"));
+    return { success: true, books: currentBooks };
+  } catch (error) {
+    console.error("Error fetching currently reading:", error);
     return { success: false, books: [] };
   }
 }

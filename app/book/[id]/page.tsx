@@ -1,7 +1,14 @@
-import { getBookById, getSeriesForBook, getAllTags, getTagsForBook } from "@/lib/actions/books";
+import {
+  getBookById,
+  getSeriesForBook,
+  getAllTags,
+  getTagsForBook,
+  getReadingSessions,
+} from "@/lib/actions/books";
 import BookCover from "@/components/BookCover";
 import BookActions from "@/components/BookActions";
 import EditBookForm from "@/components/EditBookForm";
+import ReadingProgress from "@/components/ReadingProgress";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
@@ -21,6 +28,7 @@ export default async function BookDetailPage({
   const { series: bookSeriesInfo } = await getSeriesForBook(bookId);
   const { tags: allTags } = await getAllTags();
   const { tags: bookTagsList } = await getTagsForBook(bookId);
+  const { sessions } = await getReadingSessions(bookId);
 
   const shelfLabels: Record<string, string> = {
     tbr: "📚 TBR",
@@ -246,6 +254,28 @@ export default async function BookDetailPage({
         allTags={allTags}
         bookTags={bookTagsList}
       />
+
+      {/* Reading Progress — only shown when currently reading */}
+      {book.shelf === "reading" && (
+        <>
+          <div
+            style={{
+              borderTop: "1px solid #4A3020",
+              marginBottom: "28px",
+            }}
+          />
+          <ReadingProgress
+            book={{
+              id: book.id,
+              title: book.title,
+              currentPage: book.currentPage,
+              pageCount: book.pageCount,
+              shelf: book.shelf,
+            }}
+            sessions={sessions}
+          />
+        </>
+      )}
 
       {/* Divider */}
       <div
