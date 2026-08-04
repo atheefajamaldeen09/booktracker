@@ -7,6 +7,7 @@ import BookCover from "@/components/BookCover";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyState from "@/components/EmptyState";
 
+
 const BarcodeScanner = lazy(() => import("@/components/BarcodeScanner"));
 
 type SearchResult = {

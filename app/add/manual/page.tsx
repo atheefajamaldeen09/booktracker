@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Upload, X } from "lucide-react";
-import { addBook } from "@/lib/actions/books";
+import { addBook, getAllSeries } from "@/lib/actions/books";
 import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
+import SeriesSelector from "@/components/SeriesSelector";
+
 
 export default function ManualEntryPage() {
   const router = useRouter();
@@ -25,6 +27,17 @@ export default function ManualEntryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [existingSeries, setExistingSeries] = useState<
+    { id: number; name: string; totalBooks: number | null }[]
+  >([]);
+
+  useEffect(() => {
+    getAllSeries().then((result) => {
+      if (result.success) {
+        setExistingSeries(result.series);
+      }
+    });
+  }, []);
 
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -372,102 +385,16 @@ export default function ManualEntryPage() {
       </div>
 
       {/* Series Section */}
-      <div
-        style={{
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
-          borderRadius: "14px",
-          padding: "16px",
-          marginBottom: "20px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: isSeries ? "16px" : "0",
-          }}
-        >
-          <div>
-            <p
-              style={{
-                color: "#F5ECD7",
-                fontSize: "14px",
-                fontWeight: "600",
-                margin: 0,
-              }}
-            >
-              Part of a series?
-            </p>
-            <p
-              style={{
-                color: "#A89070",
-                fontSize: "12px",
-                margin: "2px 0 0 0",
-              }}
-            >
-              Toggle if this book belongs to a series
-            </p>
-          </div>
-          <div
-            onClick={() => setIsSeries(!isSeries)}
-            style={{
-              width: "44px",
-              height: "24px",
-              backgroundColor: isSeries ? "#C8813A" : "#4A3020",
-              borderRadius: "999px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s",
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                width: "18px",
-                height: "18px",
-                backgroundColor: "#F5ECD7",
-                borderRadius: "50%",
-                position: "absolute",
-                top: "3px",
-                left: isSeries ? "23px" : "3px",
-                transition: "all 0.2s",
-              }}
-            />
-          </div>
-        </div>
-
-        {isSeries && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "2fr 1fr",
-              gap: "12px",
-            }}
-          >
-            <div>
-              <label style={labelStyle}>Series Name</label>
-              <input
-                style={inputStyle}
-                value={seriesName}
-                onChange={(e) => setSeriesName(e.target.value)}
-                placeholder="e.g. Harry Potter"
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Book Number</label>
-              <input
-                style={inputStyle}
-                type="number"
-                value={seriesPosition}
-                onChange={(e) => setSeriesPosition(e.target.value)}
-                placeholder="e.g. 1"
-                step="0.5"
-              />
-            </div>
-          </div>
-        )}
+      <div style={{ marginBottom: "20px" }}>
+        <SeriesSelector
+          isSeries={isSeries}
+          seriesName={seriesName}
+          seriesPosition={seriesPosition}
+          existingSeries={existingSeries}
+          onIsSeriesChange={setIsSeries}
+          onSeriesNameChange={setSeriesName}
+          onSeriesPositionChange={setSeriesPosition}
+        />
       </div>
 
       {/* Shelf Selection */}

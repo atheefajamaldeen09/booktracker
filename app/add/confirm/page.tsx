@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Upload, X, ChevronLeft } from "lucide-react";
 import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { addBook } from "@/lib/actions/books";
+import SeriesSelector from "@/components/SeriesSelector";
+import { addBook, getAllSeries } from "@/lib/actions/books";
 
 function ConfirmBookContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Parse book data from URL params
   const initialData = {
     key: searchParams.get("key") || "",
     title: searchParams.get("title") || "",
@@ -33,7 +33,6 @@ function ConfirmBookContent() {
       : null,
   };
 
-  // Editable fields
   const [title, setTitle] = useState(initialData.title);
   const [author, setAuthor] = useState(initialData.author);
   const [cover, setCover] = useState<string | null>(initialData.cover);
@@ -54,19 +53,27 @@ function ConfirmBookContent() {
   const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read">("tbr");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingSeries, setExistingSeries] = useState<
+    { id: number; name: string; totalBooks: number | null }[]
+  >([]);
 
-  // Handle cover image upload
+  useEffect(() => {
+    getAllSeries().then((result) => {
+      if (result.success) {
+        setExistingSeries(result.series);
+      }
+    });
+  }, []);
+
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Compress and convert to base64
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        // Max dimensions for cover
         const maxWidth = 300;
         const maxHeight = 450;
         let { width, height } = img;
@@ -81,8 +88,6 @@ function ConfirmBookContent() {
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
-
-        // Compress to JPEG at 80% quality
         const compressed = canvas.toDataURL("image/jpeg", 0.8);
         setCover(compressed);
       };
@@ -151,7 +156,6 @@ function ConfirmBookContent() {
     letterSpacing: "0.05em",
   };
 
-  // Success screen
   if (showSuccess) {
     return (
       <div
@@ -184,7 +188,6 @@ function ConfirmBookContent() {
             ? "Read shelf"
             : "Wishlist"}
         </p>
-
         <div
           style={{
             display: "flex",
@@ -347,7 +350,14 @@ function ConfirmBookContent() {
         </div>
 
         {/* Title and Author */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px",
+          }}
+        >
           <div>
             <label style={labelStyle}>Title *</label>
             <input
@@ -421,144 +431,76 @@ function ConfirmBookContent() {
       </div>
 
       {/* Series Section */}
-      <div
-        style={{
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
-          borderRadius: "14px",
-          padding: "16px",
-          marginBottom: "20px",
-        }}
-      >
-        {/* Series Toggle */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: isSeries ? "16px" : "0",
-          }}
-        >
-          <div>
-            <p style={{ color: "#F5ECD7", fontSize: "14px", fontWeight: "600", margin: 0 }}>
-              Part of a series?
-            </p>
-            <p style={{ color: "#A89070", fontSize: "12px", margin: "2px 0 0 0" }}>
-              Toggle if this book belongs to a series
-            </p>
-          </div>
-          {/* Toggle Switch */}
-          <div
-            onClick={() => setIsSeries(!isSeries)}
-            style={{
-              width: "44px",
-              height: "24px",
-              backgroundColor: isSeries ? "#C8813A" : "#4A3020",
-              borderRadius: "999px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s",
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                width: "18px",
-                height: "18px",
-                backgroundColor: "#F5ECD7",
-                borderRadius: "50%",
-                position: "absolute",
-                top: "3px",
-                left: isSeries ? "23px" : "3px",
-                transition: "all 0.2s",
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Series Fields */}
-        {isSeries && (
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
-            <div>
-              <label style={labelStyle}>Series Name</label>
-              <input
-                style={inputStyle}
-                value={seriesName}
-                onChange={(e) => setSeriesName(e.target.value)}
-                placeholder="e.g. Harry Potter"
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Book Number</label>
-              <input
-                style={inputStyle}
-                type="number"
-                value={seriesPosition}
-                onChange={(e) => setSeriesPosition(e.target.value)}
-                placeholder="e.g. 1"
-                step="0.5"
-              />
-            </div>
-          </div>
-        )}
+      <div style={{ marginBottom: "20px" }}>
+        <SeriesSelector
+          isSeries={isSeries}
+          seriesName={seriesName}
+          seriesPosition={seriesPosition}
+          existingSeries={existingSeries}
+          onIsSeriesChange={setIsSeries}
+          onSeriesNameChange={setSeriesName}
+          onSeriesPositionChange={setSeriesPosition}
+        />
       </div>
 
       {/* Shelf Selection */}
-    <div style={{ marginBottom: "28px" }}>
-    <label style={labelStyle}>Add To Shelf</label>
-    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-        {[
-        {
-            value: "tbr",
-            label: "📚 TBR",
-            desc: "I own it, haven't read it",
-        },
-        {
-            value: "read",
-            label: "✅ Already Read",
-            desc: "I own it and have read it",
-        },
-        {
-            value: "wishlist",
-            label: "💛 Wishlist",
-            desc: "I want this book",
-        },
-        ].map((option) => (
-        <div
-            key={option.value}
-            onClick={() => setShelf(option.value as "tbr" | "wishlist" | "read")}
-            style={{
-            flex: 1,
-            minWidth: "140px",
-            padding: "14px",
-            backgroundColor:
-                shelf === option.value ? "#3D2B18" : "#2A1C0F",
-            border: `2px solid ${
-                shelf === option.value ? "#C8813A" : "#4A3020"
-            }`,
-            borderRadius: "12px",
-            cursor: "pointer",
-            transition: "all 0.2s",
-            textAlign: "center",
-            }}
-        >
-            <p
-            style={{
-                color: shelf === option.value ? "#C8813A" : "#F5ECD7",
-                fontWeight: "600",
-                fontSize: "14px",
-                margin: "0 0 4px 0",
-            }}
+      <div style={{ marginBottom: "28px" }}>
+        <label style={labelStyle}>Add To Shelf</label>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          {[
+            {
+              value: "tbr",
+              label: "📚 TBR",
+              desc: "I own it, haven't read it",
+            },
+            {
+              value: "read",
+              label: "✅ Already Read",
+              desc: "I own it and have read it",
+            },
+            {
+              value: "wishlist",
+              label: "💛 Wishlist",
+              desc: "I want this book",
+            },
+          ].map((option) => (
+            <div
+              key={option.value}
+              onClick={() =>
+                setShelf(option.value as "tbr" | "wishlist" | "read")
+              }
+              style={{
+                flex: 1,
+                minWidth: "140px",
+                padding: "14px",
+                backgroundColor:
+                  shelf === option.value ? "#3D2B18" : "#2A1C0F",
+                border: `2px solid ${
+                  shelf === option.value ? "#C8813A" : "#4A3020"
+                }`,
+                borderRadius: "12px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                textAlign: "center",
+              }}
             >
-            {option.label}
-            </p>
-            <p style={{ color: "#A89070", fontSize: "12px", margin: 0 }}>
-            {option.desc}
-            </p>
+              <p
+                style={{
+                  color: shelf === option.value ? "#C8813A" : "#F5ECD7",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  margin: "0 0 4px 0",
+                }}
+              >
+                {option.label}
+              </p>
+              <p style={{ color: "#A89070", fontSize: "12px", margin: 0 }}>
+                {option.desc}
+              </p>
+            </div>
+          ))}
         </div>
-        ))}
-    </div>
-    </div>
+      </div>
 
       {/* Error */}
       {error && (
@@ -584,12 +526,12 @@ function ConfirmBookContent() {
         disabled={saving || !title.trim() || !author.trim()}
       >
         {saving
-            ? "Adding Book..."
-            : shelf === "tbr"
-            ? "Add to TBR"
-            : shelf === "read"
-            ? "Add to Read Shelf"
-            : "Add to Wishlist"}
+          ? "Adding Book..."
+          : shelf === "tbr"
+          ? "Add to TBR"
+          : shelf === "read"
+          ? "Add to Read Shelf"
+          : "Add to Wishlist"}
       </Button>
     </div>
   );

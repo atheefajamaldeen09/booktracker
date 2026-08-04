@@ -25,6 +25,11 @@ type Book = {
   publicationYear: number | null;
   dateCompleted: Date | null;
   bookTags?: Tag[];
+  bookSeries?: {
+    id: number;
+    name: string;
+    position: number;
+  } | null;
 };
 
 type Props = {
@@ -51,6 +56,7 @@ export default function LibraryView({ books }: Props) {
   const [sortBy, setSortBy] = useState<SortOption>("date_added_desc");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTag, setSelectedTag] = useState("all");
+  const [selectedSeries, setSelectedSeries] = useState("all");
 
   // Get all unique genres from all books
   const allGenres = useMemo(() => {
@@ -71,6 +77,21 @@ export default function LibraryView({ books }: Props) {
     console.log("All books bookTags:", books.map(b => ({ title: b.title, tags: b.bookTags })));
     console.log("All tags list:", Array.from(tagMap.values()));
     return Array.from(tagMap.values());
+  }, [books]);
+
+  const allSeriesList = useMemo(() => {
+    const seriesMap = new Map<number, { id: number; name: string }>();
+    books.forEach((book) => {
+      if (book.bookSeries) {
+        seriesMap.set(book.bookSeries.id, {
+          id: book.bookSeries.id,
+          name: book.bookSeries.name,
+        });
+      }
+    });
+    return Array.from(seriesMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
   }, [books]);
 
   // Get all unique years from books that have been read
@@ -140,6 +161,13 @@ export default function LibraryView({ books }: Props) {
       );
     }
 
+    // Series filter 
+    if (selectedSeries !== "all") {
+      filtered = filtered.filter(
+        (book) => book.bookSeries?.id === parseInt(selectedSeries)
+      );
+    }
+
     // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -180,6 +208,7 @@ export default function LibraryView({ books }: Props) {
     selectedRating,
     selectedYear,
     selectedTag,
+    selectedSeries,
     sortBy,
   ]);
 
@@ -189,6 +218,7 @@ export default function LibraryView({ books }: Props) {
     selectedRating !== "all" ||
     selectedYear !== "all" ||
     selectedTag !== "all" ||
+    selectedSeries !== "all" ||
     search.trim() !== "";
 
   const clearFilters = () => {
@@ -198,6 +228,7 @@ export default function LibraryView({ books }: Props) {
     setSelectedRating("all");
     setSelectedYear("all");
     setSelectedTag("all");
+    setSelectedSeries("all");
     setSortBy("date_added_desc");
   };
 
@@ -471,6 +502,36 @@ export default function LibraryView({ books }: Props) {
                 {allTagsList.map((tag) => (
                   <option key={tag.id} value={tag.id}>
                     {tag.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Series Filter 👈 ADD THIS */}
+          {allSeriesList.length > 0 && (
+            <div>
+              <label
+                style={{
+                  color: "#A89070",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  display: "block",
+                  marginBottom: "6px",
+                }}
+              >
+                Series
+              </label>
+              <select
+                value={selectedSeries}
+                onChange={(e) => setSelectedSeries(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="all">All Series</option>
+                {allSeriesList.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    📚 {s.name}
                   </option>
                 ))}
               </select>

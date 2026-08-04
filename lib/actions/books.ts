@@ -12,7 +12,9 @@ type AddBookInput = {
   pageCount?: number | null;
   publicationYear?: number | null;
   isbn?: string | null;
-  shelf: "tbr" | "wishlist" | "read";
+  description?: string | null;
+  shelf: "tbr" | "wishlist" | "reading" | "read" | "dnf";
+  isSeries?: boolean;
   seriesName?: string | null;
   seriesPosition?: number | null;
 };
@@ -288,6 +290,17 @@ export async function getAllBooksWithTags() {
       .from(bookTags)
       .innerJoin(tags, eq(bookTags.tagId, tags.id));
 
+    // Get all book-series relationships in one query
+    const allBookSeries = await db
+      .select({
+        bookId: bookSeries.bookId,
+        seriesId: series.id,
+        seriesName: series.name,
+        positionInSeries: bookSeries.positionInSeries,
+      })
+      .from(bookSeries)
+      .innerJoin(series, eq(bookSeries.seriesId, series.id));
+
     // Group tags by bookId
     const tagsByBookId = new Map<number, { id: number; name: string | null; color: string | null }[]>();
 
@@ -303,13 +316,29 @@ export async function getAllBooksWithTags() {
       });
     });
 
-    // Attach tags to each book
-    const booksWithTags = allBooks.map((book) => ({
+    // Group series by bookId
+    const seriesByBookId = new Map<
+      number,
+      { id: number; name: string; position: number }
+    >();
+
+    allBookSeries.forEach((row) => {
+      if (!row.bookId || !row.seriesId) return;
+      seriesByBookId.set(row.bookId, {
+        id: row.seriesId,
+        name: row.seriesName,
+        position: row.positionInSeries,
+      });
+    });
+
+    // Attach tags and series to each book
+    const booksWithTagsAndSeries = allBooks.map((book) => ({
       ...book,
       bookTags: tagsByBookId.get(book.id) || [],
+      bookSeries: seriesByBookId.get(book.id) || null,
     }));
 
-    return { success: true, books: booksWithTags };
+    return { success: true, books: booksWithTagsAndSeries };
   } catch (error) {
     console.error("Error fetching books with tags:", error);
     return { success: false, books: [] };
@@ -427,5 +456,15 @@ export async function getCurrentlyReading() {
   } catch (error) {
     console.error("Error fetching currently reading:", error);
     return { success: false, books: [] };
+  }
+}
+
+export async function getAllSeries() {
+  try {
+    const allSeries = await db.select().from(series);
+    return { success: true, series: allSeries };
+  } catch (error) {
+    console.error("Error fetching series:", error);
+    return { success: false, series: [] };
   }
 }
