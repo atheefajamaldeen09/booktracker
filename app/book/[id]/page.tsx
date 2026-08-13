@@ -13,6 +13,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import TagManager from "@/components/TagManager";
+import RatingReview from "@/components/RatingReview";
 
 export default async function BookDetailPage({
   params,
@@ -152,7 +153,7 @@ export default async function BookDetailPage({
                 🔖 ISBN: {book.isbn}
               </p>
             )}
-            {book.rating && (
+            {book.rating && book.rating > 0 && (
               <p style={{ color: "#E8A030", fontSize: "13px" }}>
                 {"★".repeat(Math.floor(book.rating))}
                 {book.rating % 1 >= 0.5 ? "½" : ""}{" "}
@@ -254,6 +255,24 @@ export default async function BookDetailPage({
         allTags={allTags}
         bookTags={bookTagsList}
       />
+
+      {/* Rating & Review — only shown for read books */}
+      {book.shelf === "read" && (
+        <>
+          <div
+            style={{
+              borderTop: "1px solid #4A3020",
+              marginBottom: "28px",
+            }}
+          />
+          <RatingReview
+            bookId={book.id}
+            bookTitle={book.title}
+            initialRating={book.rating}
+            initialReview={book.review}
+          />
+        </>
+      )}
 
       {/* Reading Progress — only shown when currently reading */}
       {book.shelf === "reading" && (

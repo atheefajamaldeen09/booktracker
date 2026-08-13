@@ -508,7 +508,7 @@ export default function LibraryView({ books }: Props) {
             </div>
           )}
 
-          {/* Series Filter 👈 ADD THIS */}
+          {/* Series Filter */}
           {allSeriesList.length > 0 && (
             <div>
               <label

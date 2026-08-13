@@ -82,11 +82,17 @@ export default function BookCard({ book }: { book: Book }) {
             📄 {book.pageCount} pages
           </p>
         )}
-        {book.rating && (
-          <p style={{ color: "#E8A030", fontSize: "11px", marginBottom: "4px" }}>
-            {"★".repeat(Math.floor(book.rating))}
-            {book.rating % 1 >= 0.5 ? "½" : ""} {book.rating}
-          </p>
+        {book.rating && book.rating > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+            <span style={{ color: "#E8A030", fontSize: "11px" }}>
+              {"★".repeat(Math.floor(book.rating))}
+              {book.rating % 1 >= 0.5 ? "½" : ""}
+              {"☆".repeat(5 - Math.ceil(book.rating))}
+            </span>
+            <span style={{ color: "#A89070", fontSize: "10px" }}>
+              {book.rating}
+            </span>
+          </div>
         )}
         {book.genres && book.genres.length > 0 && (
           <div

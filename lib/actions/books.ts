@@ -468,3 +468,29 @@ export async function getAllSeries() {
     return { success: false, series: [] };
   }
 }
+
+export async function updateRating(bookId: number, rating: number) {
+  try {
+    await db
+      .update(books)
+      .set({ rating: rating > 0 ? rating : null })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating rating:", error);
+    return { success: false, error: "Failed to update rating" };
+  }
+}
+
+export async function updateReview(bookId: number, review: string) {
+  try {
+    await db
+      .update(books)
+      .set({ review: review.trim() || null })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating review:", error);
+    return { success: false, error: "Failed to update review" };
+  }
+}
