@@ -11,6 +11,7 @@ import {
   Settings,
   Target,
   Heart,
+  BookMarked,
 } from "lucide-react";
 
 // Bottom mobile nav — only 5 most important pages
@@ -19,7 +20,7 @@ const mobileNavItems = [
   { href: "/bookshelf", label: "Shelf", icon: BookOpen },
   { href: "/library", label: "Library", icon: Library },
   { href: "/add", label: "Add", icon: PlusCircle },
-  { href: "/wishlist", label: "Wishlist", icon: Heart },
+  { href: "/series", label: "Series", icon: BookMarked }, // 👈 CHANGED from Wishlist
 ];
 
 // Side nav on desktop — all pages
@@ -27,6 +28,7 @@ const sideNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/bookshelf", label: "My Bookshelf", icon: BookOpen },
   { href: "/library", label: "Library", icon: Library },
+  { href: "/series", label: "Series", icon: BookMarked }, // 👈 ADDED
   { href: "/add", label: "Add Book", icon: PlusCircle },
   { href: "/wishlist", label: "Wishlist", icon: Heart },
   { href: "/stats", label: "Stats", icon: BarChart2 },

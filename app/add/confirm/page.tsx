@@ -50,6 +50,7 @@ function ConfirmBookContent() {
   const [seriesPosition, setSeriesPosition] = useState(
     initialData.seriesPosition?.toString() || ""
   );
+  const [seriesTotalBooks, setSeriesTotalBooks] = useState("");
   const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read">("tbr");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +122,8 @@ function ConfirmBookContent() {
         seriesName: isSeries && seriesName ? seriesName.trim() : null,
         seriesPosition:
           isSeries && seriesPosition ? parseFloat(seriesPosition) : null,
+        seriesTotalBooks:
+          isSeries && seriesTotalBooks ? parseInt(seriesTotalBooks) : null,
       });
 
       if (result.success) {
@@ -435,11 +438,13 @@ function ConfirmBookContent() {
         <SeriesSelector
           isSeries={isSeries}
           seriesName={seriesName}
+          seriesTotalBooks={seriesTotalBooks}
           seriesPosition={seriesPosition}
           existingSeries={existingSeries}
           onIsSeriesChange={setIsSeries}
           onSeriesNameChange={setSeriesName}
           onSeriesPositionChange={setSeriesPosition}
+          onSeriesTotalBooksChange={setSeriesTotalBooks}
         />
       </div>
 

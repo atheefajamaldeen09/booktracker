@@ -12,20 +12,24 @@ type Props = {
   isSeries: boolean;
   seriesName: string;
   seriesPosition: string;
+  seriesTotalBooks: string;
   existingSeries: Series[];
   onIsSeriesChange: (value: boolean) => void;
   onSeriesNameChange: (value: string) => void;
   onSeriesPositionChange: (value: string) => void;
+  onSeriesTotalBooksChange: (value: string) => void;
 };
 
 export default function SeriesSelector({
   isSeries,
   seriesName,
   seriesPosition,
+  seriesTotalBooks,
   existingSeries,
   onIsSeriesChange,
   onSeriesNameChange,
   onSeriesPositionChange,
+  onSeriesTotalBooksChange,
 }: Props) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
@@ -151,13 +155,7 @@ export default function SeriesSelector({
 
       {/* Series Fields */}
       {isSeries && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr",
-            gap: "12px",
-          }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {/* Series Name with dropdown */}
           <div ref={dropdownRef} style={{ position: "relative" }}>
             <label style={labelStyle}>Series Name</label>
@@ -210,6 +208,10 @@ export default function SeriesSelector({
                         key={s.id}
                         onClick={() => {
                           onSeriesNameChange(s.name);
+                          // Auto-fill total books if it exists
+                          if (s.totalBooks) {
+                            onSeriesTotalBooksChange(s.totalBooks.toString());
+                          }
                           setShowDropdown(false);
                         }}
                         style={{
@@ -224,7 +226,7 @@ export default function SeriesSelector({
                           fontSize: "13px",
                           display: "flex",
                           alignItems: "center",
-                          gap: "8px",
+                          justifyContent: "space-between",
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = "#3D2B18";
@@ -233,8 +235,15 @@ export default function SeriesSelector({
                           e.currentTarget.style.backgroundColor = "transparent";
                         }}
                       >
-                        <span>📚</span>
-                        <span>{s.name}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span>📚</span>
+                          <span>{s.name}</span>
+                        </div>
+                        {s.totalBooks && (
+                          <span style={{ color: "#A89070", fontSize: "11px" }}>
+                            {s.totalBooks} books
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -291,19 +300,38 @@ export default function SeriesSelector({
             )}
           </div>
 
-          {/* Book Number */}
-          <div>
-            <label style={labelStyle}>Book Number</label>
-            <input
-              style={inputStyle}
-              type="number"
-              value={seriesPosition}
-              onChange={(e) => onSeriesPositionChange(e.target.value)}
-              placeholder="e.g. 1"
-              step="0.5"
-              min="0"
-            />
+          {/* Book Number and Total Books in one row */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div>
+              <label style={labelStyle}>Book Number</label>
+              <input
+                style={inputStyle}
+                type="number"
+                value={seriesPosition}
+                onChange={(e) => onSeriesPositionChange(e.target.value)}
+                placeholder="e.g. 1"
+                step="0.5"
+                min="0"
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Total Books (Optional)</label>
+              <input
+                style={inputStyle}
+                type="number"
+                value={seriesTotalBooks}
+                onChange={(e) => onSeriesTotalBooksChange(e.target.value)}
+                placeholder="e.g. 7"
+                min="1"
+              />
+            </div>
           </div>
+
+          {/* Helper text */}
+          <p style={{ color: "#6B5040", fontSize: "11px", margin: "0", lineHeight: "1.4" }}>
+            💡 Total books helps track series completion (e.g. &quot;Read 3 of 7 books&quot;). You can update it later.
+          </p>
         </div>
       )}
     </div>

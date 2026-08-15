@@ -23,6 +23,7 @@ export default function ManualEntryPage() {
   const [isSeries, setIsSeries] = useState(false);
   const [seriesName, setSeriesName] = useState("");
   const [seriesPosition, setSeriesPosition] = useState("");
+  const [seriesTotalBooks, setSeriesTotalBooks] = useState("");
   const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read">("tbr");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +96,8 @@ export default function ManualEntryPage() {
         seriesName: isSeries && seriesName ? seriesName.trim() : null,
         seriesPosition:
           isSeries && seriesPosition ? parseFloat(seriesPosition) : null,
+        seriesTotalBooks:
+          isSeries && seriesTotalBooks ? parseInt(seriesTotalBooks) : null,
       });
 
       if (result.success) {
@@ -390,10 +393,12 @@ export default function ManualEntryPage() {
           isSeries={isSeries}
           seriesName={seriesName}
           seriesPosition={seriesPosition}
+          seriesTotalBooks={seriesTotalBooks}
           existingSeries={existingSeries}
           onIsSeriesChange={setIsSeries}
           onSeriesNameChange={setSeriesName}
           onSeriesPositionChange={setSeriesPosition}
+          onSeriesTotalBooksChange={setSeriesTotalBooks}
         />
       </div>
 

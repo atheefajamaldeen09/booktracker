@@ -17,6 +17,7 @@ type AddBookInput = {
   isSeries?: boolean;
   seriesName?: string | null;
   seriesPosition?: number | null;
+  seriesTotalBooks?: number | null;
 };
 
 export async function addBook(input: AddBookInput) {
@@ -47,10 +48,21 @@ export async function addBook(input: AddBookInput) {
 
       if (existingSeries.length > 0) {
         seriesId = existingSeries[0].id;
+        
+        // Update total books if provided and series doesn't have it yet
+        if (input.seriesTotalBooks && !existingSeries[0].totalBooks) {
+          await db
+            .update(series)
+            .set({ totalBooks: input.seriesTotalBooks })
+            .where(eq(series.id, seriesId));
+        }
       } else {
         const [newSeries] = await db
           .insert(series)
-          .values({ name: input.seriesName })
+          .values({ 
+            name: input.seriesName,
+            totalBooks: input.seriesTotalBooks || null
+          })
           .returning();
         seriesId = newSeries.id;
       }
@@ -492,5 +504,88 @@ export async function updateReview(bookId: number, review: string) {
   } catch (error) {
     console.error("Error updating review:", error);
     return { success: false, error: "Failed to update review" };
+  }
+}
+
+export async function updateSeriesTotalBooks(seriesId: number, totalBooks: number) {
+  try {
+    await db
+      .update(series)
+      .set({ totalBooks })
+      .where(eq(series.id, seriesId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating series total books:", error);
+    return { success: false, error: "Failed to update series" };
+  }
+}
+
+export async function getSeriesById(seriesId: number) {
+  try {
+    const [seriesData] = await db
+      .select()
+      .from(series)
+      .where(eq(series.id, seriesId))
+      .limit(1);
+
+    if (!seriesData) {
+      return { success: false, series: null, books: [] };
+    }
+
+    // Get all books in this series
+    const booksInSeries = await db
+      .select({
+        id: books.id,
+        title: books.title,
+        author: books.author,
+        cover: books.cover,
+        shelf: books.shelf,
+        rating: books.rating,
+        position: bookSeries.positionInSeries,
+      })
+      .from(bookSeries)
+      .innerJoin(books, eq(bookSeries.bookId, books.id))
+      .where(eq(bookSeries.seriesId, seriesId))
+      .orderBy(bookSeries.positionInSeries);
+
+    return { success: true, series: seriesData, books: booksInSeries };
+  } catch (error) {
+    console.error("Error fetching series:", error);
+    return { success: false, series: null, books: [] };
+  }
+}
+
+export async function getAllSeriesWithStats() {
+  try {
+    const allSeries = await db.select().from(series);
+
+    const seriesWithStats = await Promise.all(
+      allSeries.map(async (s) => {
+        const booksInSeries = await db
+          .select({
+            id: books.id,
+            shelf: books.shelf,
+          })
+          .from(bookSeries)
+          .innerJoin(books, eq(bookSeries.bookId, books.id))
+          .where(eq(bookSeries.seriesId, s.id));
+
+        // Only count books you actually own (not wishlist)
+        const ownedBooks = booksInSeries.filter((b) => b.shelf !== "wishlist");
+        const totalOwned = ownedBooks.length;
+        const totalRead = ownedBooks.filter((b) => b.shelf === "read").length;
+
+        return {
+          ...s,
+          totalOwned,
+          totalRead,
+        };
+      })
+    );
+
+    return { success: true, series: seriesWithStats };
+  } catch (error) {
+    console.error("Error fetching series with stats:", error);
+    return { success: false, series: [] };
   }
 }
