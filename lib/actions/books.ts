@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { books, series, bookSeries, tags, bookTags, readingSessions } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 type AddBookInput = {
   title: string;
@@ -587,5 +587,73 @@ export async function getAllSeriesWithStats() {
   } catch (error) {
     console.error("Error fetching series with stats:", error);
     return { success: false, series: [] };
+  }
+}
+
+export async function getDashboardStats() {
+  try {
+    const allBooks = await db.select().from(books);
+
+    const currentYear = new Date().getFullYear();
+
+    const stats = {
+      totalRead: allBooks.filter((b) => b.shelf === "read").length,
+      readThisYear: allBooks.filter(
+        (b) =>
+          b.shelf === "read" &&
+          b.dateCompleted &&
+          new Date(b.dateCompleted).getFullYear() === currentYear
+      ).length,
+      currentlyReading: allBooks.filter((b) => b.shelf === "reading").length,
+      tbr: allBooks.filter((b) => b.shelf === "tbr").length,
+      wishlist: allBooks.filter((b) => b.shelf === "wishlist").length,
+      dnf: allBooks.filter((b) => b.shelf === "dnf").length,
+    };
+
+    return { success: true, stats };
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    return {
+      success: false,
+      stats: {
+        totalRead: 0,
+        readThisYear: 0,
+        currentlyReading: 0,
+        tbr: 0,
+        wishlist: 0,
+        dnf: 0,
+      },
+    };
+  }
+}
+
+export async function getRecentlyAdded(limit: number = 5) {
+  try {
+    const recentBooks = await db
+      .select()
+      .from(books)
+      .orderBy(desc(books.dateAdded))
+      .limit(limit);
+
+    return { success: true, books: recentBooks };
+  } catch (error) {
+    console.error("Error fetching recently added:", error);
+    return { success: false, books: [] };
+  }
+}
+
+export async function getRecentlyCompleted(limit: number = 5) {
+  try {
+    const recentCompleted = await db
+      .select()
+      .from(books)
+      .where(eq(books.shelf, "read"))
+      .orderBy(desc(books.dateCompleted))
+      .limit(limit);
+
+    return { success: true, books: recentCompleted };
+  } catch (error) {
+    console.error("Error fetching recently completed:", error);
+    return { success: false, books: [] };
   }
 }
