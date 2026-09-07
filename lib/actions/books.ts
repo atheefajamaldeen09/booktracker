@@ -657,3 +657,157 @@ export async function getRecentlyCompleted(limit: number = 5) {
     return { success: false, books: [] };
   }
 }
+
+export async function getEligibleTBRBooks(filters?: {
+  genres?: string[];
+  seriesId?: number;
+  minPages?: number;
+  maxPages?: number;
+  onlyStandalone?: boolean;
+}) {
+  try {
+    const eligibleBooks = await db
+      .select({
+        id: books.id,
+        title: books.title,
+        author: books.author,
+        cover: books.cover,
+        genres: books.genres,
+        pageCount: books.pageCount,
+        shelf: books.shelf,
+      })
+      .from(books)
+      .where(eq(books.shelf, "tbr"));
+
+    // Get series info for all books
+    const booksWithSeries = await Promise.all(
+      eligibleBooks.map(async (book) => {
+        const seriesInfo = await db
+          .select({
+            seriesId: series.id,
+            seriesName: series.name,
+            position: bookSeries.positionInSeries,
+          })
+          .from(bookSeries)
+          .innerJoin(series, eq(bookSeries.seriesId, series.id))
+          .where(eq(bookSeries.bookId, book.id))
+          .limit(1);
+
+        return {
+          ...book,
+          series: seriesInfo[0] || null,
+        };
+      })
+    );
+
+    let filtered = [...booksWithSeries]; // 👈 FIX: Create new array
+
+    // Apply filters
+    if (filters?.genres && filters.genres.length > 0) {
+      filtered = filtered.filter((book) =>
+        book.genres?.some((g) => filters.genres?.includes(g))
+      );
+    }
+
+    if (filters?.seriesId) {
+      filtered = filtered.filter(
+        (book) => book.series?.seriesId === filters.seriesId
+      );
+    }
+
+    if (filters?.minPages) {
+      filtered = filtered.filter(
+        (book) => book.pageCount && book.pageCount >= filters.minPages!
+      );
+    }
+
+    if (filters?.maxPages) {
+      filtered = filtered.filter(
+        (book) => book.pageCount && book.pageCount <= filters.maxPages!
+      );
+    }
+
+    if (filters?.onlyStandalone) {
+      filtered = filtered.filter((book) => !book.series);
+    }
+
+    // Smart series filtering - only include next books in series
+    const smartFiltered = await Promise.all(
+      filtered.map(async (book) => {
+        if (!book.series) return { book, isEligible: true };
+
+        // Check if previous books in series are read
+        const previousBooks = await db
+          .select({
+            position: bookSeries.positionInSeries,
+            shelf: books.shelf,
+          })
+          .from(bookSeries)
+          .innerJoin(books, eq(bookSeries.bookId, books.id))
+          .where(
+            and(
+              eq(bookSeries.seriesId, book.series.seriesId),
+              eq(books.shelf, "read")
+            )
+          );
+
+        // If this is book 1, it's eligible
+        if (book.series.position === 1) {
+          return { book, isEligible: true };
+        }
+
+        // Check if all previous books are read
+        const maxPreviousPosition = Math.max(
+          ...previousBooks.map((pb) => pb.position),
+          0
+        );
+        const isNextInLine = book.series.position === maxPreviousPosition + 1;
+
+        return { book, isEligible: isNextInLine };
+      })
+    );
+
+    const finalBooks = smartFiltered
+      .filter((item) => item.isEligible)
+      .map((item) => item.book);
+
+    return { success: true, books: finalBooks };
+  } catch (error) {
+    console.error("Error fetching eligible TBR books:", error);
+    return { success: false, books: [] };
+  }
+}
+
+export async function getAllSeriesInTBR() {
+  try {
+    const tbrBooks = await db
+      .select({ id: books.id })
+      .from(books)
+      .where(eq(books.shelf, "tbr"));
+
+    if (tbrBooks.length === 0) {
+      return { success: true, series: [] };
+    }
+
+    // Get all series that have books in TBR
+    const seriesInTBR = await db
+      .select({
+        seriesId: series.id,
+        seriesName: series.name,
+      })
+      .from(bookSeries)
+      .innerJoin(series, eq(bookSeries.seriesId, series.id))
+      .innerJoin(books, eq(bookSeries.bookId, books.id))
+      .where(eq(books.shelf, "tbr"));
+
+    // Get unique series
+    const uniqueSeries = Array.from(
+      new Map(seriesInTBR.map((s) => [s.seriesId, s])).values()
+    );
+
+    return { success: true, series: uniqueSeries };
+  } catch (error) {
+    console.error("Error fetching series in TBR:", error);
+    return { success: false, series: [] };
+  }
+}

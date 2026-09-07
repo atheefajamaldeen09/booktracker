@@ -7,6 +7,7 @@ import {
 import StatsCard from "@/components/StatsCard";
 import CurrentlyReadingWidget from "@/components/CurrentlyReadingWidget";
 import RecentBooksCarousel from "@/components/RecentBooksCarousel";
+import PickerCard from "@/components/PickerCard"; 
 import Link from "next/link";
 
 export default async function HomePage() {
@@ -108,6 +109,51 @@ export default async function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Random Book Picker */}
+      {stats.tbr > 0 && (
+        <div style={{ marginBottom: "32px" }}>
+          <h2
+            style={{
+              color: "#C8813A",
+              fontSize: "18px",
+              fontWeight: "bold",
+              marginBottom: "16px",
+            }}
+          >
+            🎲 Can&apos;t Decide What to Read?
+          </h2>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "12px",
+            }}
+          >
+            <PickerCard
+              href="/random-picker?mode=wheel"
+              icon="🎡"
+              title="Spinning Wheel"
+              description="Let the wheel decide"
+            />
+
+            <PickerCard
+              href="/random-picker?mode=slots"
+              icon="🎰"
+              title="Slot Machine"
+              description="Spin the reels"
+            />
+
+            <PickerCard
+              href="/random-picker?mode=cards"
+              icon="🃏"
+              title="Card Draw"
+              description="Shuffle and pick"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Recently Added */}
       {recentlyAdded.length > 0 && (

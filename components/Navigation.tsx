@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,23 +13,17 @@ import {
   Target,
   Heart,
   BookMarked,
+  Shuffle,
+  Menu,
+  X,
 } from "lucide-react";
-
-// Bottom mobile nav — only 5 most important pages
-const mobileNavItems = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/bookshelf", label: "Shelf", icon: BookOpen },
-  { href: "/library", label: "Library", icon: Library },
-  { href: "/add", label: "Add", icon: PlusCircle },
-  { href: "/series", label: "Series", icon: BookMarked }, // 👈 CHANGED from Wishlist
-];
 
 // Side nav on desktop — all pages
 const sideNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/bookshelf", label: "My Bookshelf", icon: BookOpen },
   { href: "/library", label: "Library", icon: Library },
-  { href: "/series", label: "Series", icon: BookMarked }, // 👈 ADDED
+  { href: "/series", label: "Series", icon: BookMarked },
   { href: "/add", label: "Add Book", icon: PlusCircle },
   { href: "/wishlist", label: "Wishlist", icon: Heart },
   { href: "/stats", label: "Stats", icon: BarChart2 },
@@ -38,6 +33,7 @@ const sideNavItems = [
 
 export default function Navigation() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -126,9 +122,9 @@ export default function Navigation() {
           Shelves
         </p>
         {[
-          { href: "/library", label: "📚 TBR", active: pathname === "/library" },
-          { href: "/wishlist", label: "💛 Wishlist", active: pathname === "/wishlist" },
-          { href: "/dnf", label: "🚫 Did Not Finish", active: pathname === "/dnf" },
+          { href: "/library", label: "📚 TBR" },
+          { href: "/wishlist", label: "💛 Wishlist" },
+          { href: "/dnf", label: "🚫 Did Not Finish" },
         ].map((item) => (
           <Link
             key={item.href + item.label}
@@ -152,54 +148,148 @@ export default function Navigation() {
         ))}
       </nav>
 
-      {/* ── BOTTOM NAV — mobile only ── */}
-      <nav
-        id="bottom-nav"
+      {/* ── MOBILE TOP BAR with Hamburger ── */}
+      <div
+        id="mobile-top-bar"
         style={{
           backgroundColor: "#2A1C0F",
-          borderTop: "1px solid #4A3020",
+          borderBottom: "1px solid #4A3020",
           position: "fixed",
-          bottom: 0,
+          top: 0,
           left: 0,
           right: 0,
-          display: "flex",
+          display: "none",
           alignItems: "center",
-          justifyContent: "space-around",
-          padding: "10px 8px",
-          zIndex: 50,
+          justifyContent: "space-between",
+          padding: "12px 16px",
+          zIndex: 51,
         }}
       >
-        {mobileNavItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
+        <h1
+          style={{
+            color: "#C8813A",
+            fontSize: "18px",
+            fontWeight: "bold",
+            margin: 0,
+          }}
+        >
+          ☕ BookTracker
+        </h1>
+
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#C8813A",
+            cursor: "pointer",
+            padding: "4px",
+          }}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* ── MOBILE MENU OVERLAY ── */}
+      {mobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "fixed",
+              top: "56px",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              zIndex: 49,
+            }}
+          />
+
+          {/* Menu */}
+          <nav
+            style={{
+              position: "fixed",
+              top: "56px",
+              right: 0,
+              bottom: 0,
+              width: "280px",
+              backgroundColor: "#2A1C0F",
+              borderLeft: "1px solid #4A3020",
+              zIndex: 50,
+              overflowY: "auto",
+              padding: "16px",
+              animation: "slideIn 0.3s ease-out",
+            }}
+          >
+            {sideNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    marginBottom: "4px",
+                    backgroundColor: isActive ? "#3D2B18" : "transparent",
+                    color: isActive ? "#C8813A" : "#A89070",
+                    textDecoration: "none",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                >
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+
+            <div style={{ borderTop: "1px solid #4A3020", margin: "12px 0" }} />
+
+            <p
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "4px",
-                textDecoration: "none",
+                color: "#6B5040",
+                fontSize: "11px",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                padding: "0 12px",
+                marginBottom: "8px",
               }}
             >
-              <Icon
-                size={22}
-                style={{ color: isActive ? "#C8813A" : "#A89070" }}
-              />
-              <span
+              Quick Access
+            </p>
+            {[
+              { href: "/library", label: "📚 TBR" },
+              { href: "/wishlist", label: "💛 Wishlist" },
+              { href: "/dnf", label: "🚫 Did Not Finish" },
+            ].map((item) => (
+              <Link
+                key={item.href + item.label}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
                 style={{
-                  color: isActive ? "#C8813A" : "#A89070",
-                  fontSize: "10px",
+                  display: "block",
+                  padding: "10px 12px",
+                  borderRadius: "12px",
+                  marginBottom: "4px",
+                  color: "#A89070",
+                  textDecoration: "none",
+                  fontSize: "13px",
                 }}
               >
                 {item.label}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
+              </Link>
+            ))}
+          </nav>
+        </>
+      )}
 
       {/* ── Responsive styles ── */}
       <style>{`
@@ -207,7 +297,7 @@ export default function Navigation() {
           #side-nav {
             display: flex !important;
           }
-          #bottom-nav {
+          #mobile-top-bar {
             display: none !important;
           }
         }
@@ -215,8 +305,17 @@ export default function Navigation() {
           #side-nav {
             display: none !important;
           }
-          #bottom-nav {
+          #mobile-top-bar {
             display: flex !important;
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
           }
         }
       `}</style>
