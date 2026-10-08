@@ -38,7 +38,9 @@
   height: var(--H);
   transform-style: preserve-3d;
   transform-origin: 0 50%;
-  pointer-events: auto;
+  /* The container's own flat box sits in front of the pages in 3D, so it
+     must not take clicks; only the pages themselves do */
+  pointer-events: none;
 }
 
 .face {
@@ -50,6 +52,7 @@
 
 /* ─────────────── paper ─────────────── */
 .page {
+  pointer-events: auto;
   color: var(--ink);
   background-color: var(--paper);
   background-image: radial-gradient(ellipse at 50% 40%, transparent 60%, rgba(120, 90, 50, 0.08));
