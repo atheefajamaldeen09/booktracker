@@ -84,10 +84,10 @@ export default function FilterPanel({
   const selectStyle: React.CSSProperties = {
     width: "100%",
     padding: "8px 12px",
-    backgroundColor: "#2A1C0F",
-    border: "1px solid #4A3020",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: "10px",
-    color: "#F5ECD7",
+    color: "var(--text)",
     fontSize: "13px",
     outline: "none",
     cursor: "pointer",
@@ -95,7 +95,7 @@ export default function FilterPanel({
   };
 
   const labelStyle: React.CSSProperties = {
-    color: "#A89070",
+    color: "var(--text-muted)",
     fontSize: "11px",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
@@ -113,10 +113,10 @@ export default function FilterPanel({
           alignItems: "center",
           gap: "8px",
           padding: "10px 16px",
-          backgroundColor: showFilters ? "#C8813A" : "#2A1C0F",
-          border: `1px solid ${showFilters ? "#C8813A" : "#4A3020"}`,
+          backgroundColor: showFilters ? "var(--primary)" : "var(--surface)",
+          border: `1px solid ${showFilters ? "var(--primary)" : "var(--border)"}`,
           borderRadius: "12px",
-          color: showFilters ? "#F5ECD7" : "#A89070",
+          color: showFilters ? "var(--on-primary)" : "var(--text-muted)",
           fontSize: "14px",
           fontWeight: "600",
           cursor: "pointer",
@@ -127,8 +127,8 @@ export default function FilterPanel({
         {hasActiveFilters && (
           <span
             style={{
-              backgroundColor: "#F5ECD7",
-              color: "#C8813A",
+              backgroundColor: "var(--text)",
+              color: "var(--primary)",
               borderRadius: "999px",
               fontSize: "10px",
               fontWeight: "700",
@@ -169,8 +169,8 @@ export default function FilterPanel({
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              backgroundColor: "#2A1C0F",
-              border: "2px solid #C8813A",
+              backgroundColor: "var(--surface)",
+              border: "2px solid var(--primary)",
               borderRadius: "14px",
               padding: "24px",
               width: "90%",
@@ -193,7 +193,7 @@ export default function FilterPanel({
             >
               <h3
                 style={{
-                  color: "#C8813A",
+                  color: "var(--primary)",
                   fontSize: "20px",
                   fontWeight: "bold",
                   margin: 0,
@@ -206,7 +206,7 @@ export default function FilterPanel({
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   cursor: "pointer",
                   padding: "4px",
                 }}
@@ -233,15 +233,15 @@ export default function FilterPanel({
                       style={{
                         padding: "6px 12px",
                         backgroundColor: selectedGenres.includes(genre)
-                          ? "#C8813A"
-                          : "#1C1009",
+                          ? "var(--primary)"
+                          : "var(--bg)",
                         border: `1px solid ${
-                          selectedGenres.includes(genre) ? "#C8813A" : "#4A3020"
+                          selectedGenres.includes(genre) ? "var(--primary)" : "var(--border)"
                         }`,
                         borderRadius: "999px",
                         color: selectedGenres.includes(genre)
-                          ? "#F5ECD7"
-                          : "#A89070",
+                          ? "var(--on-primary)"
+                          : "var(--text-muted)",
                         fontSize: "12px",
                         cursor: "pointer",
                         transition: "all 0.2s",
@@ -306,15 +306,15 @@ export default function FilterPanel({
                 justifyContent: "space-between",
                 marginBottom: "20px",
                 padding: "12px",
-                backgroundColor: "#1C1009",
-                border: "1px solid #4A3020",
+                backgroundColor: "var(--bg)",
+                border: "1px solid var(--border)",
                 borderRadius: "10px",
               }}
             >
               <div>
                 <p
                   style={{
-                    color: "#F5ECD7",
+                    color: "var(--text)",
                     fontSize: "13px",
                     fontWeight: "600",
                     margin: 0,
@@ -324,7 +324,7 @@ export default function FilterPanel({
                 </p>
                 <p
                   style={{
-                    color: "#6B5040",
+                    color: "var(--text-faint)",
                     fontSize: "11px",
                     margin: "2px 0 0 0",
                   }}
@@ -338,7 +338,7 @@ export default function FilterPanel({
                 style={{
                   width: "44px",
                   height: "24px",
-                  backgroundColor: onlyStandalone ? "#C8813A" : "#4A3020",
+                  backgroundColor: onlyStandalone ? "var(--primary)" : "var(--border)",
                   borderRadius: "999px",
                   cursor: "pointer",
                   position: "relative",
@@ -349,7 +349,7 @@ export default function FilterPanel({
                   style={{
                     width: "18px",
                     height: "18px",
-                    backgroundColor: "#F5ECD7",
+                    backgroundColor: "var(--text)",
                     borderRadius: "50%",
                     position: "absolute",
                     top: "3px",
@@ -367,10 +367,10 @@ export default function FilterPanel({
                 style={{
                   flex: 1,
                   padding: "12px",
-                  backgroundColor: "#C8813A",
+                  backgroundColor: "var(--primary)",
                   border: "none",
                   borderRadius: "10px",
-                  color: "#F5ECD7",
+                  color: "var(--on-primary)",
                   fontSize: "14px",
                   fontWeight: "600",
                   cursor: "pointer",
@@ -386,9 +386,9 @@ export default function FilterPanel({
                     flex: 1,
                     padding: "12px",
                     backgroundColor: "transparent",
-                    border: "1px solid #8B3A3A",
+                    border: "1px solid var(--danger)",
                     borderRadius: "10px",
-                    color: "#8B3A3A",
+                    color: "var(--danger)",
                     fontSize: "14px",
                     fontWeight: "600",
                     cursor: "pointer",

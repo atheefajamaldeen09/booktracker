@@ -66,17 +66,17 @@ export default function SeriesSelector({
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "10px 14px",
-    backgroundColor: "#1C1009",
-    border: "1px solid #4A3020",
+    backgroundColor: "var(--bg)",
+    border: "1px solid var(--border)",
     borderRadius: "10px",
-    color: "#F5ECD7",
+    color: "var(--text)",
     fontSize: "14px",
     outline: "none",
     boxSizing: "border-box",
   };
 
   const labelStyle: React.CSSProperties = {
-    color: "#A89070",
+    color: "var(--text-muted)",
     fontSize: "12px",
     marginBottom: "6px",
     display: "block",
@@ -87,8 +87,8 @@ export default function SeriesSelector({
   return (
     <div
       style={{
-        backgroundColor: "#2A1C0F",
-        border: "1px solid #4A3020",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: "14px",
         padding: "16px",
       }}
@@ -105,7 +105,7 @@ export default function SeriesSelector({
         <div>
           <p
             style={{
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "14px",
               fontWeight: "600",
               margin: 0,
@@ -115,7 +115,7 @@ export default function SeriesSelector({
           </p>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               margin: "2px 0 0 0",
             }}
@@ -130,7 +130,7 @@ export default function SeriesSelector({
           style={{
             width: "44px",
             height: "24px",
-            backgroundColor: isSeries ? "#C8813A" : "#4A3020",
+            backgroundColor: isSeries ? "var(--primary)" : "var(--border)",
             borderRadius: "999px",
             cursor: "pointer",
             position: "relative",
@@ -142,7 +142,7 @@ export default function SeriesSelector({
             style={{
               width: "18px",
               height: "18px",
-              backgroundColor: "#F5ECD7",
+              backgroundColor: "var(--text)",
               borderRadius: "50%",
               position: "absolute",
               top: "3px",
@@ -178,8 +178,8 @@ export default function SeriesSelector({
                   top: "100%",
                   left: 0,
                   right: 0,
-                  backgroundColor: "#2A1C0F",
-                  border: "1px solid #4A3020",
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
                   borderRadius: "10px",
                   zIndex: 50,
                   maxHeight: "200px",
@@ -193,7 +193,7 @@ export default function SeriesSelector({
                   <div>
                     <p
                       style={{
-                        color: "#6B5040",
+                        color: "var(--text-faint)",
                         fontSize: "10px",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
@@ -219,17 +219,17 @@ export default function SeriesSelector({
                           padding: "10px 12px",
                           backgroundColor: "transparent",
                           border: "none",
-                          borderBottom: "1px solid #3D2B18",
+                          borderBottom: "1px solid var(--raised)",
                           cursor: "pointer",
                           textAlign: "left",
-                          color: "#F5ECD7",
+                          color: "var(--text)",
                           fontSize: "13px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#3D2B18";
+                          e.currentTarget.style.backgroundColor = "var(--raised)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.backgroundColor = "transparent";
@@ -240,7 +240,7 @@ export default function SeriesSelector({
                           <span>{s.name}</span>
                         </div>
                         {s.totalBooks && (
-                          <span style={{ color: "#A89070", fontSize: "11px" }}>
+                          <span style={{ color: "var(--text-muted)", fontSize: "11px" }}>
                             {s.totalBooks} books
                           </span>
                         )}
@@ -265,14 +265,14 @@ export default function SeriesSelector({
                         border: "none",
                         cursor: "pointer",
                         textAlign: "left",
-                        color: "#C8813A",
+                        color: "var(--primary)",
                         fontSize: "13px",
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#3D2B18";
+                        e.currentTarget.style.backgroundColor = "var(--raised)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = "transparent";
@@ -287,7 +287,7 @@ export default function SeriesSelector({
                 {filteredSeries.length === 0 && seriesName.trim() === "" && (
                   <p
                     style={{
-                      color: "#A89070",
+                      color: "var(--text-muted)",
                       fontSize: "13px",
                       padding: "12px",
                       margin: 0,
@@ -329,7 +329,7 @@ export default function SeriesSelector({
           </div>
 
           {/* Helper text */}
-          <p style={{ color: "#6B5040", fontSize: "11px", margin: "0", lineHeight: "1.4" }}>
+          <p style={{ color: "var(--text-faint)", fontSize: "11px", margin: "0", lineHeight: "1.4" }}>
             💡 Total books helps track series completion (e.g. &quot;Read 3 of 7 books&quot;). You can update it later.
           </p>
         </div>

@@ -1,9 +1,12 @@
+import { connection } from "next/server";
 import { getBooksByShelf } from "@/lib/actions/books";
 import BookCard from "@/components/BookCard";
 import EmptyState from "@/components/EmptyState";
 import Link from "next/link";
 
 export default async function DNFPage() {
+  // Always read fresh data from the database instead of a build-time snapshot
+  await connection();
   const { books } = await getBooksByShelf("dnf");
 
   return (
@@ -22,7 +25,7 @@ export default async function DNFPage() {
         <div>
           <h1
             style={{
-              color: "#C8813A",
+              color: "var(--primary)",
               fontSize: "26px",
               fontWeight: "bold",
               marginBottom: "4px",
@@ -30,7 +33,7 @@ export default async function DNFPage() {
           >
             🚫 Did Not Finish
           </h1>
-          <p style={{ color: "#A89070", fontSize: "14px" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
             {books.length} {books.length === 1 ? "book" : "books"} you did not
             finish
           </p>
@@ -39,8 +42,8 @@ export default async function DNFPage() {
           href="/add"
           style={{
             padding: "10px 20px",
-            backgroundColor: "#C8813A",
-            color: "#F5ECD7",
+            backgroundColor: "var(--primary)",
+            color: "var(--on-primary)",
             borderRadius: "12px",
             fontWeight: "600",
             fontSize: "14px",

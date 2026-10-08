@@ -22,11 +22,11 @@ export default function SeriesBooksList({ books }: Props) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
 
   const shelfColors: Record<string, string> = {
-    tbr: "#C8813A",
-    reading: "#D4A853",
-    read: "#7A9E7E",
-    wishlist: "#A89070",
-    dnf: "#8B3A3A",
+    tbr: "var(--primary)",
+    reading: "var(--accent)",
+    read: "var(--success)",
+    wishlist: "var(--text-muted)",
+    dnf: "var(--danger)",
   };
 
   const shelfLabels: Record<string, string> = {
@@ -43,12 +43,12 @@ export default function SeriesBooksList({ books }: Props) {
         style={{
           textAlign: "center",
           padding: "40px 20px",
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: "14px",
         }}
       >
-        <p style={{ color: "#A89070", fontSize: "14px" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
           No books added to this series yet.
         </p>
       </div>
@@ -73,8 +73,8 @@ export default function SeriesBooksList({ books }: Props) {
             style={{
               display: "flex",
               gap: "14px",
-              backgroundColor: isHovered ? "#3D2B18" : "#2A1C0F",
-              border: `1px solid ${isHovered ? "#C8813A" : "#4A3020"}`,
+              backgroundColor: isHovered ? "var(--raised)" : "var(--surface)",
+              border: `1px solid ${isHovered ? "var(--primary)" : "var(--border)"}`,
               borderRadius: "14px",
               padding: "14px",
               textDecoration: "none",
@@ -101,7 +101,7 @@ export default function SeriesBooksList({ books }: Props) {
               >
                 <span
                   style={{
-                    color: "#C8813A",
+                    color: "var(--primary)",
                     fontSize: "12px",
                     fontWeight: "700",
                   }}
@@ -110,9 +110,9 @@ export default function SeriesBooksList({ books }: Props) {
                 </span>
                 <span
                   style={{
-                    backgroundColor: "#2A1C0F",
-                    border: `1px solid ${shelfColors[book.shelf] || "#4A3020"}`,
-                    color: shelfColors[book.shelf] || "#A89070",
+                    backgroundColor: "var(--surface)",
+                    border: `1px solid ${shelfColors[book.shelf] || "var(--border)"}`,
+                    color: shelfColors[book.shelf] || "var(--text-muted)",
                     fontSize: "10px",
                     fontWeight: "600",
                     padding: "2px 8px",
@@ -125,7 +125,7 @@ export default function SeriesBooksList({ books }: Props) {
 
               <h3
                 style={{
-                  color: "#F5ECD7",
+                  color: "var(--text)",
                   fontSize: "14px",
                   fontWeight: "bold",
                   marginBottom: "4px",
@@ -137,7 +137,7 @@ export default function SeriesBooksList({ books }: Props) {
 
               <p
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "12px",
                   marginBottom: "6px",
                 }}
@@ -146,7 +146,7 @@ export default function SeriesBooksList({ books }: Props) {
               </p>
 
               {book.rating && book.rating > 0 && (
-                <p style={{ color: "#E8A030", fontSize: "11px" }}>
+                <p style={{ color: "var(--star)", fontSize: "11px" }}>
                   {"★".repeat(Math.floor(book.rating))}
                   {book.rating % 1 >= 0.5 ? "½" : ""} {book.rating}
                 </p>
@@ -157,7 +157,7 @@ export default function SeriesBooksList({ books }: Props) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "18px",
                 flexShrink: 0,
               }}

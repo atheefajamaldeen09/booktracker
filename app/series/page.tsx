@@ -1,7 +1,10 @@
+import { connection } from "next/server";
 import { getAllSeriesWithStats } from "@/lib/actions/books";
 import SeriesListView from "@/components/SeriesListView";
 
 export default async function SeriesListPage() {
+  // Always read fresh data from the database instead of a build-time snapshot
+  await connection();
   const { series: allSeries } = await getAllSeriesWithStats();
 
   return (
@@ -19,7 +22,7 @@ export default async function SeriesListPage() {
         <div>
           <h1
             style={{
-              color: "#C8813A",
+              color: "var(--primary)",
               fontSize: "26px",
               fontWeight: "bold",
               marginBottom: "4px",
@@ -27,7 +30,7 @@ export default async function SeriesListPage() {
           >
             📚 My Series
           </h1>
-          <p style={{ color: "#A89070", fontSize: "14px" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
             {allSeries.length} {allSeries.length === 1 ? "series" : "series"}{" "}
             in your collection
           </p>

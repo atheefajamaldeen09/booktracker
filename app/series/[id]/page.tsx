@@ -41,7 +41,7 @@ export default async function SeriesDetailPage({
           display: "inline-flex",
           alignItems: "center",
           gap: "4px",
-          color: "#A89070",
+          color: "var(--text-muted)",
           fontSize: "14px",
           textDecoration: "none",
           marginBottom: "24px",
@@ -55,7 +55,7 @@ export default async function SeriesDetailPage({
       <div style={{ marginBottom: "32px" }}>
         <h1
           style={{
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "28px",
             fontWeight: "bold",
             marginBottom: "8px",
@@ -75,9 +75,9 @@ export default async function SeriesDetailPage({
         >
           <span
             style={{
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
-              color: "#A89070",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: "var(--text-muted)",
               fontSize: "13px",
               padding: "6px 12px",
               borderRadius: "999px",
@@ -89,9 +89,9 @@ export default async function SeriesDetailPage({
           {seriesData.totalBooks && (
             <span
               style={{
-                backgroundColor: "#2A1C0F",
-                border: "1px solid #4A3020",
-                color: "#A89070",
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
                 fontSize: "13px",
                 padding: "6px 12px",
                 borderRadius: "999px",
@@ -104,9 +104,9 @@ export default async function SeriesDetailPage({
           {totalRead > 0 && (
             <span
               style={{
-                backgroundColor: "#2A1C0F",
-                border: "1px solid #7A9E7E",
-                color: "#7A9E7E",
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--success)",
+                color: "var(--success)",
                 fontSize: "13px",
                 padding: "6px 12px",
                 borderRadius: "999px",
@@ -119,9 +119,9 @@ export default async function SeriesDetailPage({
           {totalReading > 0 && (
             <span
               style={{
-                backgroundColor: "#2A1C0F",
-                border: "1px solid #D4A853",
-                color: "#D4A853",
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--accent)",
+                color: "var(--accent)",
                 fontSize: "13px",
                 padding: "6px 12px",
                 borderRadius: "999px",
@@ -134,9 +134,9 @@ export default async function SeriesDetailPage({
           {totalWishlist > 0 && (
             <span
                 style={{
-                backgroundColor: "#2A1C0F",
-                border: "1px solid #A89070",
-                color: "#A89070",
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--text-muted)",
+                color: "var(--text-muted)",
                 fontSize: "13px",
                 padding: "6px 12px",
                 borderRadius: "999px",
@@ -163,7 +163,7 @@ export default async function SeriesDetailPage({
           >
             <p
               style={{
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "12px",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -174,7 +174,7 @@ export default async function SeriesDetailPage({
             </p>
             <p
               style={{
-                color: "#F5ECD7",
+                color: "var(--text)",
                 fontSize: "13px",
                 fontWeight: "600",
                 margin: 0,
@@ -188,8 +188,8 @@ export default async function SeriesDetailPage({
             style={{
               width: "100%",
               height: "12px",
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "999px",
               overflow: "hidden",
             }}
@@ -198,7 +198,7 @@ export default async function SeriesDetailPage({
               style={{
                 width: `${completionPercentage}%`,
                 height: "100%",
-                backgroundColor: "#7A9E7E",
+                backgroundColor: "var(--success)",
                 transition: "width 0.3s",
               }}
             />
@@ -206,7 +206,7 @@ export default async function SeriesDetailPage({
 
           <p
             style={{
-                color: "#6B5040",
+                color: "var(--text-faint)",
                 fontSize: "12px",
                 marginTop: "6px",
             }}
@@ -229,7 +229,7 @@ export default async function SeriesDetailPage({
       {/* Divider */}
       <div
         style={{
-          borderTop: "1px solid #4A3020",
+          borderTop: "1px solid var(--border)",
           marginBottom: "28px",
         }}
       />
@@ -237,7 +237,7 @@ export default async function SeriesDetailPage({
       {/* Books in Series */}
       <h2
         style={{
-          color: "#C8813A",
+          color: "var(--primary)",
           fontSize: "18px",
           fontWeight: "bold",
           marginBottom: "16px",

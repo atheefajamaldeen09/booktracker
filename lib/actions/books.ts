@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { books, series, bookSeries, tags, bookTags, readingSessions } from "@/lib/db/schema";
+import { books, series, bookSeries, tags, bookTags, readingSessions, goals } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 type AddBookInput = {
@@ -28,7 +28,7 @@ export async function addBook(input: AddBookInput) {
         title: input.title,
         author: input.author,
         cover: input.cover ?? null,
-        genres: input.genres ?? [],
+        genres: Array.from(new Set(input.genres ?? [])),
         pageCount: input.pageCount ?? null,
         publicationYear: input.publicationYear ?? null,
         isbn: input.isbn ?? null,
@@ -168,7 +168,7 @@ export async function updateBook(
         title: input.title,
         author: input.author,
         cover: input.cover,
-        genres: input.genres,
+        genres: input.genres && Array.from(new Set(input.genres)),
         pageCount: input.pageCount,
         publicationYear: input.publicationYear,
         isbn: input.isbn,
@@ -416,7 +416,23 @@ export async function completeBook(
         currentPage: pageCount || 0,
       })
       .where(eq(books.id, bookId));
-    return { success: true };
+
+    // Did finishing this book hit this year's reading goal exactly?
+    const year = new Date().getFullYear();
+    const [goal] = await db.select().from(goals).where(eq(goals.year, year)).limit(1);
+    let goalReached = false;
+    if (goal) {
+      const readBooks = await db
+        .select({ dateCompleted: books.dateCompleted })
+        .from(books)
+        .where(eq(books.shelf, "read"));
+      const readThisYear = readBooks.filter(
+        (b) => b.dateCompleted && new Date(b.dateCompleted).getFullYear() === year
+      ).length;
+      goalReached = readThisYear === goal.targetBooks;
+    }
+
+    return { success: true, goalReached };
   } catch (error) {
     console.error("Error completing book:", error);
     return { success: false, error: "Failed to complete book" };
@@ -666,7 +682,7 @@ export async function getEligibleTBRBooks(filters?: {
   onlyStandalone?: boolean;
 }) {
   try {
-    const eligibleBooks = await db
+    const tbrBooks = await db
       .select({
         id: books.id,
         title: books.title,
@@ -679,30 +695,48 @@ export async function getEligibleTBRBooks(filters?: {
       .from(books)
       .where(eq(books.shelf, "tbr"));
 
-    // Get series info for all books
-    const booksWithSeries = await Promise.all(
-      eligibleBooks.map(async (book) => {
-        const seriesInfo = await db
-          .select({
-            seriesId: series.id,
-            seriesName: series.name,
-            position: bookSeries.positionInSeries,
-          })
-          .from(bookSeries)
-          .innerJoin(series, eq(bookSeries.seriesId, series.id))
-          .where(eq(bookSeries.bookId, book.id))
-          .limit(1);
-
-        return {
-          ...book,
-          series: seriesInfo[0] || null,
-        };
+    // Every book that belongs to a series, with its shelf — one query
+    const seriesRows = await db
+      .select({
+        bookId: bookSeries.bookId,
+        seriesId: series.id,
+        seriesName: series.name,
+        position: bookSeries.positionInSeries,
+        shelf: books.shelf,
       })
+      .from(bookSeries)
+      .innerJoin(series, eq(bookSeries.seriesId, series.id))
+      .innerJoin(books, eq(bookSeries.bookId, books.id));
+
+    // For each series, the next book in line is the lowest-numbered one you
+    // haven't finished (read or DNF). It's only pickable if it's on your TBR —
+    // if it's being read already or still on the wishlist, the rest wait.
+    const nextInLine = new Map<number, number>(); // seriesId -> bookId
+    const bySeries = new Map<number, typeof seriesRows>();
+    seriesRows.forEach((row) => {
+      if (!bySeries.has(row.seriesId)) bySeries.set(row.seriesId, []);
+      bySeries.get(row.seriesId)!.push(row);
+    });
+    bySeries.forEach((rows, seriesId) => {
+      const next = rows
+        .filter((r) => r.shelf !== "read" && r.shelf !== "dnf")
+        .sort((a, b) => a.position - b.position)[0];
+      if (next?.bookId && next.shelf === "tbr") nextInLine.set(seriesId, next.bookId);
+    });
+
+    const seriesByBook = new Map(
+      seriesRows
+        .filter((r) => r.bookId)
+        .map((r) => [
+          r.bookId!,
+          { seriesId: r.seriesId, seriesName: r.seriesName, position: r.position },
+        ])
     );
 
-    let filtered = [...booksWithSeries]; // 👈 FIX: Create new array
+    let filtered = tbrBooks
+      .map((book) => ({ ...book, series: seriesByBook.get(book.id) || null }))
+      .filter((book) => !book.series || nextInLine.get(book.series.seriesId) === book.id);
 
-    // Apply filters
     if (filters?.genres && filters.genres.length > 0) {
       filtered = filtered.filter((book) =>
         book.genres?.some((g) => filters.genres?.includes(g))
@@ -731,47 +765,7 @@ export async function getEligibleTBRBooks(filters?: {
       filtered = filtered.filter((book) => !book.series);
     }
 
-    // Smart series filtering - only include next books in series
-    const smartFiltered = await Promise.all(
-      filtered.map(async (book) => {
-        if (!book.series) return { book, isEligible: true };
-
-        // Check if previous books in series are read
-        const previousBooks = await db
-          .select({
-            position: bookSeries.positionInSeries,
-            shelf: books.shelf,
-          })
-          .from(bookSeries)
-          .innerJoin(books, eq(bookSeries.bookId, books.id))
-          .where(
-            and(
-              eq(bookSeries.seriesId, book.series.seriesId),
-              eq(books.shelf, "read")
-            )
-          );
-
-        // If this is book 1, it's eligible
-        if (book.series.position === 1) {
-          return { book, isEligible: true };
-        }
-
-        // Check if all previous books are read
-        const maxPreviousPosition = Math.max(
-          ...previousBooks.map((pb) => pb.position),
-          0
-        );
-        const isNextInLine = book.series.position === maxPreviousPosition + 1;
-
-        return { book, isEligible: isNextInLine };
-      })
-    );
-
-    const finalBooks = smartFiltered
-      .filter((item) => item.isEligible)
-      .map((item) => item.book);
-
-    return { success: true, books: finalBooks };
+    return { success: true, books: filtered };
   } catch (error) {
     console.error("Error fetching eligible TBR books:", error);
     return { success: false, books: [] };

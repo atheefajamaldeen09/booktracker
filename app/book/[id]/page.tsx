@@ -14,13 +14,18 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import TagManager from "@/components/TagManager";
 import RatingReview from "@/components/RatingReview";
+import GoalReachedBanner from "@/components/GoalReachedBanner";
+import { getGoalProgress } from "@/lib/actions/goals";
 
 export default async function BookDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ goalReached?: string }>;
 }) {
   const { id } = await params;
+  const { goalReached } = await searchParams;
   const bookId = parseInt(id);
   const { book } = await getBookById(bookId);
 
@@ -30,6 +35,7 @@ export default async function BookDetailPage({
   const { tags: allTags } = await getAllTags();
   const { tags: bookTagsList } = await getTagsForBook(bookId);
   const { sessions } = await getReadingSessions(bookId);
+  const goal = goalReached === "1" ? await getGoalProgress() : null;
 
   const shelfLabels: Record<string, string> = {
     tbr: "📚 TBR",
@@ -40,11 +46,11 @@ export default async function BookDetailPage({
   };
 
   const shelfColors: Record<string, string> = {
-    tbr: "#C8813A",
-    reading: "#D4A853",
-    read: "#7A9E7E",
-    wishlist: "#A89070",
-    dnf: "#8B3A3A",
+    tbr: "var(--primary)",
+    reading: "var(--accent)",
+    read: "var(--success)",
+    wishlist: "var(--text-muted)",
+    dnf: "var(--danger)",
   };
 
   // Back link depends on which shelf the book is on
@@ -63,6 +69,10 @@ export default async function BookDetailPage({
 
   return (
     <div style={{ maxWidth: "680px" }}>
+      {goal?.target && goal.booksRead >= goal.target && (
+        <GoalReachedBanner year={goal.year} target={goal.target} />
+      )}
+
       {/* Back Button */}
       <Link
         href={backLink.href}
@@ -70,7 +80,7 @@ export default async function BookDetailPage({
           display: "inline-flex",
           alignItems: "center",
           gap: "4px",
-          color: "#A89070",
+          color: "var(--text-muted)",
           fontSize: "14px",
           textDecoration: "none",
           marginBottom: "24px",
@@ -98,7 +108,7 @@ export default async function BookDetailPage({
         <div style={{ flex: 1 }}>
           <h1
             style={{
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "22px",
               fontWeight: "bold",
               lineHeight: "1.3",
@@ -109,7 +119,7 @@ export default async function BookDetailPage({
           </h1>
           <p
             style={{
-              color: "#C8813A",
+              color: "var(--primary)",
               fontSize: "16px",
               marginBottom: "12px",
             }}
@@ -121,9 +131,9 @@ export default async function BookDetailPage({
           <span
             style={{
               display: "inline-block",
-              backgroundColor: "#2A1C0F",
-              border: `1px solid ${shelfColors[book.shelf] || "#4A3020"}`,
-              color: shelfColors[book.shelf] || "#A89070",
+              backgroundColor: "var(--surface)",
+              border: `1px solid ${shelfColors[book.shelf] || "var(--border)"}`,
+              color: shelfColors[book.shelf] || "var(--text-muted)",
               fontSize: "12px",
               fontWeight: "600",
               padding: "4px 12px",
@@ -139,25 +149,25 @@ export default async function BookDetailPage({
             style={{ display: "flex", flexDirection: "column", gap: "6px" }}
           >
             {book.pageCount && (
-              <p style={{ color: "#A89070", fontSize: "13px" }}>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
                 📄 {book.pageCount} pages
               </p>
             )}
             {book.publicationYear && (
-              <p style={{ color: "#A89070", fontSize: "13px" }}>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
                 📅 Published {book.publicationYear}
               </p>
             )}
             {book.isbn && (
-              <p style={{ color: "#A89070", fontSize: "13px" }}>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
                 🔖 ISBN: {book.isbn}
               </p>
             )}
             {book.rating && book.rating > 0 && (
-              <p style={{ color: "#E8A030", fontSize: "13px" }}>
+              <p style={{ color: "var(--star)", fontSize: "13px" }}>
                 {"★".repeat(Math.floor(book.rating))}
                 {book.rating % 1 >= 0.5 ? "½" : ""}{" "}
-                <span style={{ color: "#A89070" }}>{book.rating} / 5</span>
+                <span style={{ color: "var(--text-muted)" }}>{book.rating} / 5</span>
               </p>
             )}
           </div>
@@ -169,7 +179,7 @@ export default async function BookDetailPage({
         <div style={{ marginBottom: "28px" }}>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               textTransform: "uppercase",
               letterSpacing: "0.05em",
@@ -179,13 +189,13 @@ export default async function BookDetailPage({
             Genres
           </p>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {book.genres.map((genre) => (
+            {Array.from(new Set(book.genres)).map((genre) => (
               <span
                 key={genre}
                 style={{
-                  backgroundColor: "#2A1C0F",
-                  border: "1px solid #4A3020",
-                  color: "#A89070",
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-muted)",
                   fontSize: "12px",
                   padding: "4px 12px",
                   borderRadius: "999px",
@@ -203,7 +213,7 @@ export default async function BookDetailPage({
         <div style={{ marginBottom: "28px" }}>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               textTransform: "uppercase",
               letterSpacing: "0.05em",
@@ -217,8 +227,8 @@ export default async function BookDetailPage({
               display: "flex",
               alignItems: "center",
               gap: "10px",
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
               padding: "12px 16px",
             }}
@@ -227,7 +237,7 @@ export default async function BookDetailPage({
             <div>
               <p
                 style={{
-                  color: "#F5ECD7",
+                  color: "var(--text)",
                   fontSize: "14px",
                   fontWeight: "600",
                   margin: 0,
@@ -237,7 +247,7 @@ export default async function BookDetailPage({
               </p>
               <p
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "12px",
                   margin: "2px 0 0 0",
                 }}
@@ -261,7 +271,7 @@ export default async function BookDetailPage({
         <>
           <div
             style={{
-              borderTop: "1px solid #4A3020",
+              borderTop: "1px solid var(--border)",
               marginBottom: "28px",
             }}
           />
@@ -279,7 +289,7 @@ export default async function BookDetailPage({
         <>
           <div
             style={{
-              borderTop: "1px solid #4A3020",
+              borderTop: "1px solid var(--border)",
               marginBottom: "28px",
             }}
           />
@@ -299,7 +309,7 @@ export default async function BookDetailPage({
       {/* Divider */}
       <div
         style={{
-          borderTop: "1px solid #4A3020",
+          borderTop: "1px solid var(--border)",
           marginBottom: "28px",
         }}
       />
@@ -321,7 +331,7 @@ export default async function BookDetailPage({
       {/* Divider */}
       <div
         style={{
-          borderTop: "1px solid #4A3020",
+          borderTop: "1px solid var(--border)",
           marginBottom: "28px",
         }}
       />

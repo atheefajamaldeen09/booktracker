@@ -110,17 +110,17 @@ export default function EditBookForm({ book }: Props) {
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "10px 14px",
-    backgroundColor: "#1C1009",
-    border: "1px solid #4A3020",
+    backgroundColor: "var(--bg)",
+    border: "1px solid var(--border)",
     borderRadius: "10px",
-    color: "#F5ECD7",
+    color: "var(--text)",
     fontSize: "14px",
     outline: "none",
     boxSizing: "border-box",
   };
 
   const labelStyle: React.CSSProperties = {
-    color: "#A89070",
+    color: "var(--text-muted)",
     fontSize: "12px",
     marginBottom: "6px",
     display: "block",
@@ -131,8 +131,8 @@ export default function EditBookForm({ book }: Props) {
   return (
     <div
       style={{
-        backgroundColor: "#2A1C0F",
-        border: "1px solid #4A3020",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: "16px",
         overflow: "hidden",
         marginBottom: "24px",
@@ -150,22 +150,22 @@ export default function EditBookForm({ book }: Props) {
           backgroundColor: "transparent",
           border: "none",
           cursor: "pointer",
-          color: "#F5ECD7",
+          color: "var(--text)",
         }}
       >
         <span style={{ fontWeight: "600", fontSize: "14px" }}>
           ✏️ Edit Book Details
         </span>
         {isOpen ? (
-          <ChevronUp size={16} color="#A89070" />
+          <ChevronUp size={16} color="var(--text-muted)" />
         ) : (
-          <ChevronDown size={16} color="#A89070" />
+          <ChevronDown size={16} color="var(--text-muted)" />
         )}
       </button>
 
       {/* Edit Form */}
       {isOpen && (
-        <div style={{ padding: "16px", borderTop: "1px solid #4A3020" }}>
+        <div style={{ padding: "16px", borderTop: "1px solid var(--border)" }}>
           {/* Cover + Title Row */}
           <div
             style={{
@@ -193,10 +193,10 @@ export default function EditBookForm({ book }: Props) {
                   justifyContent: "center",
                   gap: "4px",
                   padding: "6px 10px",
-                  backgroundColor: "#3D2B18",
-                  border: "1px solid #4A3020",
+                  backgroundColor: "var(--raised)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   cursor: "pointer",
                   width: "100%",
@@ -214,10 +214,10 @@ export default function EditBookForm({ book }: Props) {
                     justifyContent: "center",
                     gap: "4px",
                     padding: "6px 10px",
-                    backgroundColor: "#3D1A1A",
-                    border: "1px solid #6B3A3A",
+                    backgroundColor: "var(--danger-bg)",
+                    border: "1px solid var(--danger-border)",
                     borderRadius: "8px",
-                    color: "#A89070",
+                    color: "var(--text-muted)",
                     fontSize: "11px",
                     cursor: "pointer",
                   }}
@@ -320,11 +320,11 @@ export default function EditBookForm({ book }: Props) {
           {error && (
             <div
               style={{
-                backgroundColor: "#3D1A1A",
-                border: "1px solid #8B3A3A",
+                backgroundColor: "var(--danger-bg)",
+                border: "1px solid var(--danger)",
                 borderRadius: "10px",
                 padding: "10px 14px",
-                color: "#F5ECD7",
+                color: "var(--text)",
                 fontSize: "13px",
                 marginBottom: "12px",
               }}
@@ -337,11 +337,11 @@ export default function EditBookForm({ book }: Props) {
           {success && (
             <div
               style={{
-                backgroundColor: "#1A3D1A",
-                border: "1px solid #3A8B3A",
+                backgroundColor: "var(--success-bg)",
+                border: "1px solid var(--success-border)",
                 borderRadius: "10px",
                 padding: "10px 14px",
-                color: "#F5ECD7",
+                color: "var(--text)",
                 fontSize: "13px",
                 marginBottom: "12px",
               }}
@@ -357,8 +357,8 @@ export default function EditBookForm({ book }: Props) {
             style={{
               width: "100%",
               padding: "12px",
-              backgroundColor: saving ? "#3D2B18" : "#C8813A",
-              color: "#F5ECD7",
+              backgroundColor: saving ? "var(--raised)" : "var(--primary)",
+              color: saving ? "var(--text-muted)" : "var(--on-primary)",
               border: "none",
               borderRadius: "12px",
               fontWeight: "600",

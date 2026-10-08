@@ -33,11 +33,11 @@ export default function BookActions({ book }: Props) {
   };
 
   const allShelfOptions: { shelf: Shelf; label: string; color: string }[] = [
-    { shelf: "tbr", label: "📚 Move to TBR", color: "#C8813A" },
-    { shelf: "reading", label: "📖 Start Reading", color: "#D4A853" },
-    { shelf: "read", label: "✅ Mark as Read", color: "#7A9E7E" },
-    { shelf: "wishlist", label: "💛 Move to Wishlist", color: "#A89070" },
-    { shelf: "dnf", label: "🚫 Did Not Finish", color: "#8B3A3A" },
+    { shelf: "tbr", label: "📚 Move to TBR", color: "var(--primary)" },
+    { shelf: "reading", label: "📖 Start Reading", color: "var(--accent)" },
+    { shelf: "read", label: "✅ Mark as Read", color: "var(--success)" },
+    { shelf: "wishlist", label: "💛 Move to Wishlist", color: "var(--text-muted)" },
+    { shelf: "dnf", label: "🚫 Did Not Finish", color: "var(--danger)" },
   ];
 
   const shelfOptions = allShelfOptions.filter(
@@ -50,7 +50,7 @@ export default function BookActions({ book }: Props) {
       <div style={{ marginBottom: "24px" }}>
         <p
           style={{
-            color: "#A89070",
+            color: "var(--text-muted)",
             fontSize: "12px",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
@@ -73,8 +73,8 @@ export default function BookActions({ book }: Props) {
               disabled={loading}
               style={{
                 padding: "12px 16px",
-                backgroundColor: "#2A1C0F",
-                border: "1px solid #4A3020",
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
                 borderRadius: "12px",
                 color: option.color,
                 fontSize: "14px",
@@ -86,11 +86,11 @@ export default function BookActions({ book }: Props) {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = option.color;
-                e.currentTarget.style.backgroundColor = "#3D2B18";
+                e.currentTarget.style.backgroundColor = "var(--raised)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#4A3020";
-                e.currentTarget.style.backgroundColor = "#2A1C0F";
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.backgroundColor = "var(--surface)";
               }}
             >
               {option.label}
@@ -100,7 +100,7 @@ export default function BookActions({ book }: Props) {
       </div>
 
       {/* Divider */}
-      <div style={{ borderTop: "1px solid #4A3020", marginBottom: "24px" }} />
+      <div style={{ borderTop: "1px solid var(--border)", marginBottom: "24px" }} />
 
       {/* Delete Section */}
       {!confirmDelete ? (
@@ -109,9 +109,9 @@ export default function BookActions({ book }: Props) {
           style={{
             padding: "12px 16px",
             backgroundColor: "transparent",
-            border: "1px solid #8B3A3A",
+            border: "1px solid var(--danger)",
             borderRadius: "12px",
-            color: "#8B3A3A",
+            color: "var(--danger)",
             fontSize: "14px",
             fontWeight: "600",
             cursor: "pointer",
@@ -124,15 +124,15 @@ export default function BookActions({ book }: Props) {
       ) : (
         <div
           style={{
-            backgroundColor: "#2A1C0F",
-            border: "1px solid #8B3A3A",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--danger)",
             borderRadius: "12px",
             padding: "16px",
           }}
         >
           <p
             style={{
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "14px",
               marginBottom: "12px",
             }}
@@ -148,10 +148,10 @@ export default function BookActions({ book }: Props) {
               style={{
                 flex: 1,
                 padding: "10px",
-                backgroundColor: "#8B3A3A",
+                backgroundColor: "var(--danger)",
                 border: "none",
                 borderRadius: "10px",
-                color: "#F5ECD7",
+                color: "var(--on-danger)",
                 fontSize: "14px",
                 fontWeight: "600",
                 cursor: "pointer",
@@ -164,10 +164,10 @@ export default function BookActions({ book }: Props) {
               style={{
                 flex: 1,
                 padding: "10px",
-                backgroundColor: "#3D2B18",
-                border: "1px solid #4A3020",
+                backgroundColor: "var(--raised)",
+                border: "1px solid var(--border)",
                 borderRadius: "10px",
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "14px",
                 cursor: "pointer",
               }}

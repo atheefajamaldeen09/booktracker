@@ -1,0 +1,380 @@
+/* Wood, back panel, lamp and decoration colors come from the app theme
+   tokens in app/globals.css, so the shelf restyles with the rest of the app. */
+
+/* ─────────────── bookcase ─────────────── */
+.case {
+  position: relative;
+  padding: 16px 16px 0;
+  border-radius: 14px 14px 6px 6px;
+  background-color: var(--wood);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 11px),
+    linear-gradient(180deg, var(--wood-light), var(--wood) 30%, var(--wood-dark));
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Crown moulding along the top */
+.case::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: -10px;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--wood-light), var(--wood-dark));
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+
+.scroller {
+  max-height: 78vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.bay {
+  position: relative;
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 0%, var(--lamp), transparent 70%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent 34px),
+    linear-gradient(180deg, var(--back-light), var(--back));
+  box-shadow:
+    inset 0 16px 18px -12px rgba(0, 0, 0, 0.75),
+    inset 14px 0 16px -12px rgba(0, 0, 0, 0.6),
+    inset -14px 0 16px -12px rgba(0, 0, 0, 0.6);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 18px;
+  perspective: 1100px;
+  perspective-origin: 50% -60%;
+  transform-style: preserve-3d;
+}
+
+/* Shelf plank */
+.board {
+  position: relative;
+  z-index: 2;
+  height: 18px;
+  margin: 0 -16px;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 3px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 13px),
+    linear-gradient(180deg, var(--wood-light), var(--wood) 45%, var(--wood-dark));
+  box-shadow: 0 8px 10px -2px rgba(0, 0, 0, 0.5);
+}
+
+.deco {
+  position: relative;
+  flex: none;
+  margin: 0 8px;
+}
+
+/* ─────────────── 3D books ─────────────── */
+.book {
+  position: relative;
+  flex: none;
+  width: var(--t);
+  height: var(--h);
+  margin-right: 2px;
+  cursor: pointer;
+  outline: none;
+  transform-style: preserve-3d;
+  transform-origin: var(--origin);
+  transform: rotateZ(var(--lean));
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (hover: hover) {
+  .book:hover {
+    transform: translate3d(0, -10px, 28px);
+  }
+}
+
+.book.lifted {
+  visibility: hidden;
+}
+
+.book:focus-visible .spine {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.face {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.spine {
+  width: var(--t);
+  height: var(--h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 26px 0 12px;
+  overflow: hidden;
+  border-radius: 2px 2px 1px 1px;
+  background-color: var(--spine);
+  color: var(--ink);
+}
+
+/* Rounded-spine shading */
+.spine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.38),
+    rgba(255, 255, 255, 0.16) 22%,
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(0, 0, 0, 0.12) 75%,
+    rgba(0, 0, 0, 0.42)
+  );
+}
+
+.spine::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Variant 1: foil bands top and bottom */
+.bands .spine::before {
+  inset: 0;
+  background:
+    linear-gradient(var(--foil), var(--foil)) 0 10px / 100% 2px no-repeat,
+    linear-gradient(var(--foil), var(--foil)) 0 15px / 100% 1px no-repeat,
+    linear-gradient(var(--foil), var(--foil)) 0 calc(100% - 10px) / 100% 2px no-repeat,
+    linear-gradient(var(--foil), var(--foil)) 0 calc(100% - 15px) / 100% 1px no-repeat;
+}
+
+/* Variant 2: title label panel */
+.panel .spine::before {
+  left: 3px;
+  right: 3px;
+  top: 20%;
+  bottom: 26%;
+  border-radius: 2px;
+  background: var(--panel);
+  border: 1px solid var(--foil);
+}
+
+/* Variant 3: colored cap at the top */
+.cap .spine::before {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 18px;
+  background: var(--dark);
+  border-bottom: 2px solid var(--foil);
+}
+
+.title {
+  position: relative;
+  z-index: 1;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(var(--h) - 70px);
+  overflow: hidden;
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-heading);
+  font-size: var(--fs);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.author {
+  position: relative;
+  z-index: 1;
+  max-height: 44px;
+  overflow: hidden;
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.sticker {
+  position: absolute;
+  z-index: 1;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  line-height: 1;
+  color: #f0ae3c;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Front cover, folded back along the right edge of the spine */
+.cover {
+  left: var(--t);
+  width: var(--d);
+  height: var(--h);
+  transform-origin: 0 50%;
+  transform: rotateY(90deg);
+  border-radius: 0 3px 3px 0;
+  background-color: var(--spine);
+  background-size: cover;
+  background-position: center;
+}
+
+/* Side faces sit in shadow until the book is pulled out */
+.cover::after,
+.back::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.6));
+  transition: opacity 0.55s;
+}
+
+.coverText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 12px;
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.coverText small {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.back {
+  left: calc(var(--d) * -1);
+  width: var(--d);
+  height: var(--h);
+  transform-origin: 100% 50%;
+  transform: rotateY(-90deg);
+  border-radius: 3px 0 0 3px;
+  background-color: var(--dark);
+}
+
+/* Page block seen from above */
+.top {
+  width: var(--t);
+  height: var(--d);
+  transform-origin: 50% 0;
+  transform: rotateX(-90deg);
+  border-left: 2px solid var(--dark);
+  border-right: 2px solid var(--dark);
+  background: repeating-linear-gradient(90deg, #efe3cf 0 1px, #d6c4a6 1px 2px);
+}
+
+.ribbon {
+  top: auto;
+  bottom: -14px;
+  left: calc(var(--t) * 0.55);
+  width: 5px;
+  height: 22px;
+  background: #b4433a;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+}
+
+/* ─────────────── decoration animation ─────────────── */
+.flame,
+.flameAlt {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flicker 1.6s ease-in-out infinite;
+}
+
+.flameAlt {
+  animation-duration: 2.1s;
+  animation-delay: -0.7s;
+}
+
+.glow {
+  animation: glow 2.4s ease-in-out infinite;
+}
+
+.steam,
+.steamAlt {
+  animation: steam 3s ease-out infinite;
+}
+
+.steamAlt {
+  animation-delay: -1.4s;
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  30% {
+    transform: scale(0.94, 1.08) skewX(2deg);
+  }
+  60% {
+    transform: scale(1.04, 0.95) skewX(-2deg);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes steam {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+}
+
+/* The app-wide reduced-motion rule turns transitions off; the shelf keeps
+   its gentle motion so pulling a book out still reads as a book moving */
+@media (prefers-reduced-motion: reduce) {
+  .book {
+    transition-duration: 0.55s !important;
+  }
+  .cover::after,
+  .back::after {
+    transition-duration: 0.55s !important;
+  }
+  .flame,
+  .flameAlt,
+  .glow,
+  .steam,
+  .steamAlt {
+    animation-duration: 2s !important;
+    animation-iteration-count: infinite !important;
+  }
+}

@@ -30,20 +30,20 @@ export default function BookCard({ book }: { book: Book }) {
       style={{
         display: "flex",
         gap: "14px",
-        backgroundColor: "#2A1C0F",
-        border: "1px solid #4A3020",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: "14px",
         padding: "14px",
         cursor: "pointer",
         transition: "all 0.2s",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "#C8813A";
-        e.currentTarget.style.backgroundColor = "#3D2B18";
+        e.currentTarget.style.borderColor = "var(--primary)";
+        e.currentTarget.style.backgroundColor = "var(--raised)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#4A3020";
-        e.currentTarget.style.backgroundColor = "#2A1C0F";
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.backgroundColor = "var(--surface)";
       }}
     >
       <BookCover
@@ -55,7 +55,7 @@ export default function BookCard({ book }: { book: Book }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <h3
           style={{
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "14px",
             fontWeight: "bold",
             marginBottom: "4px",
@@ -70,7 +70,7 @@ export default function BookCard({ book }: { book: Book }) {
         </h3>
         <p
           style={{
-            color: "#C8813A",
+            color: "var(--primary)",
             fontSize: "12px",
             marginBottom: "6px",
           }}
@@ -78,18 +78,18 @@ export default function BookCard({ book }: { book: Book }) {
           {book.author}
         </p>
         {book.pageCount && (
-          <p style={{ color: "#A89070", fontSize: "11px", marginBottom: "4px" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "11px", marginBottom: "4px" }}>
             📄 {book.pageCount} pages
           </p>
         )}
         {book.rating && book.rating > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
-            <span style={{ color: "#E8A030", fontSize: "11px" }}>
+            <span style={{ color: "var(--star)", fontSize: "11px" }}>
               {"★".repeat(Math.floor(book.rating))}
               {book.rating % 1 >= 0.5 ? "½" : ""}
               {"☆".repeat(5 - Math.ceil(book.rating))}
             </span>
-            <span style={{ color: "#A89070", fontSize: "10px" }}>
+            <span style={{ color: "var(--text-muted)", fontSize: "10px" }}>
               {book.rating}
             </span>
           </div>
@@ -107,9 +107,9 @@ export default function BookCard({ book }: { book: Book }) {
               <span
                 key={genre}
                 style={{
-                  backgroundColor: "#3D2B18",
-                  border: "1px solid #4A3020",
-                  color: "#A89070",
+                  backgroundColor: "var(--raised)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-muted)",
                   fontSize: "10px",
                   padding: "2px 6px",
                   borderRadius: "999px",
@@ -127,8 +127,8 @@ export default function BookCard({ book }: { book: Book }) {
               <span
                 key={tag.id}
                 style={{
-                  backgroundColor: tag.color || "#C8813A",
-                  color: "#F5ECD7",
+                  backgroundColor: tag.color || "var(--primary)",
+                  color: "var(--text)",
                   fontSize: "10px",
                   fontWeight: "600",
                   padding: "2px 6px",
@@ -145,7 +145,7 @@ export default function BookCard({ book }: { book: Book }) {
         style={{
           display: "flex",
           alignItems: "center",
-          color: "#A89070",
+          color: "var(--text-muted)",
           fontSize: "18px",
           flexShrink: 0,
         }}

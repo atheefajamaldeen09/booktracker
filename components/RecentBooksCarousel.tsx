@@ -29,39 +29,34 @@ export default function RecentBooksCarousel({
 
   if (books.length === 0) {
     return (
-      <div
-        style={{
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
-          borderRadius: "14px",
-          padding: "24px",
-          textAlign: "center",
-        }}
-      >
-        <p style={{ color: "#A89070", fontSize: "14px" }}>{emptyMessage}</p>
+      <div>
+        <h2 className="section-title">{title}</h2>
+        <div
+          style={{
+            backgroundColor: "var(--surface)",
+            border: "1px dashed var(--border)",
+            borderRadius: "16px",
+            padding: "24px",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: 0 }}>{emptyMessage}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h2
-        style={{
-          color: "#C8813A",
-          fontSize: "18px",
-          fontWeight: "bold",
-          marginBottom: "16px",
-        }}
-      >
-        {title}
-      </h2>
+      <h2 className="section-title">{title}</h2>
 
       <div
         style={{
           display: "flex",
-          gap: "12px",
+          gap: "14px",
           overflowX: "auto",
-          paddingBottom: "8px",
+          padding: "4px 2px 10px",
+          scrollSnapType: "x proximity",
         }}
       >
         {books.map((book) => {
@@ -74,30 +69,33 @@ export default function RecentBooksCarousel({
               style={{
                 display: "flex",
                 flexDirection: "column",
-                minWidth: "140px",
-                maxWidth: "140px",
-                backgroundColor: isHovered ? "#3D2B18" : "#2A1C0F",
-                border: `1px solid ${isHovered ? "#C8813A" : "#4A3020"}`,
-                borderRadius: "12px",
-                padding: "12px",
+                minWidth: "132px",
+                maxWidth: "132px",
+                transform: isHovered ? "translateY(-3px)" : "none",
+                boxShadow: isHovered ? "var(--shadow-md)" : "none",
+                backgroundColor: isHovered ? "var(--raised)" : "var(--surface)",
+                border: `1px solid ${isHovered ? "var(--primary)" : "var(--border)"}`,
+                borderRadius: "14px",
+                padding: "14px 12px",
                 textDecoration: "none",
                 transition: "all 0.2s",
+                flexShrink: 0,
               }}
               onMouseEnter={() => setHoveredId(book.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              <div style={{ marginBottom: "10px" }}>
+              <div style={{ marginBottom: "12px", display: "flex", justifyContent: "center" }}>
                 <BookCover
                   cover={book.cover}
                   title={book.title}
                   author={book.author ?? undefined}
-                  size="sm"
+                  size="md"
                 />
               </div>
 
               <h3
                 style={{
-                  color: "#F5ECD7",
+                  color: "var(--text)",
                   fontSize: "13px",
                   fontWeight: "bold",
                   marginBottom: "4px",
@@ -113,7 +111,7 @@ export default function RecentBooksCarousel({
 
               <p
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   marginBottom: showRating ? "6px" : "0",
                   overflow: "hidden",
@@ -125,7 +123,7 @@ export default function RecentBooksCarousel({
               </p>
 
               {showRating && book.rating && book.rating > 0 && (
-                <p style={{ color: "#E8A030", fontSize: "11px", margin: 0 }}>
+                <p style={{ color: "var(--star)", fontSize: "11px", margin: 0 }}>
                   {"★".repeat(Math.floor(book.rating))}
                   {book.rating % 1 >= 0.5 ? "½" : ""}
                 </p>

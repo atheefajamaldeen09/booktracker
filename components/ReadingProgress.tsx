@@ -80,7 +80,9 @@ export default function ReadingProgress({ book, sessions }: Props) {
     setLoading(true);
     const result = await completeBook(book.id, book.pageCount);
     if (result.success) {
-      router.push(`/book/${book.id}`);
+      router.push(
+        result.goalReached ? `/book/${book.id}?goalReached=1` : `/book/${book.id}`
+      );
     } else {
       setError("Failed to mark as complete");
       setLoading(false);
@@ -104,10 +106,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
 
   const inputStyle: React.CSSProperties = {
     padding: "10px 14px",
-    backgroundColor: "#1C1009",
-    border: "1px solid #4A3020",
+    backgroundColor: "var(--bg)",
+    border: "1px solid var(--border)",
     borderRadius: "10px",
-    color: "#F5ECD7",
+    color: "var(--text)",
     fontSize: "14px",
     outline: "none",
     width: "120px",
@@ -119,7 +121,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
       {/* Section Header */}
       <p
         style={{
-          color: "#A89070",
+          color: "var(--text-muted)",
           fontSize: "12px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
@@ -132,8 +134,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
       {/* Progress Bar */}
       <div
         style={{
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: "16px",
           padding: "20px",
           marginBottom: "12px",
@@ -149,7 +151,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
         {sessions.length > 0 && (
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               marginTop: "10px",
             }}
@@ -168,8 +170,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
       {/* Update Progress Form */}
       <div
         style={{
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: "16px",
           padding: "20px",
           marginBottom: "12px",
@@ -177,7 +179,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
       >
         <p
           style={{
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "14px",
             fontWeight: "600",
             marginBottom: "14px",
@@ -195,7 +197,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ color: "#A89070", fontSize: "13px" }}>
+            <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>
               Current page
             </span>
             <input
@@ -207,7 +209,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
               style={inputStyle}
             />
             {pageCount > 0 && (
-              <span style={{ color: "#A89070", fontSize: "13px" }}>
+              <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>
                 of {pageCount}
               </span>
             )}
@@ -218,8 +220,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
             disabled={loading}
             style={{
               padding: "10px 20px",
-              backgroundColor: loading ? "#3D2B18" : "#C8813A",
-              color: "#F5ECD7",
+              backgroundColor: loading ? "var(--raised)" : "var(--primary)",
+              color: loading ? "var(--text-muted)" : "var(--on-primary)",
               border: "none",
               borderRadius: "10px",
               fontWeight: "600",
@@ -236,7 +238,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
         {error && (
           <p
             style={{
-              color: "#C4756A",
+              color: "var(--danger)",
               fontSize: "13px",
               marginTop: "10px",
             }}
@@ -249,7 +251,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
         {successMessage && (
           <p
             style={{
-              color: "#7A9E7E",
+              color: "var(--success)",
               fontSize: "13px",
               marginTop: "10px",
             }}
@@ -267,10 +269,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
             style={{
               flex: 1,
               padding: "12px",
-              backgroundColor: "#1A3D1A",
-              border: "1px solid #3A8B3A",
+              backgroundColor: "var(--success-bg)",
+              border: "1px solid var(--success-border)",
               borderRadius: "12px",
-              color: "#7A9E7E",
+              color: "var(--success)",
               fontWeight: "600",
               fontSize: "14px",
               cursor: "pointer",
@@ -284,10 +286,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
             style={{
               flex: 1,
               padding: "12px",
-              backgroundColor: "#3D1A1A",
-              border: "1px solid #8B3A3A",
+              backgroundColor: "var(--danger-bg)",
+              border: "1px solid var(--danger)",
               borderRadius: "12px",
-              color: "#C4756A",
+              color: "var(--danger)",
               fontWeight: "600",
               fontSize: "14px",
               cursor: "pointer",
@@ -303,8 +305,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
       {showComplete && (
         <div
           style={{
-            backgroundColor: "#1A3D1A",
-            border: "1px solid #3A8B3A",
+            backgroundColor: "var(--success-bg)",
+            border: "1px solid var(--success-border)",
             borderRadius: "14px",
             padding: "20px",
             marginBottom: "12px",
@@ -312,7 +314,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
         >
           <p
             style={{
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "15px",
               fontWeight: "600",
               marginBottom: "8px",
@@ -322,7 +324,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
           </p>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "13px",
               marginBottom: "16px",
             }}
@@ -337,10 +339,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
               style={{
                 flex: 1,
                 padding: "10px",
-                backgroundColor: "#3A8B3A",
+                backgroundColor: "var(--success)",
                 border: "none",
                 borderRadius: "10px",
-                color: "#F5ECD7",
+                color: "var(--on-primary)",
                 fontWeight: "600",
                 fontSize: "14px",
                 cursor: loading ? "not-allowed" : "pointer",
@@ -352,10 +354,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
               onClick={() => setShowComplete(false)}
               style={{
                 padding: "10px 16px",
-                backgroundColor: "#3D2B18",
-                border: "1px solid #4A3020",
+                backgroundColor: "var(--raised)",
+                border: "1px solid var(--border)",
                 borderRadius: "10px",
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "14px",
                 cursor: "pointer",
               }}
@@ -370,8 +372,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
       {showDNFForm && (
         <div
           style={{
-            backgroundColor: "#3D1A1A",
-            border: "1px solid #8B3A3A",
+            backgroundColor: "var(--danger-bg)",
+            border: "1px solid var(--danger)",
             borderRadius: "14px",
             padding: "20px",
             marginBottom: "12px",
@@ -379,7 +381,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
         >
           <p
             style={{
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "15px",
               fontWeight: "600",
               marginBottom: "8px",
@@ -389,7 +391,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
           </p>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "13px",
               marginBottom: "12px",
             }}
@@ -404,10 +406,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
             style={{
               width: "100%",
               padding: "10px 14px",
-              backgroundColor: "#1C1009",
-              border: "1px solid #6B3A3A",
+              backgroundColor: "var(--bg)",
+              border: "1px solid var(--danger-border)",
               borderRadius: "10px",
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "13px",
               outline: "none",
               resize: "vertical",
@@ -422,10 +424,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
               style={{
                 flex: 1,
                 padding: "10px",
-                backgroundColor: "#8B3A3A",
+                backgroundColor: "var(--danger)",
                 border: "none",
                 borderRadius: "10px",
-                color: "#F5ECD7",
+                color: "var(--on-danger)",
                 fontWeight: "600",
                 fontSize: "14px",
                 cursor: loading ? "not-allowed" : "pointer",
@@ -437,10 +439,10 @@ export default function ReadingProgress({ book, sessions }: Props) {
               onClick={() => setShowDNFForm(false)}
               style={{
                 padding: "10px 16px",
-                backgroundColor: "#3D2B18",
-                border: "1px solid #4A3020",
+                backgroundColor: "var(--raised)",
+                border: "1px solid var(--border)",
                 borderRadius: "10px",
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "14px",
                 cursor: "pointer",
               }}
@@ -455,8 +457,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
       {sessions.length > 0 && (
         <div
           style={{
-            backgroundColor: "#2A1C0F",
-            border: "1px solid #4A3020",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--border)",
             borderRadius: "16px",
             overflow: "hidden",
           }}
@@ -472,19 +474,19 @@ export default function ReadingProgress({ book, sessions }: Props) {
               backgroundColor: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "#F5ECD7",
+              color: "var(--text)",
             }}
           >
             <span style={{ fontSize: "14px", fontWeight: "600" }}>
               📖 Reading Sessions ({sessions.length})
             </span>
-            <span style={{ color: "#A89070" }}>
+            <span style={{ color: "var(--text-muted)" }}>
               {showSessions ? "−" : "+"}
             </span>
           </button>
 
           {showSessions && (
-            <div style={{ borderTop: "1px solid #4A3020" }}>
+            <div style={{ borderTop: "1px solid var(--border)" }}>
               {[...sessions].reverse().map((session, index) => (
                 <div
                   key={session.id}
@@ -495,14 +497,14 @@ export default function ReadingProgress({ book, sessions }: Props) {
                     padding: "12px 20px",
                     borderBottom:
                       index < sessions.length - 1
-                        ? "1px solid #3D2B18"
+                        ? "1px solid var(--raised)"
                         : "none",
                   }}
                 >
                   <div>
                     <p
                       style={{
-                        color: "#F5ECD7",
+                        color: "var(--text)",
                         fontSize: "13px",
                         margin: 0,
                       }}
@@ -513,7 +515,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
                     </p>
                     <p
                       style={{
-                        color: "#A89070",
+                        color: "var(--text-muted)",
                         fontSize: "11px",
                         margin: "2px 0 0 0",
                       }}
@@ -523,7 +525,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
                   </div>
                   <p
                     style={{
-                      color: "#A89070",
+                      color: "var(--text-muted)",
                       fontSize: "11px",
                       margin: 0,
                     }}

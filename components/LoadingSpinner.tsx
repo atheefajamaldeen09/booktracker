@@ -12,8 +12,8 @@ export default function LoadingSpinner({ size = 32 }: { size?: number }) {
         style={{
           width: `${size}px`,
           height: `${size}px`,
-          border: "3px solid #4A3020",
-          borderTop: "3px solid #C8813A",
+          border: "3px solid var(--border)",
+          borderTop: "3px solid var(--primary)",
           borderRadius: "50%",
           animation: "spin 0.8s linear infinite",
         }}

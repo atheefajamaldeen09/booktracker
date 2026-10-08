@@ -80,8 +80,8 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
           position: "absolute",
           top: "24px",
           right: "24px",
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: "50%",
           width: "40px",
           height: "40px",
@@ -89,7 +89,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
-          color: "#F5ECD7",
+          color: "var(--text)",
         }}
       >
         <X size={18} />
@@ -97,7 +97,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
 
       <h2
         style={{
-          color: "#C8813A",
+          color: "var(--primary)",
           fontSize: "20px",
           fontWeight: "bold",
           marginBottom: "8px",
@@ -107,7 +107,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       </h2>
       <p
         style={{
-          color: "#A89070",
+          color: "var(--text-muted)",
           fontSize: "13px",
           marginBottom: "24px",
           textAlign: "center",
@@ -124,7 +124,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
           maxWidth: "400px",
           borderRadius: "16px",
           overflow: "hidden",
-          border: "2px solid #C8813A",
+          border: "2px solid var(--primary)",
         }}
       >
         <video
@@ -150,7 +150,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
             style={{
               width: "80%",
               height: "2px",
-              backgroundColor: "#C8813A",
+              backgroundColor: "var(--primary)",
               opacity: 0.8,
               animation: "scan 2s ease-in-out infinite",
             }}
@@ -171,11 +171,11 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
         <div
           style={{
             marginTop: "16px",
-            backgroundColor: "#3D1A1A",
-            border: "1px solid #8B3A3A",
+            backgroundColor: "var(--danger-bg)",
+            border: "1px solid var(--danger)",
             borderRadius: "10px",
             padding: "12px 16px",
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "13px",
             textAlign: "center",
             maxWidth: "400px",

@@ -17,8 +17,8 @@ export default function Card({
     <div
       onClick={onClick}
       style={{
-        backgroundColor: raised ? "#3D2B18" : "#2A1C0F",
-        border: "1px solid #4A3020",
+        backgroundColor: raised ? "var(--raised)" : "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: "16px",
         padding: "16px",
         cursor: onClick ? "pointer" : "default",

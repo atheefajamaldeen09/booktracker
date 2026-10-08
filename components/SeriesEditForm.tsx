@@ -53,8 +53,8 @@ export default function SeriesEditForm({
     return (
       <div
         style={{
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: "14px",
           padding: "16px",
           marginBottom: "28px",
@@ -70,7 +70,7 @@ export default function SeriesEditForm({
           <div>
             <p
               style={{
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "12px",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -81,7 +81,7 @@ export default function SeriesEditForm({
             </p>
             <p
               style={{
-                color: "#F5ECD7",
+                color: "var(--text)",
                 fontSize: "16px",
                 fontWeight: "600",
                 margin: 0,
@@ -95,10 +95,10 @@ export default function SeriesEditForm({
             onClick={() => setIsEditing(true)}
             style={{
               padding: "8px 16px",
-              backgroundColor: "#3D2B18",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--raised)",
+              border: "1px solid var(--border)",
               borderRadius: "10px",
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "13px",
               fontWeight: "600",
               cursor: "pointer",
@@ -111,7 +111,7 @@ export default function SeriesEditForm({
         {success && (
           <p
             style={{
-              color: "#7A9E7E",
+              color: "var(--success)",
               fontSize: "12px",
               marginTop: "8px",
               marginBottom: 0,
@@ -127,8 +127,8 @@ export default function SeriesEditForm({
   return (
     <div
       style={{
-        backgroundColor: "#2A1C0F",
-        border: "1px solid #4A3020",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: "14px",
         padding: "16px",
         marginBottom: "28px",
@@ -136,7 +136,7 @@ export default function SeriesEditForm({
     >
       <label
         style={{
-          color: "#A89070",
+          color: "var(--text-muted)",
           fontSize: "12px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
@@ -156,10 +156,10 @@ export default function SeriesEditForm({
         style={{
           width: "100%",
           padding: "10px 14px",
-          backgroundColor: "#1C1009",
-          border: "1px solid #4A3020",
+          backgroundColor: "var(--bg)",
+          border: "1px solid var(--border)",
           borderRadius: "10px",
-          color: "#F5ECD7",
+          color: "var(--text)",
           fontSize: "14px",
           outline: "none",
           boxSizing: "border-box",
@@ -175,10 +175,10 @@ export default function SeriesEditForm({
             flex: 1,
             padding: "10px",
             backgroundColor:
-              !hasChanged || !newTotalBooks ? "#3D2B18" : "#C8813A",
+              !hasChanged || !newTotalBooks ? "var(--raised)" : "var(--primary)",
             border: "none",
             borderRadius: "10px",
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "13px",
             fontWeight: "600",
             cursor:
@@ -199,9 +199,9 @@ export default function SeriesEditForm({
             flex: 1,
             padding: "10px",
             backgroundColor: "transparent",
-            border: "1px solid #4A3020",
+            border: "1px solid var(--border)",
             borderRadius: "10px",
-            color: "#A89070",
+            color: "var(--text-muted)",
             fontSize: "13px",
             fontWeight: "600",
             cursor: "pointer",

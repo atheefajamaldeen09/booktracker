@@ -66,7 +66,7 @@ export default function BookCover({
         <span style={{ fontSize: "20px" }}>📖</span>
         <span
           style={{
-            color: "#A89070",
+            color: "var(--text-muted)",
             fontSize,
             textAlign: "center",
             lineHeight: "1.3",
@@ -78,7 +78,7 @@ export default function BookCover({
         {author && (
           <span
             style={{
-              color: "#6B5040",
+              color: "var(--text-faint)",
               fontSize: "8px",
               textAlign: "center",
             }}

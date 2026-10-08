@@ -35,17 +35,17 @@ export default function Button({
 
   const variants: Record<string, React.CSSProperties> = {
     primary: {
-      backgroundColor: "#C8813A",
-      color: "#F5ECD7",
+      backgroundColor: "var(--primary)",
+      color: "var(--on-primary)",
     },
     secondary: {
-      backgroundColor: "#3D2B18",
-      color: "#F5ECD7",
-      border: "1px solid #4A3020",
+      backgroundColor: "var(--raised)",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
     },
     danger: {
-      backgroundColor: "#8B3A3A",
-      color: "#F5ECD7",
+      backgroundColor: "var(--danger)",
+      color: "var(--on-danger)",
     },
   };
 

@@ -1,10 +1,26 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Fraunces, DM_Sans } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
+import { DEFAULT_THEME, themeInitScript } from "@/lib/themes";
+
+const display = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-display",
+});
+
+const sans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "BookTracker",
   description: "Your personal reading companion",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#17100b",
 };
 
 export default function RootLayout({
@@ -13,58 +29,42 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body 
-        style={{ 
-          backgroundColor: "#1C1009", 
-          margin: 0,
-          padding: 0,
-          overflowX: "hidden", // 👈 ADD THIS
-          width: "100%", // 👈 ADD THIS
-        }}
-      >
+    // The inline script swaps data-theme before React hydrates, hence suppressHydrationWarning
+    <html
+      lang="en"
+      data-theme={DEFAULT_THEME}
+      className={`${display.variable} ${sans.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body>
         <Navigation />
-        {/* 
-          On mobile: padding at bottom so content clears the bottom nav 
+        {/*
+          On mobile: padding at top so content clears the top bar
           On desktop: margin on left so content clears the side nav
         */}
-        <main
-          id="main-content"
-          style={{ 
-            backgroundColor: "#1C1009", 
-            minHeight: "100vh", 
-            padding: "32px",
-            maxWidth: "100vw", // 👈 ADD THIS
-            boxSizing: "border-box", // 👈 ADD THIS
-            overflowX: "hidden", // 👈 ADD THIS
-          }}
-        >
+        <main id="main-content" className="page-enter">
           {children}
         </main>
 
         <style>{`
-          * {
-            box-sizing: border-box;
-          }
-          
-          html {
+          #main-content {
+            min-height: 100vh;
+            padding: 40px 40px 48px;
+            max-width: 100vw;
             overflow-x: hidden;
-            width: 100%;
           }
-          
           @media (min-width: 768px) {
             #main-content {
-              margin-left: 210px;
-              padding-bottom: 32px;
+              margin-left: 230px;
             }
           }
           @media (max-width: 767px) {
             #main-content {
               margin-left: 0;
-              padding-top: 72px; 
-              padding-bottom: 24px; 
-              padding-left: 16px; 
-              padding-right: 16px; 
+              padding: 80px 16px 32px;
             }
           }
         `}</style>

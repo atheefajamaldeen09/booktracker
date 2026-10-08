@@ -1,32 +1,450 @@
 @import "tailwindcss/preflight";
 @import "tailwindcss/utilities";
 
+/* ─────────────────────────────────────────────
+   Themes
+   Every component reads its colors from these tokens. :root is the
+   default (Café au Lait); each [data-theme] block swaps the whole palette.
+   The theme is set on <html> before first paint (see app/layout.tsx).
+   ───────────────────────────────────────────── */
+:root {
+  /* ☕ Café au Lait — espresso, caramel and steamed milk */
+  --bg: #17100b;
+  --bg-deep: #100a06;
+  --surface: #221810;
+  --raised: #2f2117;
+  --border: #45311f;
+  --border-soft: #36271a;
+
+  --primary: #d08c4f;
+  --primary-rgb: 208 140 79;
+  --primary-hover: #e0a065;
+  --primary-deep: #9a5a2a;
+  --on-primary: #1e130b;
+  --accent: #e2bb76;
+  --accent-rgb: 226 187 118;
+  --star: #f0ae3c;
+
+  --text: #f4e9da;
+  --text-muted: #bba187;
+  --text-faint: #86705b;
+
+  --success: #94ac7f;
+  --success-bg: #1f2a1a;
+  --success-border: #4f6b3f;
+  --danger: #b45a4c;
+  --danger-bg: #3a1d17;
+  --danger-border: #6b3a3a;
+  --on-danger: #fff4ec;
+
+  --nav-bg: rgba(23, 16, 11, 0.85);
+  --hero-from: #2f2016;
+  --hero-to: #1d140d;
+  --hero-emoji: "☕";
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.5);
+  --glow: 0 0 0 3px rgb(var(--primary-rgb) / 0.25);
+
+  /* Visual bookshelf: wood, back panel, lamp and decorations */
+  --wood: #6b4429;
+  --wood-light: #93603b;
+  --wood-dark: #3f2717;
+  --back: #150d08;
+  --back-light: #2a1b11;
+  --lamp: rgba(232, 170, 100, 0.22);
+  --deco-pot: #b5653f;
+  --deco-leaf: #7f9e5f;
+  --deco-leaf-dark: #56743f;
+  --deco-wax: #efe3cf;
+  --deco-flame: #ffb347;
+  --deco-ceramic: #e6d6bd;
+  --deco-metal: #c99a52;
+  --deco-mug: #d8c3a5;
+  --deco-globe: #5b7f93;
+
+  --radius: 16px;
+  --font-body: var(--font-sans), system-ui, sans-serif;
+  --font-heading: var(--font-display), Georgia, serif;
+
+  color-scheme: dark;
+}
+
+/* 🕯️ Enchanted Library — plum shadows, candlelight and antique gold */
+:root[data-theme="enchanted"] {
+  --bg: #130f1c;
+  --bg-deep: #0c0912;
+  --surface: #1c1628;
+  --raised: #271e36;
+  --border: #3a2d4f;
+  --border-soft: #2c2240;
+  --primary: #c9a45c;
+  --primary-rgb: 201 164 92;
+  --primary-hover: #dcb872;
+  --primary-deep: #8a6a2c;
+  --on-primary: #1a1206;
+  --accent: #b58cd9;
+  --accent-rgb: 181 140 217;
+  --star: #e8c25a;
+  --text: #efe7f7;
+  --text-muted: #b3a3c7;
+  --text-faint: #7d6e92;
+  --success: #8fb89a;
+  --success-bg: #1a2a22;
+  --success-border: #45695a;
+  --danger: #c46a7a;
+  --danger-bg: #3a1a26;
+  --danger-border: #6b3a4a;
+  --nav-bg: rgba(19, 15, 28, 0.85);
+  --hero-from: #2a1f3d;
+  --hero-to: #15101f;
+  --hero-emoji: "🕯️";
+  --wood: #4b2330;
+  --wood-light: #6e3649;
+  --wood-dark: #2c121c;
+  --back: #100915;
+  --back-light: #22152c;
+  --lamp: rgba(190, 150, 255, 0.2);
+  --deco-pot: #4a3366;
+  --deco-leaf: #6f9a7e;
+  --deco-leaf-dark: #48705a;
+  --deco-wax: #efe6f5;
+  --deco-flame: #ffcf6b;
+  --deco-ceramic: #cbbbe8;
+  --deco-metal: #d4af37;
+  --deco-mug: #6b4a8c;
+  --deco-globe: #3f4f7a;
+}
+
+/* 🌙 Midnight Ocean — deep navy, sea glass and moonlight */
+:root[data-theme="ocean"] {
+  --bg: #0a1220;
+  --bg-deep: #060c16;
+  --surface: #101b2e;
+  --raised: #17263d;
+  --border: #243a57;
+  --border-soft: #1b2d45;
+  --primary: #5cc2c7;
+  --primary-rgb: 92 194 199;
+  --primary-hover: #79d4d8;
+  --primary-deep: #2f7f86;
+  --on-primary: #04161a;
+  --accent: #a9c7ee;
+  --accent-rgb: 169 199 238;
+  --star: #f2c96b;
+  --text: #e6eef8;
+  --text-muted: #9fb3cc;
+  --text-faint: #627a97;
+  --success: #7cc49a;
+  --success-bg: #12291f;
+  --success-border: #3c6b55;
+  --danger: #d9777a;
+  --danger-bg: #3a1a22;
+  --danger-border: #6b3a44;
+  --nav-bg: rgba(10, 18, 32, 0.85);
+  --hero-from: #12253f;
+  --hero-to: #0a1424;
+  --hero-emoji: "🌙";
+  --wood: #34465a;
+  --wood-light: #4f677f;
+  --wood-dark: #1d2938;
+  --back: #070f1a;
+  --back-light: #11223b;
+  --lamp: rgba(120, 200, 255, 0.18);
+  --deco-pot: #2f6f8f;
+  --deco-leaf: #5aa39a;
+  --deco-leaf-dark: #3a7a72;
+  --deco-wax: #e8f1f7;
+  --deco-flame: #ffd27a;
+  --deco-ceramic: #a9cde0;
+  --deco-metal: #b8c6d8;
+  --deco-mug: #3e7ca6;
+  --deco-globe: #2b5d8a;
+}
+
+/* 🌿 Botanical — a light, airy greenhouse: linen, fern and terracotta */
+:root[data-theme="botanical"] {
+  --bg: #f3efe4;
+  --bg-deep: #e9e3d3;
+  --surface: #fbf8f0;
+  --raised: #efe9da;
+  --border: #d9d0bb;
+  --border-soft: #e6dfcd;
+  --primary: #4f7a4a;
+  --primary-rgb: 79 122 74;
+  --primary-hover: #5f8f59;
+  --primary-deep: #3b5e37;
+  --on-primary: #f8f5ec;
+  --accent: #c27a4e;
+  --accent-rgb: 194 122 78;
+  --star: #d99a2b;
+  --text: #26301f;
+  --text-muted: #5b6650;
+  --text-faint: #8b937f;
+  --success: #4f8a45;
+  --success-bg: #e3eedb;
+  --success-border: #a9c79a;
+  --danger: #b5523f;
+  --danger-bg: #f6e1d9;
+  --danger-border: #e0b0a4;
+  --on-danger: #ffffff;
+  --nav-bg: rgba(243, 239, 228, 0.85);
+  --hero-from: #e3ead5;
+  --hero-to: #f6f1e4;
+  --hero-emoji: "🌿";
+  --shadow-sm: 0 1px 2px rgba(60, 50, 30, 0.08);
+  --shadow-md: 0 6px 18px rgba(60, 50, 30, 0.1);
+  --shadow-lg: 0 18px 48px rgba(60, 50, 30, 0.16);
+  --wood: #8a6a43;
+  --wood-light: #b08d61;
+  --wood-dark: #5b4329;
+  --back: #101812;
+  --back-light: #1e2c21;
+  --lamp: rgba(190, 230, 140, 0.16);
+  --deco-pot: #c27a4e;
+  --deco-leaf: #5f9a4c;
+  --deco-leaf-dark: #3f7334;
+  --deco-wax: #f1ead8;
+  --deco-flame: #ffc15e;
+  --deco-ceramic: #e8e0c8;
+  --deco-metal: #a3a86a;
+  --deco-mug: #6f8f5a;
+  --deco-globe: #4f7d8a;
+  color-scheme: light;
+}
+
+/* 🧁 Sugar & Ink — blush paper, rose and fountain-pen ink */
+:root[data-theme="sugar"] {
+  --bg: #fbf1f3;
+  --bg-deep: #f5e4e9;
+  --surface: #fffafb;
+  --raised: #f8e9ee;
+  --border: #ecd3dc;
+  --border-soft: #f3e1e7;
+  --primary: #c2577a;
+  --primary-rgb: 194 87 122;
+  --primary-hover: #d06a8c;
+  --primary-deep: #8f3657;
+  --on-primary: #fff7fa;
+  --accent: #2e2a4a;
+  --accent-rgb: 46 42 74;
+  --star: #e0a43a;
+  --text: #231f33;
+  --text-muted: #5e566e;
+  --text-faint: #9a91a8;
+  --success: #4f9a78;
+  --success-bg: #e0f1e9;
+  --success-border: #a5d3bd;
+  --danger: #c0473f;
+  --danger-bg: #fbe0de;
+  --danger-border: #eeb3ae;
+  --on-danger: #ffffff;
+  --nav-bg: rgba(251, 241, 243, 0.85);
+  --hero-from: #fde4ec;
+  --hero-to: #f6eef9;
+  --hero-emoji: "🧁";
+  --shadow-sm: 0 1px 2px rgba(80, 40, 60, 0.08);
+  --shadow-md: 0 6px 18px rgba(80, 40, 60, 0.1);
+  --shadow-lg: 0 18px 48px rgba(80, 40, 60, 0.16);
+  --wood: #d9b8c4;
+  --wood-light: #f2d9e2;
+  --wood-dark: #a37b8b;
+  --back: #19141e;
+  --back-light: #2c2133;
+  --lamp: rgba(255, 170, 205, 0.2);
+  --deco-pot: #f1a3bd;
+  --deco-leaf: #84c2a0;
+  --deco-leaf-dark: #5b9a78;
+  --deco-wax: #fff4f7;
+  --deco-flame: #ffc46b;
+  --deco-ceramic: #fff0f4;
+  --deco-metal: #c7a3d9;
+  --deco-mug: #f7c6d6;
+  --deco-globe: #7fa6d9;
+  color-scheme: light;
+}
+
+/* Brief cross-fade while switching themes */
+:root.theme-switching,
+:root.theme-switching *,
+:root.theme-switching *::before,
+:root.theme-switching *::after {
+  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease, fill 0.35s ease !important;
+}
+
 @layer base {
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
   body {
-    background-color: #1C1009;
-    color: #F5ECD7;
+    background-color: var(--bg);
+    /* Soft light pooling at the top, tinted by the theme */
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgb(var(--primary-rgb) / 0.12), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgb(var(--accent-rgb) / 0.05), transparent 70%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: var(--font-body);
     min-height: 100vh;
     max-width: 100vw;
     overflow-x: hidden;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Custom scrollbar to match theme */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-weight: 600 !important;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: var(--glow);
+  }
+
+  button:not(:disabled):active {
+    transform: scale(0.98);
+  }
+
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background-color: #2A1C0F;
+    background-color: var(--bg-deep);
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #C8813A;
+    background-color: var(--border);
     border-radius: 9999px;
   }
 
-  /* Selection color */
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary);
+  }
+
   ::selection {
-    background-color: #C8813A;
-    color: #F5ECD7;
+    background-color: var(--primary);
+    color: var(--on-primary);
+  }
+}
+
+/* Reusable bits shared across pages */
+.page-enter {
+  animation: pageEnter 0.45s ease-out both;
+}
+
+/* Home hero motif follows the theme; only the coffee cup steams */
+.hero-emoji::before {
+  content: var(--hero-emoji);
+}
+
+:root:not([data-theme="cafe"]) .hero-steam {
+  display: none !important;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary) !important;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes steam {
+  0% {
+    transform: translateY(0) scaleX(1);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-14px) scaleX(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

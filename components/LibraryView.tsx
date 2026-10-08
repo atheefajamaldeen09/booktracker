@@ -34,6 +34,7 @@ type Book = {
 
 type Props = {
   books: Book[];
+  initialShelf?: string;
 };
 
 type SortOption =
@@ -47,9 +48,9 @@ type SortOption =
   | "year_desc"
   | "year_asc";
 
-export default function LibraryView({ books }: Props) {
+export default function LibraryView({ books, initialShelf = "all" }: Props) {
   const [search, setSearch] = useState("");
-  const [selectedShelf, setSelectedShelf] = useState("all");
+  const [selectedShelf, setSelectedShelf] = useState(initialShelf);
   const [selectedGenre, setSelectedGenre] = useState("all");
   const [selectedRating, setSelectedRating] = useState("all");
   const [selectedYear, setSelectedYear] = useState("all");
@@ -234,10 +235,10 @@ export default function LibraryView({ books }: Props) {
 
   const selectStyle: React.CSSProperties = {
     padding: "8px 12px",
-    backgroundColor: "#2A1C0F",
-    border: "1px solid #4A3020",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: "10px",
-    color: "#F5ECD7",
+    color: "var(--text)",
     fontSize: "13px",
     outline: "none",
     cursor: "pointer",
@@ -261,7 +262,7 @@ export default function LibraryView({ books }: Props) {
               left: "12px",
               top: "50%",
               transform: "translateY(-50%)",
-              color: "#A89070",
+              color: "var(--text-muted)",
             }}
           />
           <input
@@ -272,10 +273,10 @@ export default function LibraryView({ books }: Props) {
             style={{
               width: "100%",
               padding: "10px 12px 10px 38px",
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "14px",
               outline: "none",
               boxSizing: "border-box",
@@ -292,7 +293,7 @@ export default function LibraryView({ books }: Props) {
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#A89070",
+                color: "var(--text-muted)",
                 padding: 0,
                 display: "flex",
               }}
@@ -310,10 +311,10 @@ export default function LibraryView({ books }: Props) {
             alignItems: "center",
             gap: "6px",
             padding: "10px 14px",
-            backgroundColor: showFilters ? "#C8813A" : "#2A1C0F",
-            border: `1px solid ${showFilters ? "#C8813A" : "#4A3020"}`,
+            backgroundColor: showFilters ? "var(--primary)" : "var(--surface)",
+            border: `1px solid ${showFilters ? "var(--primary)" : "var(--border)"}`,
             borderRadius: "12px",
-            color: showFilters ? "#F5ECD7" : "#A89070",
+            color: showFilters ? "var(--on-primary)" : "var(--text-muted)",
             fontSize: "13px",
             fontWeight: "600",
             cursor: "pointer",
@@ -325,8 +326,8 @@ export default function LibraryView({ books }: Props) {
           {hasActiveFilters && (
             <span
               style={{
-                backgroundColor: "#F5ECD7",
-                color: "#C8813A",
+                backgroundColor: "var(--text)",
+                color: "var(--primary)",
                 borderRadius: "999px",
                 fontSize: "10px",
                 fontWeight: "700",
@@ -343,8 +344,8 @@ export default function LibraryView({ books }: Props) {
       {showFilters && (
         <div
           style={{
-            backgroundColor: "#2A1C0F",
-            border: "1px solid #4A3020",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--border)",
             borderRadius: "14px",
             padding: "16px",
             marginBottom: "20px",
@@ -364,7 +365,7 @@ export default function LibraryView({ books }: Props) {
             <div>
               <label
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -390,7 +391,7 @@ export default function LibraryView({ books }: Props) {
             <div>
               <label
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -426,7 +427,7 @@ export default function LibraryView({ books }: Props) {
             <div>
               <label
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -453,7 +454,7 @@ export default function LibraryView({ books }: Props) {
             <div>
               <label
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -483,7 +484,7 @@ export default function LibraryView({ books }: Props) {
             <div>
               <label
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -513,7 +514,7 @@ export default function LibraryView({ books }: Props) {
             <div>
               <label
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -542,7 +543,7 @@ export default function LibraryView({ books }: Props) {
           <div>
             <label
               style={{
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "11px",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -580,9 +581,9 @@ export default function LibraryView({ books }: Props) {
                 gap: "6px",
                 padding: "8px",
                 backgroundColor: "transparent",
-                border: "1px solid #8B3A3A",
+                border: "1px solid var(--danger)",
                 borderRadius: "10px",
-                color: "#8B3A3A",
+                color: "var(--danger)",
                 fontSize: "13px",
                 cursor: "pointer",
               }}
@@ -605,7 +606,7 @@ export default function LibraryView({ books }: Props) {
           gap: "8px",
         }}
       >
-        <p style={{ color: "#A89070", fontSize: "13px" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
           {filteredBooks.length}{" "}
           {filteredBooks.length === 1 ? "book" : "books"}
           {hasActiveFilters ? " matching filters" : " in your library"}
@@ -617,10 +618,10 @@ export default function LibraryView({ books }: Props) {
             href="/wishlist"
             style={{
               padding: "4px 12px",
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "999px",
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               textDecoration: "none",
             }}
@@ -631,10 +632,10 @@ export default function LibraryView({ books }: Props) {
             href="/dnf"
             style={{
               padding: "4px 12px",
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "999px",
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               textDecoration: "none",
             }}
@@ -663,8 +664,8 @@ export default function LibraryView({ books }: Props) {
               onClick={clearFilters}
               style={{
                 padding: "10px 20px",
-                backgroundColor: "#C8813A",
-                color: "#F5ECD7",
+                backgroundColor: "var(--primary)",
+                color: "var(--on-primary)",
                 border: "none",
                 borderRadius: "12px",
                 fontWeight: "600",

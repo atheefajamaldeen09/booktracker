@@ -15,6 +15,8 @@ type Book = {
 type Props = {
   books: Book[];
   onSelect: (book: Book) => void;
+  // Changing this number triggers a fresh spin (used by the "Re-spin" button)
+  spinSignal?: number;
 };
 
 const ReelColumn = ({ 
@@ -37,8 +39,8 @@ const ReelColumn = ({
       style={{
         width: "120px",
         height: "400px",
-        backgroundColor: "#1C1009",
-        border: "3px solid #4A3020",
+        backgroundColor: "var(--bg)",
+        border: "3px solid var(--border)",
         borderRadius: "12px",
         overflow: "hidden",
         position: "relative",
@@ -87,17 +89,17 @@ const ReelColumn = ({
           right: "0",
           height: "160px",
           transform: "translateY(-50%)",
-          border: "2px solid #C8813A",
+          border: "2px solid var(--primary)",
           borderRadius: "8px",
           pointerEvents: "none",
-          boxShadow: "0 0 20px rgba(200, 129, 58, 0.3)",
+          boxShadow: "0 0 20px rgb(var(--primary-rgb) / 0.3)",
         }}
       />
     </div>
   );
 };
 
-export default function SlotMachine({ books, onSelect }: Props) {
+export default function SlotMachine({ books, onSelect, spinSignal = 0 }: Props) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [reel1Index, setReel1Index] = useState(0);
   const [reel2Index, setReel2Index] = useState(0);
@@ -108,19 +110,6 @@ export default function SlotMachine({ books, onSelect }: Props) {
   const intervalRef2 = useRef<NodeJS.Timeout | null>(null);
   const intervalRef3 = useRef<NodeJS.Timeout | null>(null);
 
-  if (books.length === 0) {
-    return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "40px",
-          color: "#A89070",
-        }}
-      >
-        <p>No books match your filters. Adjust filters to see books.</p>
-      </div>
-    );
-  }
 
   const spin = () => {
     if (isSpinning) return;
@@ -164,7 +153,6 @@ export default function SlotMachine({ books, onSelect }: Props) {
     }, 3500);
   };
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     return () => {
       if (intervalRef1.current) clearInterval(intervalRef1.current);
@@ -172,6 +160,15 @@ export default function SlotMachine({ books, onSelect }: Props) {
       if (intervalRef3.current) clearInterval(intervalRef3.current);
     };
   }, []);
+
+  // Re-spin requested from the winner popup
+  const spinRef = useRef(spin);
+  useEffect(() => {
+    spinRef.current = spin;
+  });
+  useEffect(() => {
+    if (spinSignal > 0) spinRef.current();
+  }, [spinSignal]);
 
   return (
     <div
@@ -183,15 +180,15 @@ export default function SlotMachine({ books, onSelect }: Props) {
       }}
     >
       {/* Status Text */}
-      <p style={{ color: "#A89070", fontSize: "14px", textAlign: "center", marginBottom: "16px" }}>
+      <p style={{ color: "var(--text-muted)", fontSize: "14px", textAlign: "center", marginBottom: "16px" }}>
         {isSpinning ? "Spinning..." : "Pull the lever!"}
       </p>
 
       {/* Slot Machine */}
       <div
         style={{
-          backgroundColor: "#2A1C0F",
-          border: "4px solid #4A3020",
+          backgroundColor: "var(--surface)",
+          border: "4px solid var(--border)",
           borderRadius: "20px",
           padding: "32px 24px",
           boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
@@ -223,9 +220,9 @@ export default function SlotMachine({ books, onSelect }: Props) {
               width: "80px",
               height: "120px",
               background: isSpinning
-                ? "linear-gradient(180deg, #6B5040 0%, #4A3020 100%)"
-                : "linear-gradient(180deg, #C8813A 0%, #8B5A2B 100%)",
-              border: "3px solid #F5ECD7",
+                ? "linear-gradient(180deg, var(--text-faint) 0%, var(--border) 100%)"
+                : "linear-gradient(180deg, var(--primary) 0%, var(--primary-deep) 100%)",
+              border: "3px solid var(--text)",
               borderRadius: "12px",
               position: "relative",
               cursor: isSpinning ? "not-allowed" : "pointer",
@@ -244,14 +241,14 @@ export default function SlotMachine({ books, onSelect }: Props) {
                 transform: "translateX(-50%)",
                 width: "40px",
                 height: "40px",
-                backgroundColor: "#8B5A2B",
+                backgroundColor: "var(--primary-deep)",
                 borderRadius: "50%",
-                border: "3px solid #F5ECD7",
+                border: "3px solid var(--text)",
               }}
             />
             <span
               style={{
-                color: "#F5ECD7",
+                color: "var(--text)",
                 fontSize: "16px",
                 fontWeight: "bold",
               }}
@@ -266,19 +263,19 @@ export default function SlotMachine({ books, onSelect }: Props) {
       {selectedBook && !isSpinning && (
         <div
           style={{
-            backgroundColor: "#2A1C0F",
-            border: "2px solid #C8813A",
+            backgroundColor: "var(--surface)",
+            border: "2px solid var(--primary)",
             borderRadius: "14px",
             padding: "20px",
             textAlign: "center",
             maxWidth: "300px",
-            boxShadow: "0 8px 32px rgba(200, 129, 58, 0.3)",
+            boxShadow: "0 8px 32px rgb(var(--primary-rgb) / 0.3)",
             animation: "winnerPop 0.5s ease-out",
           }}
         >
           <p
             style={{
-              color: "#C8813A",
+              color: "var(--primary)",
               fontSize: "24px",
               fontWeight: "bold",
               margin: "0 0 8px 0",
@@ -288,7 +285,7 @@ export default function SlotMachine({ books, onSelect }: Props) {
           </p>
           <p
             style={{
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "16px",
               fontWeight: "600",
               margin: "0 0 4px 0",
@@ -298,7 +295,7 @@ export default function SlotMachine({ books, onSelect }: Props) {
           </p>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "14px",
               margin: 0,
             }}

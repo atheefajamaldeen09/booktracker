@@ -87,7 +87,7 @@ export default function StarRating({
                 position: "absolute",
                 top: 0,
                 left: 0,
-                color: "#4A3020",
+                color: "var(--border)",
               }}
             >
               ★
@@ -100,7 +100,7 @@ export default function StarRating({
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  color: hoverRating ? "#F5C842" : "#E8A030",
+                  color: hoverRating ? "#F5C842" : "var(--star)",
                   overflow: "hidden",
                   width: isHalfFilled ? "50%" : "100%",
                 }}

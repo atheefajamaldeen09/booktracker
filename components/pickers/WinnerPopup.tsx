@@ -24,9 +24,11 @@ type Book = {
 type Props = {
   book: Book;
   onClose: () => void;
+  // Spin again straight away (hidden when there's only one eligible book)
+  onRespin?: () => void;
 };
 
-export default function WinnerPopup({ book, onClose }: Props) {
+export default function WinnerPopup({ book, onClose, onRespin }: Props) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
 
@@ -60,16 +62,16 @@ export default function WinnerPopup({ book, onClose }: Props) {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          backgroundColor: "#2A1C0F",
-          border: "3px solid #C8813A",
-          borderRadius: "20px",
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--primary)",
+          borderRadius: "24px",
           padding: "32px",
           maxWidth: "500px",
           width: "90%",
           maxHeight: "90vh",
           overflowY: "auto",
           zIndex: 1000,
-          boxShadow: "0 20px 60px rgba(200, 129, 58, 0.5)",
+          boxShadow: "0 24px 70px rgba(0, 0, 0, 0.6), 0 0 40px rgb(var(--primary-rgb) / 0.25)",
           animation: "popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
         }}
       >
@@ -82,7 +84,7 @@ export default function WinnerPopup({ book, onClose }: Props) {
             right: "16px",
             background: "none",
             border: "none",
-            color: "#A89070",
+            color: "var(--text-muted)",
             cursor: "pointer",
             padding: "4px",
           }}
@@ -94,23 +96,23 @@ export default function WinnerPopup({ book, onClose }: Props) {
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <p
             style={{
-              color: "#C8813A",
-              fontSize: "32px",
+              color: "var(--primary)",
+              fontSize: "26px", fontFamily: "var(--font-heading)",
               fontWeight: "bold",
               margin: "0 0 8px 0",
-              textShadow: "0 2px 8px rgba(200, 129, 58, 0.3)",
+              textShadow: "0 2px 8px rgb(var(--primary-rgb) / 0.3)",
             }}
           >
-            🎉 WINNER! 🎉
+            ☕ Your next read ☕
           </p>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "14px",
               margin: 0,
             }}
           >
-            Your next read has been chosen!
+            Fresh from the pot — fate has chosen!
           </p>
         </div>
 
@@ -133,7 +135,7 @@ export default function WinnerPopup({ book, onClose }: Props) {
           <div style={{ flex: 1 }}>
             <h2
               style={{
-                color: "#F5ECD7",
+                color: "var(--text)",
                 fontSize: "20px",
                 fontWeight: "bold",
                 marginBottom: "8px",
@@ -144,7 +146,7 @@ export default function WinnerPopup({ book, onClose }: Props) {
             </h2>
             <p
               style={{
-                color: "#C8813A",
+                color: "var(--primary)",
                 fontSize: "16px",
                 marginBottom: "12px",
               }}
@@ -155,7 +157,7 @@ export default function WinnerPopup({ book, onClose }: Props) {
             {book.series && (
               <p
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "13px",
                   marginBottom: "8px",
                 }}
@@ -167,7 +169,7 @@ export default function WinnerPopup({ book, onClose }: Props) {
             {book.pageCount && (
               <p
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "13px",
                   marginBottom: "12px",
                 }}
@@ -188,9 +190,9 @@ export default function WinnerPopup({ book, onClose }: Props) {
                   <span
                     key={genre}
                     style={{
-                      backgroundColor: "#1C1009",
-                      border: "1px solid #4A3020",
-                      color: "#A89070",
+                      backgroundColor: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text-muted)",
                       fontSize: "11px",
                       padding: "4px 10px",
                       borderRadius: "999px",
@@ -221,9 +223,9 @@ export default function WinnerPopup({ book, onClose }: Props) {
             style={{
               padding: "12px",
               backgroundColor: "transparent",
-              border: "1px solid #4A3020",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "14px",
               fontWeight: "600",
               cursor: "pointer",
@@ -233,19 +235,19 @@ export default function WinnerPopup({ book, onClose }: Props) {
           </button>
 
           <button
-            onClick={onClose}
+            onClick={onRespin ?? onClose}
             style={{
               padding: "12px",
               backgroundColor: "transparent",
-              border: "1px solid #4A3020",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
-              color: "#6B5040",
+              color: "var(--text-muted)",
               fontSize: "14px",
               fontWeight: "600",
               cursor: "pointer",
             }}
           >
-            Pick Again
+            {onRespin ? "🔄 Re-spin" : "Close"}
           </button>
         </div>
       </div>

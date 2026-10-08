@@ -1,0 +1,363 @@
+/* The opened book floats above the shelf. Paper and ink stay paper and ink
+   in every theme; only the accents (endpapers, kicker, buttons) follow it. */
+.overlay {
+  --paper: #f7f0e2;
+  --paper-shade: #ece2cf;
+  --ink: #33261b;
+  --ink-muted: #7a6650;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.stage {
+  position: relative;
+  width: calc(var(--W) * 2);
+  height: var(--H);
+  perspective: 2400px;
+  pointer-events: none;
+}
+
+.book {
+  position: absolute;
+  top: 0;
+  left: var(--W);
+  width: var(--W);
+  height: var(--H);
+  transform-style: preserve-3d;
+  transform-origin: 0 50%;
+  pointer-events: auto;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ─────────────── paper ─────────────── */
+.page {
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: radial-gradient(ellipse at 50% 40%, transparent 60%, rgba(120, 90, 50, 0.08));
+}
+
+.rightPage {
+  position: absolute;
+  inset: 0;
+  border-radius: 0 6px 6px 0;
+  transform: translateZ(-5px);
+  background-image:
+    linear-gradient(90deg, rgba(60, 40, 20, 0.22), rgba(60, 40, 20, 0.06) 5%, transparent 12%),
+    radial-gradient(ellipse at 50% 40%, transparent 60%, rgba(120, 90, 50, 0.08));
+  box-shadow: 18px 30px 60px rgba(0, 0, 0, 0.45);
+}
+
+.pageEdge {
+  position: absolute;
+  top: 3px;
+  left: var(--W);
+  width: var(--T);
+  height: calc(var(--H) - 6px);
+  transform-origin: 0 50%;
+  transform: rotateY(90deg);
+  background: repeating-linear-gradient(0deg, var(--paper) 0 1px, var(--paper-shade) 1px 2px);
+}
+
+.leaf {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform-origin: 0 50%;
+}
+
+.leafFront {
+  border-radius: 0 6px 6px 0;
+  background-image:
+    linear-gradient(90deg, rgba(60, 40, 20, 0.2), transparent 10%),
+    repeating-linear-gradient(180deg, transparent 0 calc(22px * var(--u)), rgba(60, 40, 20, 0.05) calc(22px * var(--u)) calc(23px * var(--u)));
+}
+
+/* Back of a leaf becomes the left-hand page once turned */
+.leafBack {
+  transform: rotateY(180deg);
+  border-radius: 6px 0 0 6px;
+  background-image:
+    linear-gradient(270deg, rgba(60, 40, 20, 0.22), rgba(60, 40, 20, 0.06) 5%, transparent 12%),
+    radial-gradient(ellipse at 50% 40%, transparent 60%, rgba(120, 90, 50, 0.08));
+  box-shadow: -18px 30px 60px rgba(0, 0, 0, 0.35);
+}
+
+/* ─────────────── cover & spine ─────────────── */
+.cover {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  left: 0;
+  right: -6px;
+  transform-style: preserve-3d;
+  transform-origin: 0 50%;
+}
+
+.coverFront {
+  border-radius: 2px 6px 6px 2px;
+  background-color: var(--spine);
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+}
+
+/* Hinge crease and a soft sheen so it reads as a hardcover */
+.coverFront::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.14) 2.5%, rgba(0, 0, 0, 0.2) 4.5%, transparent 9%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.14), transparent 40%);
+}
+
+.plainCover {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 18% 14% 0 18%;
+  color: var(--spine-ink);
+  font-family: var(--font-heading);
+  font-size: max(15px, calc(26px * var(--u)));
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.plainCover small {
+  font-family: var(--font-body);
+  font-size: max(11px, calc(14px * var(--u)));
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.endpaper {
+  transform: rotateY(180deg);
+  border-radius: 6px 2px 2px 6px;
+  background-color: var(--primary-deep);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.12) 1.2px, transparent 1.6px),
+    radial-gradient(rgba(255, 255, 255, 0.07) 1.2px, transparent 1.6px);
+  background-size: 18px 18px;
+  background-position: 0 0, 9px 9px;
+  box-shadow: inset -10px 0 18px -8px rgba(0, 0, 0, 0.5);
+}
+
+.spine {
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: var(--T);
+  height: calc(var(--H) + 10px);
+  transform-origin: 0 50%;
+  transform: rotateY(90deg);
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.15) 25%, rgba(0, 0, 0, 0.15) 75%, rgba(0, 0, 0, 0.45)),
+    var(--spine);
+}
+
+/* ─────────────── page content ─────────────── */
+.pageInner {
+  position: absolute;
+  inset: max(16px, calc(30px * var(--u))) max(14px, calc(28px * var(--u)));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.leafBack .pageInner {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0 0 max(6px, calc(12px * var(--u)));
+  color: var(--primary-deep);
+  font-size: max(9px, calc(11px * var(--u)));
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: max(16px, calc(28px * var(--u)));
+  line-height: 1.12;
+}
+
+.byline {
+  margin: max(6px, calc(10px * var(--u))) 0 0;
+  color: var(--ink-muted);
+  font-family: var(--font-heading);
+  font-size: max(11px, calc(15px * var(--u)));
+  font-style: italic;
+}
+
+.ornament {
+  margin: max(8px, calc(16px * var(--u))) 0;
+  color: var(--primary-deep);
+  font-size: max(16px, calc(24px * var(--u)));
+  line-height: 1;
+}
+
+.stars {
+  margin: 0;
+  color: #c98a1f;
+  font-size: max(13px, calc(18px * var(--u)));
+  letter-spacing: 0.1em;
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: max(8px, calc(14px * var(--u)));
+}
+
+.genres span {
+  padding: 3px 9px;
+  border: 1px solid rgba(51, 38, 27, 0.22);
+  border-radius: 999px;
+  color: var(--ink-muted);
+  font-size: max(9px, calc(11px * var(--u)));
+}
+
+.review {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 7;
+  overflow: hidden;
+  margin: 0 0 max(10px, calc(18px * var(--u)));
+  padding-left: 12px;
+  border-left: 2px solid var(--primary-deep);
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-size: max(11px, calc(15px * var(--u)));
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.emptyNote {
+  margin: 0 0 max(10px, calc(18px * var(--u)));
+  color: var(--ink-muted);
+  font-family: var(--font-heading);
+  font-size: max(11px, calc(14px * var(--u)));
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: max(4px, calc(8px * var(--u))) 14px;
+  margin: 0;
+  font-size: max(11px, calc(13px * var(--u)));
+}
+
+.facts dt {
+  color: var(--ink-muted);
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.progress {
+  margin-top: max(10px, calc(16px * var(--u)));
+  color: var(--ink-muted);
+  font-size: max(10px, calc(12px * var(--u)));
+}
+
+.progressTrack {
+  height: 6px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background: rgba(51, 38, 27, 0.12);
+  overflow: hidden;
+}
+
+.progressTrack div {
+  height: 100%;
+  background: var(--primary-deep);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-bottom: max(14px, calc(22px * var(--u)));
+}
+
+.primaryAction,
+.secondaryAction {
+  padding: max(7px, calc(9px * var(--u))) max(10px, calc(14px * var(--u)));
+  border-radius: 10px;
+  font-size: max(11px, calc(13px * var(--u)));
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primaryAction {
+  border: none;
+  background: var(--primary-deep);
+  color: var(--paper);
+}
+
+.secondaryAction {
+  border: 1px solid rgba(51, 38, 27, 0.25);
+  background: transparent;
+  color: var(--ink);
+}
+
+.primaryAction:hover {
+  filter: brightness(1.1);
+}
+
+.secondaryAction:hover {
+  background: rgba(51, 38, 27, 0.06);
+}
+
+.folio {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  color: var(--ink-muted);
+  font-family: var(--font-heading);
+  font-size: max(9px, calc(11px * var(--u)));
+  text-align: center;
+  opacity: 0.7;
+}

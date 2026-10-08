@@ -112,7 +112,7 @@ export default function AddBookPage() {
       <div style={{ marginBottom: "28px" }}>
         <h1
           style={{
-            color: "#C8813A",
+            color: "var(--primary)",
             fontSize: "26px",
             fontWeight: "bold",
             marginBottom: "6px",
@@ -120,7 +120,7 @@ export default function AddBookPage() {
         >
           Add a Book
         </h1>
-        <p style={{ color: "#A89070", fontSize: "14px" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
           Search by title, author, or scan the barcode on your book
         </p>
       </div>
@@ -131,10 +131,10 @@ export default function AddBookPage() {
           display: "flex",
           gap: "8px",
           marginBottom: "16px",
-          backgroundColor: "#2A1C0F",
+          backgroundColor: "var(--surface)",
           padding: "6px",
           borderRadius: "14px",
-          border: "1px solid #4A3020",
+          border: "1px solid var(--border)",
           width: "fit-content",
         }}
       >
@@ -157,8 +157,8 @@ export default function AddBookPage() {
               cursor: "pointer",
               fontSize: "13px",
               fontWeight: "600",
-              backgroundColor: searchType === type ? "#C8813A" : "transparent",
-              color: searchType === type ? "#F5ECD7" : "#A89070",
+              backgroundColor: searchType === type ? "var(--primary)" : "transparent",
+              color: searchType === type ? "var(--on-primary)" : "var(--text-muted)",
               transition: "all 0.2s",
             }}
           >
@@ -184,7 +184,7 @@ export default function AddBookPage() {
               left: "14px",
               top: "50%",
               transform: "translateY(-50%)",
-              color: "#A89070",
+              color: "var(--text-muted)",
             }}
           />
           <input
@@ -202,10 +202,10 @@ export default function AddBookPage() {
             style={{
               width: "100%",
               padding: "12px 16px 12px 42px",
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "14px",
               outline: "none",
               boxSizing: "border-box",
@@ -218,8 +218,8 @@ export default function AddBookPage() {
           style={{
             padding: "12px 20px",
             backgroundColor:
-              !query.trim() || loading ? "#3D2B18" : "#C8813A",
-            color: "#F5ECD7",
+              !query.trim() || loading ? "var(--raised)" : "var(--primary)",
+            color: !query.trim() || loading ? "var(--text-muted)" : "var(--on-primary)",
             border: "none",
             borderRadius: "12px",
             fontWeight: "600",
@@ -242,13 +242,13 @@ export default function AddBookPage() {
             gap: "10px",
             marginBottom: "24px",
             padding: "12px 16px",
-            backgroundColor: "#2A1C0F",
-            border: "1px solid #4A3020",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--border)",
             borderRadius: "12px",
           }}
         >
-          <Camera size={16} style={{ color: "#C8813A", flexShrink: 0 }} />
-          <p style={{ color: "#A89070", fontSize: "13px", margin: 0, flex: 1 }}>
+          <Camera size={16} style={{ color: "var(--primary)", flexShrink: 0 }} />
+          <p style={{ color: "var(--text-muted)", fontSize: "13px", margin: 0, flex: 1 }}>
             You can type the ISBN number from the back of the book or use your
             camera to scan the barcode
           </p>
@@ -256,8 +256,8 @@ export default function AddBookPage() {
             onClick={() => setShowScanner(true)}
             style={{
               padding: "8px 14px",
-              backgroundColor: "#C8813A",
-              color: "#F5ECD7",
+              backgroundColor: "var(--primary)",
+              color: "var(--on-primary)",
               border: "none",
               borderRadius: "10px",
               fontSize: "12px",
@@ -285,7 +285,7 @@ export default function AddBookPage() {
             display: "flex",
             alignItems: "center",
             gap: "6px",
-            color: "#A89070",
+            color: "var(--text-muted)",
             fontSize: "13px",
             background: "none",
             border: "none",
@@ -305,11 +305,11 @@ export default function AddBookPage() {
       {error && !loading && (
         <div
           style={{
-            backgroundColor: "#3D1A1A",
-            border: "1px solid #8B3A3A",
+            backgroundColor: "var(--danger-bg)",
+            border: "1px solid var(--danger)",
             borderRadius: "12px",
             padding: "16px",
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "14px",
           }}
         >
@@ -331,7 +331,7 @@ export default function AddBookPage() {
         <div>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               marginBottom: "12px",
               textTransform: "uppercase",
@@ -350,20 +350,20 @@ export default function AddBookPage() {
                 style={{
                   display: "flex",
                   gap: "16px",
-                  backgroundColor: "#2A1C0F",
-                  border: "1px solid #4A3020",
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
                   borderRadius: "16px",
                   padding: "16px",
                   cursor: "pointer",
                   transition: "all 0.2s",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#C8813A";
-                  e.currentTarget.style.backgroundColor = "#3D2B18";
+                  e.currentTarget.style.borderColor = "var(--primary)";
+                  e.currentTarget.style.backgroundColor = "var(--raised)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#4A3020";
-                  e.currentTarget.style.backgroundColor = "#2A1C0F";
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.backgroundColor = "var(--surface)";
                 }}
               >
                 <BookCover
@@ -376,7 +376,7 @@ export default function AddBookPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3
                     style={{
-                      color: "#F5ECD7",
+                      color: "var(--text)",
                       fontSize: "15px",
                       fontWeight: "bold",
                       marginBottom: "4px",
@@ -387,7 +387,7 @@ export default function AddBookPage() {
                   </h3>
                   <p
                     style={{
-                      color: "#C8813A",
+                      color: "var(--primary)",
                       fontSize: "13px",
                       marginBottom: "8px",
                     }}
@@ -404,17 +404,17 @@ export default function AddBookPage() {
                     }}
                   >
                     {book.publicationYear && (
-                      <span style={{ color: "#A89070", fontSize: "12px" }}>
+                      <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>
                         📅 {book.publicationYear}
                       </span>
                     )}
                     {book.pageCount && (
-                      <span style={{ color: "#A89070", fontSize: "12px" }}>
+                      <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>
                         📄 {book.pageCount} pages
                       </span>
                     )}
                     {book.series && (
-                      <span style={{ color: "#D4A853", fontSize: "12px" }}>
+                      <span style={{ color: "var(--accent)", fontSize: "12px" }}>
                         📚 {book.series}
                         {book.seriesPosition
                           ? ` #${book.seriesPosition}`
@@ -435,9 +435,9 @@ export default function AddBookPage() {
                         <span
                           key={genre}
                           style={{
-                            backgroundColor: "#3D2B18",
-                            border: "1px solid #4A3020",
-                            color: "#A89070",
+                            backgroundColor: "var(--raised)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-muted)",
                             fontSize: "11px",
                             padding: "2px 8px",
                             borderRadius: "999px",
@@ -454,7 +454,7 @@ export default function AddBookPage() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    color: "#A89070",
+                    color: "var(--text-muted)",
                     fontSize: "18px",
                     flexShrink: 0,
                   }}

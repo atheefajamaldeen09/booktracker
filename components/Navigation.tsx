@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -17,143 +17,235 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { ThemeDots } from "./ThemePicker";
 
-// Side nav on desktop — all pages
-const sideNavItems = [
+const mainNavItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/bookshelf", label: "My Bookshelf", icon: BookOpen },
   { href: "/library", label: "Library", icon: Library },
+  { href: "/bookshelf", label: "My Bookshelf", icon: BookOpen },
   { href: "/series", label: "Series", icon: BookMarked },
-  { href: "/add", label: "Add Book", icon: PlusCircle },
   { href: "/wishlist", label: "Wishlist", icon: Heart },
-  { href: "/stats", label: "Stats", icon: BarChart2 },
+  { href: "/random-picker", label: "Pick Next Read", icon: Shuffle },
   { href: "/goals", label: "Goals", icon: Target },
+  { href: "/stats", label: "Stats", icon: BarChart2 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
+
+const shelfLinks = [
+  { href: "/library?shelf=tbr", label: "To Be Read", dot: "var(--primary)" },
+  { href: "/library?shelf=reading", label: "Currently Reading", dot: "var(--accent)" },
+  { href: "/library?shelf=read", label: "Read", dot: "var(--success)" },
+  { href: "/dnf", label: "Did Not Finish", dot: "var(--danger)" },
+];
+
+function isActivePath(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+function Logo() {
+  return (
+    <Link
+      href="/"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        textDecoration: "none",
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          position: "relative",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "38px",
+          height: "38px",
+          borderRadius: "12px",
+          background: "linear-gradient(145deg, var(--primary), var(--primary-deep))",
+          boxShadow: "var(--shadow-md)",
+          fontSize: "20px",
+        }}
+      >
+        <span className="hero-emoji" />
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
+        <span
+          style={{
+            fontFamily: "var(--font-heading)",
+            color: "var(--text)",
+            fontSize: "19px",
+            fontWeight: 600,
+          }}
+        >
+          BookTracker
+        </span>
+        <span style={{ color: "var(--text-faint)", fontSize: "11px", marginTop: "2px" }}>
+          brewed for readers
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+function NavLinks({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <>
+      <Link
+        href="/add"
+        onClick={onNavigate}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          padding: "11px 14px",
+          borderRadius: "12px",
+          margin: "0 0 20px 0",
+          background: "linear-gradient(135deg, var(--primary-hover), var(--primary))",
+          color: "var(--on-primary)",
+          textDecoration: "none",
+          fontSize: "14px",
+          fontWeight: 700,
+          boxShadow: "var(--shadow-md)",
+        }}
+      >
+        <PlusCircle size={18} />
+        Add a Book
+      </Link>
+
+      {mainNavItems.map((item) => {
+        const Icon = item.icon;
+        const active = isActivePath(pathname, item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className="nav-link"
+            data-active={active}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "10px 12px",
+              borderRadius: "12px",
+              marginBottom: "2px",
+              textDecoration: "none",
+              fontSize: "14px",
+              fontWeight: 500,
+            }}
+          >
+            <Icon size={18} />
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
+
+      <p
+        style={{
+          color: "var(--text-faint)",
+          fontSize: "11px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
+          padding: "0 12px",
+          margin: "24px 0 8px",
+        }}
+      >
+        Shelves
+      </p>
+      {shelfLinks.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={onNavigate}
+          className="nav-link"
+          data-active={false}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "8px 12px",
+            borderRadius: "10px",
+            marginBottom: "2px",
+            textDecoration: "none",
+            fontSize: "13px",
+          }}
+        >
+          <span
+            style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              backgroundColor: item.dot,
+              flexShrink: 0,
+            }}
+          />
+          {item.label}
+        </Link>
+      ))}
+    </>
+  );
+}
 
 export default function Navigation() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Lock page scroll while the mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <>
       {/* ── SIDE NAV — desktop only ── */}
       <nav
+        id="side-nav"
         style={{
-          backgroundColor: "#2A1C0F",
-          borderRight: "1px solid #4A3020",
+          background: "linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%)",
+          borderRight: "1px solid var(--border-soft)",
           position: "fixed",
           top: 0,
           left: 0,
           bottom: 0,
-          width: "210px",
+          width: "230px",
           display: "none",
           flexDirection: "column",
-          padding: "24px 12px",
+          padding: "24px 14px",
           zIndex: 50,
           overflowY: "auto",
         }}
-        id="side-nav"
       >
-        {/* App title */}
-        <div style={{ marginBottom: "32px", padding: "0 12px" }}>
-          <h1
-            style={{
-              color: "#C8813A",
-              fontSize: "20px",
-              fontWeight: "bold",
-            }}
-          >
-            ☕ BookTracker
-          </h1>
-          <p style={{ color: "#A89070", fontSize: "12px", marginTop: "4px" }}>
-            Your reading companion
-          </p>
+        <div style={{ padding: "0 6px", marginBottom: "28px" }}>
+          <Logo />
         </div>
-
-        {/* Main Nav Links */}
-        {sideNavItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "10px 12px",
-                borderRadius: "12px",
-                marginBottom: "4px",
-                backgroundColor: isActive ? "#3D2B18" : "transparent",
-                color: isActive ? "#C8813A" : "#A89070",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "500",
-                transition: "all 0.2s",
-              }}
-            >
-              <Icon size={18} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-
-        {/* Divider */}
-        <div
-          style={{
-            borderTop: "1px solid #4A3020",
-            margin: "12px 0",
-          }}
-        />
-
-        {/* Extra shelf links */}
-        <p
-          style={{
-            color: "#6B5040",
-            fontSize: "11px",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            padding: "0 12px",
-            marginBottom: "8px",
-          }}
-        >
-          Shelves
-        </p>
-        {[
-          { href: "/library", label: "📚 TBR" },
-          { href: "/wishlist", label: "💛 Wishlist" },
-          { href: "/dnf", label: "🚫 Did Not Finish" },
-        ].map((item) => (
-          <Link
-            key={item.href + item.label}
-            href={item.href}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "8px 12px",
-              borderRadius: "12px",
-              marginBottom: "4px",
-              backgroundColor: "transparent",
-              color: "#A89070",
-              textDecoration: "none",
-              fontSize: "13px",
-              transition: "all 0.2s",
-            }}
-          >
-            {item.label}
-          </Link>
-        ))}
+        <NavLinks pathname={pathname} />
+        <div style={{ marginTop: "auto", paddingTop: "28px" }}>
+          <ThemeDots />
+        </div>
       </nav>
 
-      {/* ── MOBILE TOP BAR with Hamburger ── */}
+      {/* ── MOBILE TOP BAR ── */}
       <div
         id="mobile-top-bar"
         style={{
-          backgroundColor: "#2A1C0F",
-          borderBottom: "1px solid #4A3020",
+          backgroundColor: "var(--nav-bg)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderBottom: "1px solid var(--border-soft)",
           position: "fixed",
           top: 0,
           left: 0,
@@ -161,162 +253,93 @@ export default function Navigation() {
           display: "none",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "12px 16px",
+          padding: "10px 16px",
           zIndex: 51,
         }}
       >
-        <h1
-          style={{
-            color: "#C8813A",
-            fontSize: "18px",
-            fontWeight: "bold",
-            margin: 0,
-          }}
-        >
-          ☕ BookTracker
-        </h1>
-
+        <Logo />
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           style={{
-            background: "none",
-            border: "none",
-            color: "#C8813A",
+            background: "var(--raised)",
+            border: "1px solid var(--border)",
+            borderRadius: "10px",
+            color: "var(--text)",
             cursor: "pointer",
-            padding: "4px",
+            padding: "8px",
+            display: "flex",
           }}
         >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       {/* ── MOBILE MENU OVERLAY ── */}
       {mobileMenuOpen && (
         <>
-          {/* Backdrop */}
           <div
             onClick={() => setMobileMenuOpen(false)}
             style={{
               position: "fixed",
-              top: "56px",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
               zIndex: 49,
+              animation: "navFade 0.2s ease-out",
             }}
           />
-
-          {/* Menu */}
           <nav
             style={{
               position: "fixed",
-              top: "56px",
+              top: "59px",
               right: 0,
               bottom: 0,
-              width: "280px",
-              backgroundColor: "#2A1C0F",
-              borderLeft: "1px solid #4A3020",
+              width: "min(290px, 85vw)",
+              background: "linear-gradient(180deg, var(--surface) 0%, var(--bg-deep) 100%)",
+              borderLeft: "1px solid var(--border-soft)",
               zIndex: 50,
               overflowY: "auto",
-              padding: "16px",
-              animation: "slideIn 0.3s ease-out",
+              padding: "20px 14px",
+              animation: "slideIn 0.25s ease-out",
             }}
           >
-            {sideNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "12px",
-                    borderRadius: "12px",
-                    marginBottom: "4px",
-                    backgroundColor: isActive ? "#3D2B18" : "transparent",
-                    color: isActive ? "#C8813A" : "#A89070",
-                    textDecoration: "none",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-
-            <div style={{ borderTop: "1px solid #4A3020", margin: "12px 0" }} />
-
-            <p
-              style={{
-                color: "#6B5040",
-                fontSize: "11px",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                padding: "0 12px",
-                marginBottom: "8px",
-              }}
-            >
-              Quick Access
-            </p>
-            {[
-              { href: "/library", label: "📚 TBR" },
-              { href: "/wishlist", label: "💛 Wishlist" },
-              { href: "/dnf", label: "🚫 Did Not Finish" },
-            ].map((item) => (
-              <Link
-                key={item.href + item.label}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  display: "block",
-                  padding: "10px 12px",
-                  borderRadius: "12px",
-                  marginBottom: "4px",
-                  color: "#A89070",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
+            <NavLinks pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
+            <div style={{ marginTop: "28px" }}>
+              <ThemeDots />
+            </div>
           </nav>
         </>
       )}
 
-      {/* ── Responsive styles ── */}
       <style>{`
+        .nav-link {
+          color: var(--text-muted);
+          transition: background-color 0.15s, color 0.15s;
+        }
+        .nav-link:hover {
+          background-color: var(--raised);
+          color: var(--text);
+        }
+        .nav-link[data-active="true"] {
+          background-color: var(--raised);
+          color: var(--primary);
+          box-shadow: inset 3px 0 0 var(--primary);
+        }
         @media (min-width: 768px) {
-          #side-nav {
-            display: flex !important;
-          }
-          #mobile-top-bar {
-            display: none !important;
-          }
+          #side-nav { display: flex !important; }
+          #mobile-top-bar { display: none !important; }
         }
         @media (max-width: 767px) {
-          #side-nav {
-            display: none !important;
-          }
-          #mobile-top-bar {
-            display: flex !important;
-          }
+          #side-nav { display: none !important; }
+          #mobile-top-bar { display: flex !important; }
         }
-
         @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-          }
-          to {
-            transform: translateX(0);
-          }
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        @keyframes navFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </>

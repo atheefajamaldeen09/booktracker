@@ -15,7 +15,7 @@ export default function RandomPickerPage() {
             minHeight: "60vh",
           }}
         >
-          <p style={{ color: "#A89070", fontSize: "16px" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "16px" }}>
             Loading picker...
           </p>
         </div>

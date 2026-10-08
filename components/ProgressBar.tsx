@@ -21,10 +21,10 @@ export default function ProgressBar({
             marginBottom: "6px",
           }}
         >
-          <span style={{ color: "#A89070", fontSize: "12px" }}>
+          <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>
             Page {current} of {total}
           </span>
-          <span style={{ color: "#C8813A", fontSize: "12px", fontWeight: "600" }}>
+          <span style={{ color: "var(--primary)", fontSize: "12px", fontWeight: "600" }}>
             {Math.round(percentage)}%
           </span>
         </div>
@@ -33,7 +33,7 @@ export default function ProgressBar({
         style={{
           width: "100%",
           height: "8px",
-          backgroundColor: "#3D2B18",
+          backgroundColor: "var(--raised)",
           borderRadius: "999px",
           overflow: "hidden",
         }}
@@ -42,7 +42,7 @@ export default function ProgressBar({
           style={{
             width: `${percentage}%`,
             height: "100%",
-            backgroundColor: "#C8813A",
+            backgroundColor: "var(--primary)",
             borderRadius: "999px",
             transition: "width 0.4s ease",
           }}

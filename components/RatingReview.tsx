@@ -63,8 +63,8 @@ export default function RatingReview({
   return (
     <div
       style={{
-        backgroundColor: "#2A1C0F",
-        border: "1px solid #4A3020",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: "14px",
         padding: "20px",
         marginBottom: "28px",
@@ -72,7 +72,7 @@ export default function RatingReview({
     >
       <h2
         style={{
-          color: "#C8813A",
+          color: "var(--primary)",
           fontSize: "18px",
           fontWeight: "bold",
           marginBottom: "20px",
@@ -85,7 +85,7 @@ export default function RatingReview({
         <div style={{ marginBottom: "24px" }}>
         <label
             style={{
-            color: "#A89070",
+            color: "var(--text-muted)",
             fontSize: "12px",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
@@ -106,7 +106,7 @@ export default function RatingReview({
         >
             <StarRating rating={rating} onRatingChange={setRating} size="lg" />
             {rating > 0 && (
-            <span style={{ color: "#F5ECD7", fontSize: "16px" }}>
+            <span style={{ color: "var(--text)", fontSize: "16px" }}>
                 {rating} / 5
             </span>
             )}
@@ -120,8 +120,8 @@ export default function RatingReview({
                 disabled={isSavingRating}
                 style={{
                 padding: "8px 16px",
-                backgroundColor: "#C8813A",
-                color: "#F5ECD7",
+                backgroundColor: "var(--primary)",
+                color: "var(--on-primary)",
                 border: "none",
                 borderRadius: "10px",
                 fontSize: "13px",
@@ -145,8 +145,8 @@ export default function RatingReview({
                 style={{
                 padding: "8px 16px",
                 backgroundColor: "transparent",
-                color: "#8B3A3A",
-                border: "1px solid #8B3A3A",
+                color: "var(--danger)",
+                border: "1px solid var(--danger)",
                 borderRadius: "10px",
                 fontSize: "13px",
                 fontWeight: "600",
@@ -159,7 +159,7 @@ export default function RatingReview({
 
             {/* Success message */}
             {ratingSuccess && (
-            <span style={{ color: "#7A9E7E", fontSize: "13px" }}>
+            <span style={{ color: "var(--success)", fontSize: "13px" }}>
                 ✓ Saved!
             </span>
             )}
@@ -170,7 +170,7 @@ export default function RatingReview({
       <div>
         <label
           style={{
-            color: "#A89070",
+            color: "var(--text-muted)",
             fontSize: "12px",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
@@ -189,10 +189,10 @@ export default function RatingReview({
             width: "100%",
             minHeight: "120px",
             padding: "12px 14px",
-            backgroundColor: "#1C1009",
-            border: "1px solid #4A3020",
+            backgroundColor: "var(--bg)",
+            border: "1px solid var(--border)",
             borderRadius: "10px",
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "14px",
             fontFamily: "inherit",
             resize: "vertical",
@@ -209,7 +209,7 @@ export default function RatingReview({
             alignItems: "center",
           }}
         >
-          <p style={{ color: "#6B5040", fontSize: "11px", margin: 0 }}>
+          <p style={{ color: "var(--text-faint)", fontSize: "11px", margin: 0 }}>
             {review.length} characters
           </p>
 
@@ -220,8 +220,8 @@ export default function RatingReview({
                 disabled={isSavingReview}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: "#C8813A",
-                  color: "#F5ECD7",
+                  backgroundColor: "var(--primary)",
+                  color: "var(--on-primary)",
                   border: "none",
                   borderRadius: "10px",
                   fontSize: "13px",
@@ -232,7 +232,7 @@ export default function RatingReview({
                 {isSavingReview ? "Saving..." : "Save Review"}
               </button>
               {reviewSuccess && (
-                <span style={{ color: "#7A9E7E", fontSize: "13px" }}>
+                <span style={{ color: "var(--success)", fontSize: "13px" }}>
                   ✓ Saved!
                 </span>
               )}
@@ -247,20 +247,20 @@ export default function RatingReview({
           style={{
             marginTop: "16px",
             padding: "12px",
-            backgroundColor: "#3D2B18",
+            backgroundColor: "var(--raised)",
             borderRadius: "10px",
-            border: "1px solid #4A3020",
+            border: "1px solid var(--border)",
           }}
         >
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "12px",
               margin: 0,
               lineHeight: "1.5",
             }}
           >
-            💡 <strong style={{ color: "#C8813A" }}>Tip:</strong> Rate and
+            💡 <strong style={{ color: "var(--primary)" }}>Tip:</strong> Rate and
             review books you&apos;ve finished to track what you loved and
             remember your thoughts later!
           </p>

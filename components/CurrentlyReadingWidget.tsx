@@ -44,17 +44,22 @@ export default function CurrentlyReadingWidget({ books }: Props) {
     return (
       <div
         style={{
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
-          borderRadius: "14px",
-          padding: "24px",
+          backgroundColor: "var(--surface)",
+          border: "1px dashed var(--border)",
+          borderRadius: "18px",
+          padding: "28px 24px",
           textAlign: "center",
+          height: "calc(100% - 40px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         <div style={{ fontSize: "48px", marginBottom: "12px" }}>📖</div>
         <h3
           style={{
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "16px",
             fontWeight: "bold",
             marginBottom: "8px",
@@ -62,23 +67,23 @@ export default function CurrentlyReadingWidget({ books }: Props) {
         >
           No books currently reading
         </h3>
-        <p style={{ color: "#A89070", fontSize: "14px", marginBottom: "16px" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "16px" }}>
           Start a book from your TBR to track your progress
         </p>
         <Link
-          href="/library"
+          href="/library?shelf=tbr"
           style={{
             display: "inline-block",
             padding: "10px 20px",
-            backgroundColor: "#C8813A",
-            color: "#F5ECD7",
+            backgroundColor: "var(--primary)",
+            color: "var(--on-primary)",
             borderRadius: "12px",
             fontWeight: "600",
             fontSize: "14px",
             textDecoration: "none",
           }}
         >
-          Browse Library
+          Browse your TBR
         </Link>
       </div>
     );
@@ -96,10 +101,11 @@ export default function CurrentlyReadingWidget({ books }: Props) {
           <div
             key={book.id}
             style={{
-              backgroundColor: "#2A1C0F",
-              border: "1px solid #4A3020",
-              borderRadius: "14px",
-              padding: "16px",
+              background: "linear-gradient(135deg, var(--surface), var(--raised))",
+              border: "1px solid var(--border)",
+              borderRadius: "18px",
+              padding: "18px",
+              boxShadow: "var(--shadow-sm)",
             }}
           >
             <Link
@@ -121,7 +127,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3
                   style={{
-                    color: "#F5ECD7",
+                    color: "var(--text)",
                     fontSize: "16px",
                     fontWeight: "bold",
                     marginBottom: "4px",
@@ -132,7 +138,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                 </h3>
                 <p
                   style={{
-                    color: "#C8813A",
+                    color: "var(--primary)",
                     fontSize: "14px",
                     marginBottom: "12px",
                   }}
@@ -151,7 +157,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                     >
                       <p
                         style={{
-                          color: "#A89070",
+                          color: "var(--text-muted)",
                           fontSize: "12px",
                           margin: 0,
                         }}
@@ -160,7 +166,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                       </p>
                       <p
                         style={{
-                          color: "#F5ECD7",
+                          color: "var(--text)",
                           fontSize: "12px",
                           fontWeight: "600",
                           margin: 0,
@@ -174,8 +180,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                       style={{
                         width: "100%",
                         height: "10px",
-                        backgroundColor: "#1C1009",
-                        border: "1px solid #4A3020",
+                        backgroundColor: "var(--bg)",
                         borderRadius: "999px",
                         overflow: "hidden",
                       }}
@@ -184,8 +189,9 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                         style={{
                           width: `${progress}%`,
                           height: "100%",
-                          backgroundColor: "#C8813A",
-                          transition: "width 0.3s",
+                          background: "linear-gradient(90deg, var(--primary), var(--accent))",
+                          borderRadius: "999px",
+                          transition: "width 0.6s ease-out",
                         }}
                       />
                     </div>
@@ -203,10 +209,10 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                     style={{
                       width: "100%",
                       padding: "10px",
-                      backgroundColor: "#3D2B18",
-                      border: "1px solid #4A3020",
+                      backgroundColor: "var(--raised)",
+                      border: "1px solid var(--border)",
                       borderRadius: "10px",
-                      color: "#F5ECD7",
+                      color: "var(--text)",
                       fontSize: "13px",
                       fontWeight: "600",
                       cursor: "pointer",
@@ -217,15 +223,15 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                 ) : (
                   <div
                     style={{
-                      backgroundColor: "#1C1009",
-                      border: "1px solid #4A3020",
+                      backgroundColor: "var(--bg)",
+                      border: "1px solid var(--border)",
                       borderRadius: "10px",
                       padding: "12px",
                     }}
                   >
                     <label
                       style={{
-                        color: "#A89070",
+                        color: "var(--text-muted)",
                         fontSize: "11px",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
@@ -247,10 +253,10 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                       style={{
                         width: "100%",
                         padding: "8px 12px",
-                        backgroundColor: "#2A1C0F",
-                        border: "1px solid #4A3020",
+                        backgroundColor: "var(--surface)",
+                        border: "1px solid var(--border)",
                         borderRadius: "8px",
-                        color: "#F5ECD7",
+                        color: "var(--text)",
                         fontSize: "14px",
                         outline: "none",
                         marginBottom: "8px",
@@ -278,11 +284,11 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                             updating === book.id ||
                             !newPage[book.id] ||
                             parseInt(newPage[book.id]) <= (book.currentPage || 0)
-                              ? "#3D2B18"
-                              : "#C8813A",
+                              ? "var(--primary)"
+                              : "var(--primary)",
                           border: "none",
                           borderRadius: "8px",
-                          color: "#F5ECD7",
+                          color: "var(--on-primary)",
                           fontSize: "13px",
                           fontWeight: "600",
                           cursor:
@@ -311,9 +317,9 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                           flex: 1,
                           padding: "8px",
                           backgroundColor: "transparent",
-                          border: "1px solid #4A3020",
+                          border: "1px solid var(--border)",
                           borderRadius: "8px",
-                          color: "#A89070",
+                          color: "var(--text-muted)",
                           fontSize: "13px",
                           fontWeight: "600",
                           cursor: "pointer",

@@ -141,17 +141,17 @@ function ConfirmBookContent() {
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "10px 14px",
-    backgroundColor: "#2A1C0F",
-    border: "1px solid #4A3020",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: "10px",
-    color: "#F5ECD7",
+    color: "var(--text)",
     fontSize: "14px",
     outline: "none",
     boxSizing: "border-box",
   };
 
   const labelStyle: React.CSSProperties = {
-    color: "#A89070",
+    color: "var(--text-muted)",
     fontSize: "12px",
     marginBottom: "6px",
     display: "block",
@@ -175,15 +175,15 @@ function ConfirmBookContent() {
         <div style={{ fontSize: "64px" }}>🎉</div>
         <h1
           style={{
-            color: "#C8813A",
+            color: "var(--primary)",
             fontSize: "24px",
             fontWeight: "bold",
           }}
         >
           Book Added!
         </h1>
-        <p style={{ color: "#A89070", fontSize: "14px", maxWidth: "300px" }}>
-          <strong style={{ color: "#F5ECD7" }}>{title}</strong> has been added
+        <p style={{ color: "var(--text-muted)", fontSize: "14px", maxWidth: "300px" }}>
+          <strong style={{ color: "var(--text)" }}>{title}</strong> has been added
           to your{" "}
           {shelf === "tbr"
             ? "TBR"
@@ -205,8 +205,8 @@ function ConfirmBookContent() {
             onClick={() => router.push("/library")}
             style={{
               padding: "12px",
-              backgroundColor: "#C8813A",
-              color: "#F5ECD7",
+              backgroundColor: "var(--primary)",
+              color: "var(--on-primary)",
               border: "none",
               borderRadius: "12px",
               fontWeight: "600",
@@ -220,9 +220,9 @@ function ConfirmBookContent() {
             onClick={() => router.push("/add")}
             style={{
               padding: "12px",
-              backgroundColor: "#2A1C0F",
-              color: "#F5ECD7",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--surface)",
+              color: "var(--text)",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
               fontWeight: "600",
               fontSize: "14px",
@@ -236,9 +236,9 @@ function ConfirmBookContent() {
               onClick={() => router.push("/bookshelf")}
               style={{
                 padding: "12px",
-                backgroundColor: "#2A1C0F",
-                color: "#F5ECD7",
-                border: "1px solid #4A3020",
+                backgroundColor: "var(--surface)",
+                color: "var(--text)",
+                border: "1px solid var(--border)",
                 borderRadius: "12px",
                 fontWeight: "600",
                 fontSize: "14px",
@@ -262,7 +262,7 @@ function ConfirmBookContent() {
           display: "flex",
           alignItems: "center",
           gap: "4px",
-          color: "#A89070",
+          color: "var(--text-muted)",
           background: "none",
           border: "none",
           cursor: "pointer",
@@ -277,7 +277,7 @@ function ConfirmBookContent() {
 
       <h1
         style={{
-          color: "#C8813A",
+          color: "var(--primary)",
           fontSize: "24px",
           fontWeight: "bold",
           marginBottom: "6px",
@@ -285,7 +285,7 @@ function ConfirmBookContent() {
       >
         Confirm Book Details
       </h1>
-      <p style={{ color: "#A89070", fontSize: "14px", marginBottom: "28px" }}>
+      <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "28px" }}>
         Review and edit any details before adding to your shelf
       </p>
 
@@ -309,10 +309,10 @@ function ConfirmBookContent() {
               justifyContent: "center",
               gap: "4px",
               padding: "6px 10px",
-              backgroundColor: "#3D2B18",
-              border: "1px solid #4A3020",
+              backgroundColor: "var(--raised)",
+              border: "1px solid var(--border)",
               borderRadius: "8px",
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "11px",
               cursor: "pointer",
               width: "100%",
@@ -330,10 +330,10 @@ function ConfirmBookContent() {
                 justifyContent: "center",
                 gap: "4px",
                 padding: "6px 10px",
-                backgroundColor: "#3D1A1A",
-                border: "1px solid #6B3A3A",
+                backgroundColor: "var(--danger-bg)",
+                border: "1px solid var(--danger-border)",
                 borderRadius: "8px",
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "11px",
                 cursor: "pointer",
                 width: "100%",
@@ -479,9 +479,9 @@ function ConfirmBookContent() {
                 minWidth: "140px",
                 padding: "14px",
                 backgroundColor:
-                  shelf === option.value ? "#3D2B18" : "#2A1C0F",
+                  shelf === option.value ? "var(--raised)" : "var(--surface)",
                 border: `2px solid ${
-                  shelf === option.value ? "#C8813A" : "#4A3020"
+                  shelf === option.value ? "var(--primary)" : "var(--border)"
                 }`,
                 borderRadius: "12px",
                 cursor: "pointer",
@@ -491,7 +491,7 @@ function ConfirmBookContent() {
             >
               <p
                 style={{
-                  color: shelf === option.value ? "#C8813A" : "#F5ECD7",
+                  color: shelf === option.value ? "var(--primary)" : "var(--text)",
                   fontWeight: "600",
                   fontSize: "14px",
                   margin: "0 0 4px 0",
@@ -499,7 +499,7 @@ function ConfirmBookContent() {
               >
                 {option.label}
               </p>
-              <p style={{ color: "#A89070", fontSize: "12px", margin: 0 }}>
+              <p style={{ color: "var(--text-muted)", fontSize: "12px", margin: 0 }}>
                 {option.desc}
               </p>
             </div>
@@ -511,11 +511,11 @@ function ConfirmBookContent() {
       {error && (
         <div
           style={{
-            backgroundColor: "#3D1A1A",
-            border: "1px solid #8B3A3A",
+            backgroundColor: "var(--danger-bg)",
+            border: "1px solid var(--danger)",
             borderRadius: "10px",
             padding: "12px 16px",
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "14px",
             marginBottom: "16px",
           }}

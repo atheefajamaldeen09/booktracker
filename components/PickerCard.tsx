@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 
 type Props = {
@@ -11,49 +8,53 @@ type Props = {
 };
 
 export default function PickerCard({ href, icon, title, description }: Props) {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <Link
       href={href}
+      className="hover-lift"
       style={{
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        backgroundColor: isHovered ? "#3D2B18" : "#2A1C0F",
-        border: `2px solid ${isHovered ? "#C8813A" : "#4A3020"}`,
-        borderRadius: "14px",
+        gap: "14px",
+        padding: "18px",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "16px",
         textDecoration: "none",
-        transition: "all 0.2s",
-        cursor: "pointer",
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      <div style={{ fontSize: "48px", marginBottom: "12px" }}>{icon}</div>
-      <h3
+      <span
         style={{
-          color: "#F5ECD7",
-          fontSize: "16px",
-          fontWeight: "bold",
-          marginBottom: "6px",
-          textAlign: "center",
+          width: "52px",
+          height: "52px",
+          flexShrink: 0,
+          borderRadius: "14px",
+          background: "linear-gradient(145deg, var(--raised), var(--bg))",
+          border: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "28px",
         }}
       >
-        {title}
-      </h3>
-      <p
-        style={{
-          color: "#A89070",
-          fontSize: "12px",
-          textAlign: "center",
-          margin: 0,
-        }}
-      >
-        {description}
-      </p>
+        {icon}
+      </span>
+      <span style={{ minWidth: 0 }}>
+        <span
+          style={{
+            display: "block",
+            color: "var(--text)",
+            fontSize: "15px",
+            fontWeight: 600,
+            marginBottom: "2px",
+          }}
+        >
+          {title}
+        </span>
+        <span style={{ display: "block", color: "var(--text-muted)", fontSize: "12px" }}>
+          {description}
+        </span>
+      </span>
     </Link>
   );
 }

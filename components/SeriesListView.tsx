@@ -24,15 +24,15 @@ export default function SeriesListView({ series }: Props) {
         style={{
           textAlign: "center",
           padding: "60px 20px",
-          backgroundColor: "#2A1C0F",
-          border: "1px solid #4A3020",
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--border)",
           borderRadius: "14px",
         }}
       >
         <div style={{ fontSize: "48px", marginBottom: "16px" }}>📚</div>
         <h2
           style={{
-            color: "#F5ECD7",
+            color: "var(--text)",
             fontSize: "18px",
             fontWeight: "bold",
             marginBottom: "8px",
@@ -42,7 +42,7 @@ export default function SeriesListView({ series }: Props) {
         </h2>
         <p
           style={{
-            color: "#A89070",
+            color: "var(--text-muted)",
             fontSize: "14px",
             marginBottom: "20px",
           }}
@@ -54,8 +54,8 @@ export default function SeriesListView({ series }: Props) {
           style={{
             display: "inline-block",
             padding: "10px 20px",
-            backgroundColor: "#C8813A",
-            color: "#F5ECD7",
+            backgroundColor: "var(--primary)",
+            color: "var(--on-primary)",
             borderRadius: "12px",
             fontWeight: "600",
             fontSize: "14px",
@@ -91,8 +91,8 @@ export default function SeriesListView({ series }: Props) {
             href={`/series/${s.id}`}
             style={{
               display: "block",
-              backgroundColor: isHovered ? "#3D2B18" : "#2A1C0F",
-              border: `1px solid ${isHovered ? "#C8813A" : "#4A3020"}`,
+              backgroundColor: isHovered ? "var(--raised)" : "var(--surface)",
+              border: `1px solid ${isHovered ? "var(--primary)" : "var(--border)"}`,
               borderRadius: "14px",
               padding: "20px",
               textDecoration: "none",
@@ -103,7 +103,7 @@ export default function SeriesListView({ series }: Props) {
           >
             <h3
               style={{
-                color: "#F5ECD7",
+                color: "var(--text)",
                 fontSize: "16px",
                 fontWeight: "bold",
                 marginBottom: "12px",
@@ -124,9 +124,9 @@ export default function SeriesListView({ series }: Props) {
             >
               <span
                 style={{
-                  backgroundColor: "#1C1009",
-                  border: "1px solid #4A3020",
-                  color: "#A89070",
+                  backgroundColor: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   padding: "4px 8px",
                   borderRadius: "999px",
@@ -138,9 +138,9 @@ export default function SeriesListView({ series }: Props) {
               {s.totalBooks && (
                 <span
                   style={{
-                    backgroundColor: "#1C1009",
-                    border: "1px solid #4A3020",
-                    color: "#A89070",
+                    backgroundColor: "var(--bg)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-muted)",
                     fontSize: "11px",
                     padding: "4px 8px",
                     borderRadius: "999px",
@@ -153,9 +153,9 @@ export default function SeriesListView({ series }: Props) {
               {s.totalRead > 0 && (
                 <span
                   style={{
-                    backgroundColor: "#1C1009",
-                    border: "1px solid #7A9E7E",
-                    color: "#7A9E7E",
+                    backgroundColor: "var(--bg)",
+                    border: "1px solid var(--success)",
+                    color: "var(--success)",
                     fontSize: "11px",
                     padding: "4px 8px",
                     borderRadius: "999px",
@@ -177,7 +177,7 @@ export default function SeriesListView({ series }: Props) {
               >
                 <p
                   style={{
-                    color: "#6B5040",
+                    color: "var(--text-faint)",
                     fontSize: "11px",
                     margin: 0,
                   }}
@@ -186,7 +186,7 @@ export default function SeriesListView({ series }: Props) {
                 </p>
                 <p
                   style={{
-                    color: "#A89070",
+                    color: "var(--text-muted)",
                     fontSize: "11px",
                     fontWeight: "600",
                     margin: 0,
@@ -200,8 +200,8 @@ export default function SeriesListView({ series }: Props) {
                 style={{
                   width: "100%",
                   height: "8px",
-                  backgroundColor: "#1C1009",
-                  border: "1px solid #4A3020",
+                  backgroundColor: "var(--bg)",
+                  border: "1px solid var(--border)",
                   borderRadius: "999px",
                   overflow: "hidden",
                 }}
@@ -210,7 +210,7 @@ export default function SeriesListView({ series }: Props) {
                   style={{
                     width: `${completionPercentage}%`,
                     height: "100%",
-                    backgroundColor: "#7A9E7E",
+                    backgroundColor: "var(--success)",
                     transition: "width 0.3s",
                   }}
                 />

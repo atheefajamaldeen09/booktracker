@@ -23,9 +23,9 @@ type Props = {
 };
 
 const TAG_COLORS = [
-  { label: "Amber", value: "#C8813A" },
-  { label: "Gold", value: "#D4A853" },
-  { label: "Sage", value: "#7A9E7E" },
+  { label: "Amber", value: "var(--primary)" },
+  { label: "Gold", value: "var(--accent)" },
+  { label: "Sage", value: "var(--success)" },
   { label: "Teal", value: "#4AA8A0" },
   { label: "Rose", value: "#C4756A" },
   { label: "Lavender", value: "#9B7EC8" },
@@ -113,8 +113,8 @@ export default function TagManager({
   return (
     <div
       style={{
-        backgroundColor: "#2A1C0F",
-        border: "1px solid #4A3020",
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
         borderRadius: "16px",
         overflow: "hidden",
         marginBottom: "24px",
@@ -132,7 +132,7 @@ export default function TagManager({
           backgroundColor: "transparent",
           border: "none",
           cursor: "pointer",
-          color: "#F5ECD7",
+          color: "var(--text)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -146,8 +146,8 @@ export default function TagManager({
                 <span
                   key={tag.id}
                   style={{
-                    backgroundColor: tag.color || "#C8813A",
-                    color: "#F5ECD7",
+                    backgroundColor: tag.color || "var(--primary)",
+                    color: "var(--text)",
                     fontSize: "10px",
                     padding: "2px 8px",
                     borderRadius: "999px",
@@ -158,32 +158,32 @@ export default function TagManager({
                 </span>
               ))}
               {assignedTags.length > 3 && (
-                <span style={{ color: "#A89070", fontSize: "10px" }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "10px" }}>
                   +{assignedTags.length - 3} more
                 </span>
               )}
             </div>
           )}
           {!isOpen && assignedTags.length === 0 && (
-            <span style={{ color: "#A89070", fontSize: "12px" }}>
+            <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>
               No tags yet
             </span>
           )}
         </div>
-        <span style={{ color: "#A89070", fontSize: "18px" }}>
+        <span style={{ color: "var(--text-muted)", fontSize: "18px" }}>
           {isOpen ? "−" : "+"}
         </span>
       </button>
 
       {/* Tag Panel */}
       {isOpen && (
-        <div style={{ padding: "16px", borderTop: "1px solid #4A3020" }}>
+        <div style={{ padding: "16px", borderTop: "1px solid var(--border)" }}>
           {/* All available tags */}
           {allTags.length > 0 && (
             <div style={{ marginBottom: "16px" }}>
               <p
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -210,13 +210,13 @@ export default function TagManager({
                         style={{
                           padding: "4px 12px",
                           backgroundColor: isAssigned
-                            ? tag.color || "#C8813A"
+                            ? tag.color || "var(--primary)"
                             : "transparent",
-                          border: `1px solid ${tag.color || "#C8813A"}`,
+                          border: `1px solid ${tag.color || "var(--primary)"}`,
                           borderRadius: "999px",
                           color: isAssigned
-                            ? "#F5ECD7"
-                            : tag.color || "#C8813A",
+                            ? "var(--text)"
+                            : tag.color || "var(--primary)",
                           fontSize: "12px",
                           fontWeight: "600",
                           cursor: loading ? "not-allowed" : "pointer",
@@ -239,7 +239,7 @@ export default function TagManager({
                           backgroundColor: "transparent",
                           border: "none",
                           cursor: loading ? "not-allowed" : "pointer",
-                          color: "#6B5040",
+                          color: "var(--text-faint)",
                           padding: 0,
                         }}
                         title="Delete tag"
@@ -256,7 +256,7 @@ export default function TagManager({
           {allTags.length === 0 && !showCreateForm && (
             <p
               style={{
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "13px",
                 marginBottom: "12px",
               }}
@@ -275,9 +275,9 @@ export default function TagManager({
                 gap: "6px",
                 padding: "8px 14px",
                 backgroundColor: "transparent",
-                border: "1px dashed #4A3020",
+                border: "1px dashed var(--border)",
                 borderRadius: "10px",
-                color: "#A89070",
+                color: "var(--text-muted)",
                 fontSize: "13px",
                 cursor: "pointer",
               }}
@@ -288,15 +288,15 @@ export default function TagManager({
           ) : (
             <div
               style={{
-                backgroundColor: "#1C1009",
-                border: "1px solid #4A3020",
+                backgroundColor: "var(--bg)",
+                border: "1px solid var(--border)",
                 borderRadius: "12px",
                 padding: "14px",
               }}
             >
               <p
                 style={{
-                  color: "#A89070",
+                  color: "var(--text-muted)",
                   fontSize: "11px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -315,10 +315,10 @@ export default function TagManager({
                 style={{
                   width: "100%",
                   padding: "8px 12px",
-                  backgroundColor: "#2A1C0F",
-                  border: "1px solid #4A3020",
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "#F5ECD7",
+                  color: "var(--text)",
                   fontSize: "13px",
                   outline: "none",
                   marginBottom: "10px",
@@ -346,7 +346,7 @@ export default function TagManager({
                       backgroundColor: color.value,
                       border:
                         newTagColor === color.value
-                          ? "3px solid #F5ECD7"
+                          ? "3px solid var(--text)"
                           : "2px solid transparent",
                       cursor: "pointer",
                       padding: 0,
@@ -360,7 +360,7 @@ export default function TagManager({
                   <span
                     style={{
                       backgroundColor: newTagColor,
-                      color: "#F5ECD7",
+                      color: "var(--text)",
                       fontSize: "12px",
                       fontWeight: "600",
                       padding: "4px 12px",
@@ -380,8 +380,8 @@ export default function TagManager({
                     flex: 1,
                     padding: "8px",
                     backgroundColor:
-                      !newTagName.trim() || loading ? "#3D2B18" : "#C8813A",
-                    color: "#F5ECD7",
+                      !newTagName.trim() || loading ? "var(--raised)" : "var(--primary)",
+                    color: "var(--text)",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "13px",
@@ -401,9 +401,9 @@ export default function TagManager({
                   }}
                   style={{
                     padding: "8px 14px",
-                    backgroundColor: "#3D2B18",
-                    color: "#A89070",
-                    border: "1px solid #4A3020",
+                    backgroundColor: "var(--raised)",
+                    color: "var(--text-muted)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                     fontSize: "13px",
                     cursor: "pointer",

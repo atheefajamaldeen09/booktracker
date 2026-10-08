@@ -26,7 +26,7 @@ export default function EmptyState({
       <span style={{ fontSize: "48px" }}>{icon}</span>
       <h3
         style={{
-          color: "#F5ECD7",
+          color: "var(--text)",
           fontSize: "18px",
           fontWeight: "bold",
           margin: 0,
@@ -36,7 +36,7 @@ export default function EmptyState({
       </h3>
       <p
         style={{
-          color: "#A89070",
+          color: "var(--text-muted)",
           fontSize: "14px",
           maxWidth: "280px",
           margin: 0,

@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/purity */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import BookCover from "@/components/BookCover";
 
 type Book = {
@@ -16,46 +15,50 @@ type Book = {
 type Props = {
   books: Book[];
   onSelect: (book: Book) => void;
+  // Changing this number triggers a fresh spin (used by the "Re-spin" button)
+  spinSignal?: number;
 };
 
-export default function CardFlip({ books, onSelect }: Props) {
+function drawDeck(books: Book[]) {
+  const copy = [...books];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, 6);
+}
+
+export default function CardFlip({ books, onSelect, spinSignal = 0 }: Props) {
   const [isShuffling, setIsShuffling] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
+  // Up to 6 cards drawn at random from the whole eligible TBR
+  const [deck, setDeck] = useState<Book[]>(() => drawDeck(books));
+  // Random wobble for each card while shuffling, set when a shuffle starts
+  const [wobble, setWobble] = useState<{ y: number; r: number }[]>([]);
 
-  if (books.length === 0) {
-    return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "40px",
-          color: "#A89070",
-        }}
-      >
-        <p>No books match your filters. Adjust filters to see books.</p>
-      </div>
-    );
-  }
 
   const shuffle = () => {
     if (isShuffling) return;
 
+    const newDeck = drawDeck(books);
+    setDeck(newDeck);
+    setWobble(newDeck.map(() => ({ y: Math.random() * 20 - 10, r: Math.random() * 10 - 5 })));
     setIsShuffling(true);
     setSelectedBook(null);
     setFlippedCards(new Set());
 
     // Shuffle animation
     setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * Math.min(books.length, 6));
-      const selected = books[randomIndex];
-      
+      const selected = newDeck[Math.floor(Math.random() * newDeck.length)];
+
       // Flip cards one by one
       let count = 0;
       const interval = setInterval(() => {
         setFlippedCards((prev) => new Set([...prev, count]));
         count++;
         
-        if (count >= Math.min(books.length, 6)) {
+        if (count >= newDeck.length) {
           clearInterval(interval);
           
           // Show selected card after all are flipped
@@ -69,7 +72,16 @@ export default function CardFlip({ books, onSelect }: Props) {
     }, 1000);
   };
 
-  const displayBooks = books.slice(0, 6); // Show max 6 cards
+  const displayBooks = deck;
+
+  // Re-spin requested from the winner popup
+  const spinRef = useRef(shuffle);
+  useEffect(() => {
+    spinRef.current = shuffle;
+  });
+  useEffect(() => {
+    if (spinSignal > 0) spinRef.current();
+  }, [spinSignal]);
 
   return (
     <div
@@ -81,7 +93,7 @@ export default function CardFlip({ books, onSelect }: Props) {
       }}
     >
       {/* Status Text */}
-      <p style={{ color: "#A89070", fontSize: "14px", textAlign: "center", marginBottom: "16px" }}>
+      <p style={{ color: "var(--text-muted)", fontSize: "14px", textAlign: "center", marginBottom: "16px" }}>
         {isShuffling
           ? "Shuffling cards..."
           : selectedBook
@@ -93,8 +105,8 @@ export default function CardFlip({ books, onSelect }: Props) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "20px",
+          gridTemplateColumns: "repeat(3, minmax(0, 140px))",
+          gap: "clamp(10px, 3vw, 20px)",
           perspective: "1000px",
         }}
       >
@@ -106,14 +118,14 @@ export default function CardFlip({ books, onSelect }: Props) {
             <div
               key={book.id}
               style={{
-                width: "140px",
-                height: "200px",
+                width: "100%",
+                aspectRatio: "7 / 10",
                 position: "relative",
                 transformStyle: "preserve-3d",
                 transition: "transform 0.6s",
                 transform: isShuffling
-                  ? `translateY(${Math.random() * 20 - 10}px) rotate(${
-                      Math.random() * 10 - 5
+                  ? `translateY(${wobble[index]?.y ?? 0}px) rotate(${
+                      wobble[index]?.r ?? 0
                     }deg) ${isFlipped ? "rotateY(180deg)" : ""}`
                   : isSelected
                   ? "scale(1.1) rotateY(180deg)"
@@ -130,8 +142,8 @@ export default function CardFlip({ books, onSelect }: Props) {
                   width: "100%",
                   height: "100%",
                   backfaceVisibility: "hidden",
-                  backgroundColor: "#2A1C0F",
-                  border: "3px solid #C8813A",
+                  backgroundColor: "var(--surface)",
+                  border: "3px solid var(--primary)",
                   borderRadius: "12px",
                   display: "flex",
                   alignItems: "center",
@@ -157,21 +169,39 @@ export default function CardFlip({ books, onSelect }: Props) {
                   height: "100%",
                   backfaceVisibility: "hidden",
                   transform: "rotateY(180deg)",
-                  backgroundColor: "#1C1009",
-                  border: isSelected ? "3px solid #C8813A" : "3px solid #4A3020",
+                  backgroundColor: "var(--bg)",
+                  border: isSelected ? "3px solid var(--primary)" : "3px solid var(--border)",
                   borderRadius: "12px",
                   overflow: "hidden",
                   boxShadow: isSelected
-                    ? "0 8px 32px rgba(200, 129, 58, 0.5)"
+                    ? "0 8px 32px rgb(var(--primary-rgb) / 0.5)"
                     : "0 4px 16px rgba(0,0,0,0.4)",
                 }}
               >
-                <BookCover
-                  cover={book.cover}
-                  title={book.title}
-                  author={book.author ?? undefined}
-                  size="md"
-                />
+                {book.cover ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={book.cover}
+                    alt={book.title}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <BookCover
+                      cover={book.cover}
+                      title={book.title}
+                      author={book.author ?? undefined}
+                      size="md"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -184,8 +214,8 @@ export default function CardFlip({ books, onSelect }: Props) {
         disabled={isShuffling}
         style={{
           padding: "14px 32px",
-          backgroundColor: isShuffling ? "#6B5040" : "#C8813A",
-          color: "#F5ECD7",
+          backgroundColor: isShuffling ? "var(--text-faint)" : "var(--primary)",
+          color: isShuffling ? "var(--text-muted)" : "var(--on-primary)",
           border: "none",
           borderRadius: "12px",
           fontSize: "16px",
@@ -203,19 +233,19 @@ export default function CardFlip({ books, onSelect }: Props) {
       {selectedBook && !isShuffling && (
         <div
           style={{
-            backgroundColor: "#2A1C0F",
-            border: "2px solid #C8813A",
+            backgroundColor: "var(--surface)",
+            border: "2px solid var(--primary)",
             borderRadius: "14px",
             padding: "20px",
             textAlign: "center",
             maxWidth: "400px",
-            boxShadow: "0 8px 32px rgba(200, 129, 58, 0.3)",
+            boxShadow: "0 8px 32px rgb(var(--primary-rgb) / 0.3)",
             animation: "fadeIn 0.5s ease-out",
           }}
         >
           <p
             style={{
-              color: "#C8813A",
+              color: "var(--primary)",
               fontSize: "20px",
               fontWeight: "bold",
               margin: "0 0 12px 0",
@@ -225,7 +255,7 @@ export default function CardFlip({ books, onSelect }: Props) {
           </p>
           <p
             style={{
-              color: "#F5ECD7",
+              color: "var(--text)",
               fontSize: "18px",
               fontWeight: "600",
               margin: "0 0 6px 0",
@@ -235,7 +265,7 @@ export default function CardFlip({ books, onSelect }: Props) {
           </p>
           <p
             style={{
-              color: "#A89070",
+              color: "var(--text-muted)",
               fontSize: "14px",
               margin: "0 0 12px 0",
             }}
@@ -245,7 +275,7 @@ export default function CardFlip({ books, onSelect }: Props) {
           {selectedBook.pageCount && (
             <p
               style={{
-                color: "#6B5040",
+                color: "var(--text-faint)",
                 fontSize: "12px",
                 margin: 0,
               }}
