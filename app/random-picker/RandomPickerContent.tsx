@@ -232,6 +232,7 @@ export default function RandomPickerContent() {
             </p>
             {!hasFilters && (
               <button
+                data-owner-only
                 onClick={() => router.push("/add")}
                 style={{
                   padding: "10px 20px",

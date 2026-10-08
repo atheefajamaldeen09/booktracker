@@ -306,44 +306,47 @@ export default async function BookDetailPage({
         </>
       )}
 
-      {/* Divider */}
-      <div
-        style={{
-          borderTop: "1px solid var(--border)",
-          marginBottom: "28px",
-        }}
-      />
+      {/* Editing — hidden for guests (the server refuses their edits anyway) */}
+      <div data-owner-only>
+        {/* Divider */}
+        <div
+          style={{
+            borderTop: "1px solid var(--border)",
+            marginBottom: "28px",
+          }}
+        />
 
-      {/* Edit Book Form */}
-      <EditBookForm
-        book={{
-          id: book.id,
-          title: book.title,
-          author: book.author,
-          cover: book.cover,
-          genres: book.genres,
-          pageCount: book.pageCount,
-          publicationYear: book.publicationYear,
-          isbn: book.isbn,
-        }}
-      />
+        {/* Edit Book Form */}
+        <EditBookForm
+          book={{
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            cover: book.cover,
+            genres: book.genres,
+            pageCount: book.pageCount,
+            publicationYear: book.publicationYear,
+            isbn: book.isbn,
+          }}
+        />
 
-      {/* Divider */}
-      <div
-        style={{
-          borderTop: "1px solid var(--border)",
-          marginBottom: "28px",
-        }}
-      />
+        {/* Divider */}
+        <div
+          style={{
+            borderTop: "1px solid var(--border)",
+            marginBottom: "28px",
+          }}
+        />
 
-      {/* Actions */}
-      <BookActions
-        book={{
-          id: book.id,
-          shelf: book.shelf,
-          title: book.title,
-        }}
-      />
+        {/* Actions */}
+        <BookActions
+          book={{
+            id: book.id,
+            shelf: book.shelf,
+            title: book.title,
+          }}
+        />
+      </div>
     </div>
   );
 }

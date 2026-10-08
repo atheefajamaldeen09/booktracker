@@ -111,6 +111,7 @@ export default async function HomePage() {
         </p>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <Link
+            data-owner-only
             href="/add"
             style={{
               padding: "11px 20px",
@@ -170,6 +171,7 @@ export default async function HomePage() {
             tracking your reading.
           </p>
           <Link
+            data-owner-only
             href="/add"
             style={{
               display: "inline-block",

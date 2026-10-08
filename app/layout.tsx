@@ -3,6 +3,8 @@ import { Fraunces, DM_Sans } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import { DEFAULT_THEME, themeInitScript } from "@/lib/themes";
+import { getRole } from "@/lib/auth/server";
+import { ViewerProvider } from "@/components/Viewer";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -23,16 +25,20 @@ export const viewport: Viewport = {
   themeColor: "#17100b",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // owner, guest (view-only link) or null on the private/unlock screens
+  const role = await getRole();
+
   return (
     // The inline script swaps data-theme before React hydrates, hence suppressHydrationWarning
     <html
       lang="en"
       data-theme={DEFAULT_THEME}
+      data-role={role ?? "none"}
       className={`${display.variable} ${sans.variable}`}
       suppressHydrationWarning
     >
@@ -40,14 +46,22 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <Navigation />
-        {/*
-          On mobile: padding at top so content clears the top bar
-          On desktop: margin on left so content clears the side nav
-        */}
-        <main id="main-content" className="page-enter">
-          {children}
-        </main>
+        <ViewerProvider role={role}>
+          <Navigation />
+          {/*
+            On mobile: padding at top so content clears the top bar
+            On desktop: margin on left so content clears the side nav
+          */}
+          <main id="main-content" className="page-enter">
+            {role === "guest" && (
+              <div className="guest-banner" role="status">
+                <span aria-hidden>👀</span> You&apos;re visiting as a guest — have a look around. Nothing here can be
+                changed.
+              </div>
+            )}
+            {children}
+          </main>
+        </ViewerProvider>
 
         <style>{`
           #main-content {

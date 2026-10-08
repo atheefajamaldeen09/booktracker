@@ -51,6 +51,7 @@ export default async function StatsPage() {
             Add a few books and your stats will start brewing.
           </p>
           <Link
+            data-owner-only
             href="/add"
             style={{
               display: "inline-block",

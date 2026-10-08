@@ -169,6 +169,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
 
       {/* Update Progress Form */}
       <div
+        data-owner-only
         style={{
           backgroundColor: "var(--surface)",
           border: "1px solid var(--border)",
@@ -263,7 +264,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
 
       {/* Mark Complete Button */}
       {!showComplete && !showDNFForm && (
-        <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+        <div data-owner-only style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
           <button
             onClick={() => setShowComplete(true)}
             style={{

@@ -26,6 +26,7 @@ export default async function LibraryPage({
         } on your shelves`}
         action={
           <Link
+            data-owner-only
             href="/add"
             style={{
               padding: "10px 20px",

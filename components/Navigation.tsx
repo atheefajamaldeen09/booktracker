@@ -100,6 +100,7 @@ function NavLinks({
   return (
     <>
       <Link
+        data-owner-only
         href="/add"
         onClick={onNavigate}
         style={{
@@ -208,6 +209,9 @@ export default function Navigation() {
       document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
+
+  // The private-library and unlock screens stand on their own
+  if (pathname === "/private" || pathname === "/unlock") return null;
 
   return (
     <>

@@ -6,6 +6,7 @@ import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
 import { startReading } from "@/lib/actions/books";
 import { useState } from "react";
+import { useCanEdit } from "@/components/Viewer";
 
 type Book = {
   id: number;
@@ -31,6 +32,7 @@ type Props = {
 export default function WinnerPopup({ book, onClose, onRespin }: Props) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
+  const canEdit = useCanEdit();
 
   const handleStartReading = async () => {
     setStarting(true);
@@ -214,9 +216,11 @@ export default function WinnerPopup({ book, onClose, onRespin }: Props) {
             gap: "12px",
           }}
         >
-          <Button onClick={handleStartReading} disabled={starting} fullWidth>
-            {starting ? "Starting..." : "📖 Start Reading This Book"}
-          </Button>
+          {canEdit && (
+            <Button onClick={handleStartReading} disabled={starting} fullWidth>
+              {starting ? "Starting..." : "📖 Start Reading This Book"}
+            </Button>
+          )}
 
           <button
             onClick={() => router.push(`/book/${book.id}`)}

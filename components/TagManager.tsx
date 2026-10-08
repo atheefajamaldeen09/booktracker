@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCanEdit } from "@/components/Viewer";
 import { useRouter } from "next/navigation";
 import { X, Plus } from "lucide-react";
 import {
@@ -52,6 +53,8 @@ export default function TagManager({
   );
 
   const assignedTags = allTags.filter((t) => assignedTagIds.has(t.id));
+  // Guests just see the tags; the editor never opens
+  const canEdit = useCanEdit();
 
   const handleToggleTag = async (tag: Tag) => {
     setLoading(true);
@@ -110,6 +113,8 @@ export default function TagManager({
     router.refresh();
   };
 
+  if (!canEdit && assignedTags.length === 0) return null;
+
   return (
     <div
       style={{
@@ -122,7 +127,8 @@ export default function TagManager({
     >
       {/* Toggle Header */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => canEdit && setIsOpen(!isOpen)}
+        disabled={!canEdit}
         style={{
           width: "100%",
           padding: "16px",
@@ -131,7 +137,7 @@ export default function TagManager({
           justifyContent: "space-between",
           backgroundColor: "transparent",
           border: "none",
-          cursor: "pointer",
+          cursor: canEdit ? "pointer" : "default",
           color: "var(--text)",
         }}
       >
@@ -142,7 +148,7 @@ export default function TagManager({
           {/* Show assigned tags as preview when collapsed */}
           {!isOpen && assignedTags.length > 0 && (
             <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-              {assignedTags.slice(0, 3).map((tag) => (
+              {assignedTags.slice(0, canEdit ? 3 : undefined).map((tag) => (
                 <span
                   key={tag.id}
                   style={{
@@ -170,9 +176,11 @@ export default function TagManager({
             </span>
           )}
         </div>
-        <span style={{ color: "var(--text-muted)", fontSize: "18px" }}>
-          {isOpen ? "−" : "+"}
-        </span>
+        {canEdit && (
+          <span style={{ color: "var(--text-muted)", fontSize: "18px" }}>
+            {isOpen ? "−" : "+"}
+          </span>
+        )}
       </button>
 
       {/* Tag Panel */}

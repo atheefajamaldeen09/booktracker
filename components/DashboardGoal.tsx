@@ -32,13 +32,17 @@ export default function DashboardGoal({ year, target, booksRead }: Props) {
         }}
       >
         <span style={{ fontSize: "36px" }}>🎯</span>
-        <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "16px" }}>
+        <span data-owner-only style={{ color: "var(--text)", fontWeight: 600, fontSize: "16px" }}>
           Set a {year} reading goal
         </span>
-        <span style={{ color: "var(--text-muted)", fontSize: "13px", maxWidth: "220px" }}>
+        <span data-owner-only style={{ color: "var(--text-muted)", fontSize: "13px", maxWidth: "220px" }}>
           {booksRead > 0
             ? `You've read ${booksRead} ${booksRead === 1 ? "book" : "books"} so far — how many more?`
             : "Pick a number and track it automatically as you finish books."}
+        </span>
+        {/* What a guest sees instead */}
+        <span data-guest-only style={{ color: "var(--text)", fontWeight: 600, fontSize: "16px" }}>
+          {booksRead} {booksRead === 1 ? "book" : "books"} read in {year}
         </span>
       </Link>
     );

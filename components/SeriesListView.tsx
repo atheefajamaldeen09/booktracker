@@ -50,6 +50,7 @@ export default function SeriesListView({ series }: Props) {
           Add a book that&apos;s part of a series to get started
         </p>
         <Link
+          data-owner-only
           href="/add"
           style={{
             display: "inline-block",

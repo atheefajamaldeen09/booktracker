@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BookCover from "@/components/BookCover";
 import { updateReadingProgress } from "@/lib/actions/books";
+import { useCanEdit } from "@/components/Viewer";
 
 type Book = {
   id: number;
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export default function CurrentlyReadingWidget({ books }: Props) {
+  const canEdit = useCanEdit();
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [newPage, setNewPage] = useState<{ [key: number]: string }>({});
@@ -201,7 +203,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
             </Link>
 
             {/* Quick Update */}
-            {book.pageCount && (
+            {canEdit && book.pageCount && (
               <>
                 {!isExpanded ? (
                   <button

@@ -1,5 +1,6 @@
 "use server";
 
+import { requireOwner, requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books, series, bookSeries, tags, bookTags, readingSessions, goals } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -21,6 +22,7 @@ type AddBookInput = {
 };
 
 export async function addBook(input: AddBookInput) {
+  await requireOwner();
   try {
     const [newBook] = await db
       .insert(books)
@@ -82,6 +84,7 @@ export async function addBook(input: AddBookInput) {
 }
 
 export async function getAllBooks() {
+  await requireViewer();
   try {
     const allBooks = await db.select().from(books);
     return { success: true, books: allBooks };
@@ -92,6 +95,7 @@ export async function getAllBooks() {
 }
 
 export async function getBooksByShelf(shelf: string) {
+  await requireViewer();
   try {
     const shelfBooks = await db
       .select()
@@ -108,6 +112,7 @@ export async function moveBookToShelf(
   bookId: number,
   newShelf: "tbr" | "reading" | "read" | "wishlist" | "dnf"
 ) {
+  await requireOwner();
   try {
     await db
       .update(books)
@@ -126,6 +131,7 @@ export async function moveBookToShelf(
 }
 
 export async function deleteBook(bookId: number) {
+  await requireOwner();
   try {
     await db.delete(books).where(eq(books.id, bookId));
     return { success: true };
@@ -136,6 +142,7 @@ export async function deleteBook(bookId: number) {
 }
 
 export async function getBookById(id: number) {
+  await requireViewer();
   try {
     const [book] = await db
       .select()
@@ -161,6 +168,7 @@ export async function updateBook(
     isbn?: string | null;
   }
 ) {
+  await requireOwner();
   try {
     await db
       .update(books)
@@ -182,6 +190,7 @@ export async function updateBook(
 }
 
 export async function getSeriesForBook(bookId: number) {
+  await requireViewer();
   try {
     const result = await db
       .select({
@@ -202,6 +211,7 @@ export async function getSeriesForBook(bookId: number) {
 }
 
 export async function getAllTags() {
+  await requireViewer();
   try {
     const allTags = await db.select().from(tags);
     return { success: true, tags: allTags };
@@ -212,6 +222,7 @@ export async function getAllTags() {
 }
 
 export async function createTag(name: string, color: string) {
+  await requireOwner();
   try {
     const [newTag] = await db
       .insert(tags)
@@ -225,6 +236,7 @@ export async function createTag(name: string, color: string) {
 }
 
 export async function deleteTag(tagId: number) {
+  await requireOwner();
   try {
     await db.delete(tags).where(eq(tags.id, tagId));
     return { success: true };
@@ -235,6 +247,7 @@ export async function deleteTag(tagId: number) {
 }
 
 export async function getTagsForBook(bookId: number) {
+  await requireViewer();
   try {
     const result = await db
       .select({
@@ -253,6 +266,7 @@ export async function getTagsForBook(bookId: number) {
 }
 
 export async function addTagToBook(bookId: number, tagId: number) {
+  await requireOwner();
   try {
     // Check if already exists to avoid duplicates
     const existing = await db
@@ -275,6 +289,7 @@ export async function addTagToBook(bookId: number, tagId: number) {
 }
 
 export async function removeTagFromBook(bookId: number, tagId: number) {
+  await requireOwner();
   try {
     await db
       .delete(bookTags)
@@ -287,6 +302,7 @@ export async function removeTagFromBook(bookId: number, tagId: number) {
 }
 
 export async function getAllBooksWithTags() {
+  await requireViewer();
   try {
     // Get all books first
     const allBooks = await db.select().from(books);
@@ -358,6 +374,7 @@ export async function getAllBooksWithTags() {
 }
 
 export async function startReading(bookId: number) {
+  await requireOwner();
   try {
     await db
       .update(books)
@@ -379,6 +396,7 @@ export async function updateReadingProgress(
   currentPage: number,
   previousPage: number
 ) {
+  await requireOwner();
   try {
     const pagesRead = Math.max(0, currentPage - previousPage);
 
@@ -407,6 +425,7 @@ export async function completeBook(
   bookId: number,
   pageCount: number | null
 ) {
+  await requireOwner();
   try {
     await db
       .update(books)
@@ -444,6 +463,7 @@ export async function markDNF(
   currentPage: number,
   reason?: string
 ) {
+  await requireOwner();
   try {
     await db
       .update(books)
@@ -461,6 +481,7 @@ export async function markDNF(
 }
 
 export async function getReadingSessions(bookId: number) {
+  await requireViewer();
   try {
     const sessions = await db
       .select()
@@ -475,6 +496,7 @@ export async function getReadingSessions(bookId: number) {
 }
 
 export async function getCurrentlyReading() {
+  await requireViewer();
   try {
     const currentBooks = await db
       .select()
@@ -488,6 +510,7 @@ export async function getCurrentlyReading() {
 }
 
 export async function getAllSeries() {
+  await requireViewer();
   try {
     const allSeries = await db.select().from(series);
     return { success: true, series: allSeries };
@@ -498,6 +521,7 @@ export async function getAllSeries() {
 }
 
 export async function updateRating(bookId: number, rating: number) {
+  await requireOwner();
   try {
     await db
       .update(books)
@@ -511,6 +535,7 @@ export async function updateRating(bookId: number, rating: number) {
 }
 
 export async function updateReview(bookId: number, review: string) {
+  await requireOwner();
   try {
     await db
       .update(books)
@@ -524,6 +549,7 @@ export async function updateReview(bookId: number, review: string) {
 }
 
 export async function updateSeriesTotalBooks(seriesId: number, totalBooks: number) {
+  await requireOwner();
   try {
     await db
       .update(series)
@@ -537,6 +563,7 @@ export async function updateSeriesTotalBooks(seriesId: number, totalBooks: numbe
 }
 
 export async function getSeriesById(seriesId: number) {
+  await requireViewer();
   try {
     const [seriesData] = await db
       .select()
@@ -572,6 +599,7 @@ export async function getSeriesById(seriesId: number) {
 }
 
 export async function getAllSeriesWithStats() {
+  await requireViewer();
   try {
     const allSeries = await db.select().from(series);
 
@@ -607,6 +635,7 @@ export async function getAllSeriesWithStats() {
 }
 
 export async function getDashboardStats() {
+  await requireViewer();
   try {
     const allBooks = await db.select().from(books);
 
@@ -644,6 +673,7 @@ export async function getDashboardStats() {
 }
 
 export async function getRecentlyAdded(limit: number = 5) {
+  await requireViewer();
   try {
     const recentBooks = await db
       .select()
@@ -659,6 +689,7 @@ export async function getRecentlyAdded(limit: number = 5) {
 }
 
 export async function getRecentlyCompleted(limit: number = 5) {
+  await requireViewer();
   try {
     const recentCompleted = await db
       .select()
@@ -681,6 +712,7 @@ export async function getEligibleTBRBooks(filters?: {
   maxPages?: number;
   onlyStandalone?: boolean;
 }) {
+  await requireViewer();
   try {
     const tbrBooks = await db
       .select({
@@ -773,6 +805,7 @@ export async function getEligibleTBRBooks(filters?: {
 }
 
 export async function getAllSeriesInTBR() {
+  await requireViewer();
   try {
     const tbrBooks = await db
       .select({ id: books.id })

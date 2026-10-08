@@ -85,3 +85,9 @@ export const bookTags = pgTable("book_tags", {
     onDelete: "cascade",
   }),
 });
+
+// App settings — small key/value pairs, e.g. the secret guest-link token
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});

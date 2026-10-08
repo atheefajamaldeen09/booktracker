@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useCanEdit } from "@/components/Viewer";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, PartyPopper } from "lucide-react";
 import ProgressRing from "@/components/ProgressRing";
@@ -41,6 +42,7 @@ export default function GoalCard({ year, target, booksRead }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [replay, setReplay] = useState(0);
+  const canEdit = useCanEdit();
   const [, startTransition] = useTransition();
 
   const reached = target !== null && booksRead >= target;
@@ -109,7 +111,15 @@ export default function GoalCard({ year, target, booksRead }: Props) {
         }}
       />
 
-      {editing ? (
+      {!canEdit && target === null ? (
+        // Guests can't set goals; just say there isn't one yet
+        <div style={{ position: "relative" }}>
+          <h2 style={{ color: "var(--text)", fontSize: "22px", margin: "0 0 6px 0" }}>No goal set for {year}</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: 0 }}>
+            {booksRead} {booksRead === 1 ? "book" : "books"} finished so far this year.
+          </p>
+        </div>
+      ) : editing && canEdit ? (
         <div style={{ position: "relative", maxWidth: "460px" }}>
           <h2 style={{ color: "var(--text)", fontSize: "22px", margin: "0 0 6px 0" }}>
             {target ? `Edit your ${year} goal` : `Set your ${year} reading goal`}
@@ -306,7 +316,7 @@ export default function GoalCard({ year, target, booksRead }: Props) {
               </div>
 
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <button onClick={() => setEditing(true)} className="goal-btn">
+                <button data-owner-only onClick={() => setEditing(true)} className="goal-btn">
                   <Pencil size={14} /> Edit goal
                 </button>
                 {reached && (
@@ -314,7 +324,7 @@ export default function GoalCard({ year, target, booksRead }: Props) {
                     <PartyPopper size={14} /> Celebrate again
                   </button>
                 )}
-                <button onClick={remove} disabled={saving} className="goal-btn">
+                <button data-owner-only onClick={remove} disabled={saving} className="goal-btn">
                   <Trash2 size={14} /> Remove
                 </button>
               </div>

@@ -39,6 +39,7 @@ export default async function WishlistPage() {
           </p>
         </div>
         <Link
+          data-owner-only
           href="/add"
           style={{
             padding: "10px 20px",

@@ -220,11 +220,13 @@ export default async function SeriesDetailPage({
       </div>
 
       {/* Edit Series Form */}
-      <SeriesEditForm
-        seriesId={seriesData.id}
-        seriesName={seriesData.name}
-        totalBooks={seriesData.totalBooks}
-      />
+      <div data-owner-only>
+        <SeriesEditForm
+          seriesId={seriesData.id}
+          seriesName={seriesData.name}
+          totalBooks={seriesData.totalBooks}
+        />
+      </div>
 
       {/* Divider */}
       <div

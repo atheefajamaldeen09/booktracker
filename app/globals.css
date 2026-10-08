@@ -367,6 +367,101 @@
   animation: pageEnter 0.45s ease-out both;
 }
 
+/* Guests browse a read-only library: editing controls are hidden.
+   (The server refuses edits anyway; this just keeps the UI honest.) */
+:root[data-role="guest"] [data-owner-only] {
+  display: none !important;
+}
+
+:root:not([data-role="guest"]) [data-guest-only] {
+  display: none !important;
+}
+
+.guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 1040px;
+  margin: 0 0 24px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--surface);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Private-library and unlock screens: no navigation, centred card */
+body:has(.auth-screen) #main-content {
+  margin-left: 0 !important;
+  padding: 24px 16px !important;
+}
+
+.auth-screen {
+  min-height: calc(100vh - 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: min(100%, 400px);
+  padding: 36px 28px 28px;
+  text-align: center;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-card h1 {
+  color: var(--text);
+  font-size: 26px;
+  margin: 0 0 10px;
+}
+
+.auth-emoji {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.auth-eyebrow {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.auth-text {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 0 20px;
+}
+
+.auth-note {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  margin: 0 0 20px;
+}
+
+.auth-link {
+  color: var(--text-faint);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  color: var(--primary);
+}
+
 /* Home hero motif follows the theme; only the coffee cup steams */
 .hero-emoji::before {
   content: var(--hero-emoji);

@@ -1,5 +1,6 @@
 "use server";
 
+import { requireOwner, requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books, goals } from "@/lib/db/schema";
 import { eq, and, isNotNull } from "drizzle-orm";
@@ -48,6 +49,7 @@ async function getReadBooksByYear() {
 }
 
 export async function getGoalProgress(year: number = new Date().getFullYear()) {
+  await requireViewer();
   try {
     const [goal] = await db
       .select()
@@ -70,6 +72,7 @@ export async function getGoalProgress(year: number = new Date().getFullYear()) {
 }
 
 export async function getGoalsOverview() {
+  await requireViewer();
   const currentYear = new Date().getFullYear();
   try {
     const allGoals = await db.select().from(goals);
@@ -115,6 +118,7 @@ export async function getGoalsOverview() {
 }
 
 export async function setGoal(year: number, targetBooks: number) {
+  await requireOwner();
   if (!Number.isInteger(targetBooks) || targetBooks < 1 || targetBooks > 1000) {
     return { success: false, error: "Goal must be between 1 and 1000 books" };
   }
@@ -141,6 +145,7 @@ export async function setGoal(year: number, targetBooks: number) {
 }
 
 export async function deleteGoal(year: number) {
+  await requireOwner();
   try {
     await db.delete(goals).where(eq(goals.year, year));
     revalidatePath("/goals");

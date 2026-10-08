@@ -1,5 +1,6 @@
 "use server";
 
+import { requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books, readingSessions } from "@/lib/db/schema";
 
@@ -36,6 +37,7 @@ function emptyStats() {
 export type ReadingStats = ReturnType<typeof emptyStats>;
 
 export async function getReadingStats(): Promise<ReadingStats> {
+  await requireViewer();
   try {
     const [allBooks, sessions] = await Promise.all([
       db.select().from(books),

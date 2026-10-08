@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import StarRating from "@/components/StarRating";
 import Button from "@/components/Button";
 import { updateRating, updateReview } from "@/lib/actions/books";
+import { useCanEdit } from "@/components/Viewer";
 
 type Props = {
   bookId: number;
@@ -26,6 +27,7 @@ export default function RatingReview({
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [ratingSuccess, setRatingSuccess] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
+  const canEdit = useCanEdit();
 
   const handleSaveRating = async () => {
     setIsSavingRating(true);
@@ -59,6 +61,37 @@ export default function RatingReview({
 
   const hasRatingChanged = rating !== (initialRating || 0);
   const hasReviewChanged = review.trim() !== (initialReview || "").trim();
+
+  // Guests get a read-only card with just the rating and notes
+  if (!canEdit) {
+    if (!initialRating && !initialReview) return null;
+    return (
+      <div
+        style={{
+          backgroundColor: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "14px",
+          padding: "20px",
+          marginBottom: "28px",
+        }}
+      >
+        <h2 style={{ color: "var(--primary)", fontSize: "18px", fontWeight: "bold", marginBottom: "16px" }}>
+          ⭐ Rating & Review
+        </h2>
+        {initialRating ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: initialReview ? "16px" : 0 }}>
+            <StarRating rating={initialRating} onRatingChange={() => {}} size="lg" readonly />
+            <span style={{ color: "var(--text)", fontSize: "16px" }}>{initialRating} / 5</span>
+          </div>
+        ) : null}
+        {initialReview && (
+          <p style={{ color: "var(--text)", fontSize: "14px", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>
+            {initialReview}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

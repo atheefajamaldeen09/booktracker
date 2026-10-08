@@ -1,7 +1,24 @@
+import { headers } from "next/headers";
 import PageHeader from "@/components/PageHeader";
 import { ThemeGallery } from "@/components/ThemePicker";
+import ShareCard from "@/components/ShareCard";
+import { getRole } from "@/lib/auth/server";
+import { authStatus } from "@/lib/auth/session";
+import { getGuestToken } from "@/lib/auth/viewer";
 
-export default function SettingsPage() {
+// The guest link, built from whatever address the site is being served on
+async function guestLink() {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}/guest/${await getGuestToken()}`;
+}
+
+export default async function SettingsPage() {
+  const isOwner = (await getRole()) === "owner";
+  const sharing = isOwner && authStatus() === "enabled";
+  const link = sharing ? await guestLink() : null;
+
   return (
     <div style={{ maxWidth: "1040px" }}>
       <PageHeader eyebrow="Preferences" title="Settings" subtitle="Make BookTracker feel like yours." />
@@ -15,7 +32,21 @@ export default function SettingsPage() {
         <ThemeGallery />
       </section>
 
-      <section style={{ marginTop: "44px" }}>
+      {isOwner && (
+        <section style={{ marginTop: "44px" }}>
+          <h2 className="section-title">Share</h2>
+          {link ? (
+            <ShareCard link={link} />
+          ) : (
+            <p style={{ color: "var(--text-faint)", fontSize: "13px", margin: 0 }}>
+              Sharing switches on once <code>OWNER_PASSCODE</code> and <code>SESSION_SECRET</code> are set (in{" "}
+              <code>.env.local</code> locally, or in Vercel&apos;s environment variables).
+            </p>
+          )}
+        </section>
+      )}
+
+      <section data-owner-only style={{ marginTop: "44px" }}>
         <h2 className="section-title">Your data</h2>
         <div
           style={{

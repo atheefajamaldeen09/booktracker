@@ -1,5 +1,6 @@
 "use server";
 
+import { requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books } from "@/lib/db/schema";
 import { inArray } from "drizzle-orm";
@@ -24,6 +25,7 @@ export type ShelfBook = {
 // Everything that belongs on the visual shelf: books you've read, are reading,
 // or plan to read. New TBR/Read books show up automatically on the next visit.
 export async function getShelfBooks(): Promise<ShelfBook[]> {
+  await requireViewer();
   try {
     const rows = await db
       .select({
