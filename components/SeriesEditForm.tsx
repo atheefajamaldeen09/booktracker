@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateSeriesTotalBooks } from "@/lib/actions/books";
-import Button from "@/components/Button";
 
 type Props = {
   seriesId: number;

@@ -498,6 +498,90 @@ body:has(.auth-screen) #main-content {
   background: linear-gradient(90deg, var(--border), transparent);
 }
 
+/* Loading placeholders: soft blocks with a slow sheen passing over them */
+.skeleton {
+  border-radius: 10px;
+  background:
+    linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.06) 50%, transparent 70%) 0 0 / 200% 100%,
+    var(--surface);
+  animation: skeleton 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton {
+  from {
+    background-position: 150% 0, 0 0;
+  }
+  to {
+    background-position: -50% 0, 0 0;
+  }
+}
+
+/* Centered card for errors and missing pages */
+.status-card {
+  max-width: 440px;
+  margin: 8vh auto 0;
+  padding: 40px 30px 32px;
+  text-align: center;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-md);
+}
+
+.status-card-icon {
+  font-size: 46px;
+}
+
+.status-card h1 {
+  margin: 14px 0 8px;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  color: var(--text);
+}
+
+.status-card p {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.status-card small {
+  display: block;
+  margin-top: 20px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.status-card-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status-card-primary,
+.status-card-secondary {
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.status-card-primary {
+  border: none;
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.status-card-secondary {
+  border: 1px solid var(--border);
+  background-color: var(--raised);
+  color: var(--text);
+}
+
 @keyframes pageEnter {
   from {
     opacity: 0;

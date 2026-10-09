@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import StarRating from "@/components/StarRating";
-import Button from "@/components/Button";
 import { updateRating, updateReview } from "@/lib/actions/books";
 import { useCanEdit } from "@/components/Viewer";
 

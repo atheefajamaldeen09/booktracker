@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import { DEFAULT_THEME, themeInitScript } from "@/lib/themes";
 import { getRole } from "@/lib/auth/server";
 import { ViewerProvider } from "@/components/Viewer";
+import ServiceWorker from "@/components/ServiceWorker";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -19,6 +20,9 @@ const sans = DM_Sans({
 export const metadata: Metadata = {
   title: "BookTracker",
   description: "Your personal reading companion",
+  applicationName: "BookTracker",
+  // Opened from an iPhone home screen it runs full screen, like an app
+  appleWebApp: { capable: true, title: "BookTracker", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
@@ -46,6 +50,7 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
+        <ServiceWorker />
         <ViewerProvider role={role}>
           <Navigation />
           {/*

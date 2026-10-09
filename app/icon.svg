@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3a466"/><stop offset="1" stop-color="#a65d2b"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#bg)"/><g transform="translate(256 256) scale(1.0) translate(-256 -256)">  <path d="M100 196 V372 C160 358 214 362 256 390 C298 362 352 358 412 372 V196 Z" fill="#6e3818"/>
+  <path d="M256 202 C214 176 160 172 116 184 V356 C160 344 214 348 256 374 Z" fill="#fbf3e6" stroke="#5a2e14" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M256 202 C298 176 352 172 396 184 V356 C352 344 298 348 256 374 Z" fill="#f1e2c8" stroke="#5a2e14" stroke-width="9" stroke-linejoin="round"/>
+  <g stroke="#c9a77a" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M146 222 C176 216 206 218 228 230"/><path d="M146 256 C176 250 206 252 228 264"/><path d="M146 290 C176 284 206 286 228 298"/>
+    <path d="M366 222 C336 216 306 218 284 230"/><path d="M366 256 C336 250 306 252 284 264"/><path d="M366 290 C336 284 306 286 284 298"/>
+  </g>
+  <path d="M256 202 V374" stroke="#5a2e14" stroke-width="7"/>
+  <g stroke="#fbf3e6" stroke-width="13" stroke-linecap="round" fill="none" opacity="0.95">
+    <path d="M214 162 c-16 -20 16 -32 0 -56"/><path d="M256 150 c-16 -20 16 -32 0 -60"/><path d="M298 162 c-16 -20 16 -32 0 -56"/>
+  </g>
+</g></svg>
