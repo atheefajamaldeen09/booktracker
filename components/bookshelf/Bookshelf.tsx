@@ -253,11 +253,11 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
           addDeco(type, `deco-${r}-${k}`);
           used += w;
         }
-        // Spread the ornaments evenly through the free space, with one
-        // standing between the books when there are enough of both
+        // Spread the ornaments evenly through the free space. One only stands
+        // between the books when that leaves at least 3 books on each side
         if (bookItems.length > 0) decos.forEach((d) => (d.push = true));
         const items: Item[] =
-          bookItems.length >= 2 && decos.length >= 2
+          bookItems.length >= 6 && decos.length >= 2
             ? [
                 ...bookItems.slice(0, Math.ceil(bookItems.length / 2)),
                 decos[0],
@@ -269,10 +269,11 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
       }
 
       // On a full shelf the ornament stands between the books on most
-      // shelves, and at one end on the rest; ivy hangs on the other side
+      // shelves, and at one end on the rest; ivy hangs on the other side.
+      // Between books it always has at least 3 on each side (3 to 7 of 10)
       const spot = seed % 4;
       if (spot >= 2) {
-        const at = 3 + ((seed >> 3) % 5);
+        const at = 3 + ((seed >> 3) % (BOOKS_PER_SHELF - 5));
         return {
           key: `shelf-${r}`,
           items: [...bookItems.slice(0, at), ...decos, ...bookItems.slice(at)],
