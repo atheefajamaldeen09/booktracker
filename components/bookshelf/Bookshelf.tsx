@@ -184,7 +184,8 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     // Book height and ornament width grow together, so solve for both: the
     // tallest books that still leave ten of them book-shaped (no wider than
     // height / ratio) beside an ornament scaled to the same height
-    const ratio = roomy ? 6.2 : 7.5;
+    // Phones get taller, slimmer books so ten still look a good size
+    const ratio = roomy ? 6.2 : 9;
     const basis: DecorationType = roomy ? "candles" : "cat";
     const ornament = hasDecor ? DECORATION_SIZE[pool.includes(basis) ? basis : pool[0]].w / DECO_REF : 0;
     const free = available - (hasDecor ? margin : 0) - BOOKS_PER_SHELF * BOOK_GAP;
@@ -292,7 +293,8 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
       };
     });
 
-    return { rows, layouts, bayHeight: H + HEADROOM };
+    // Less empty space above the books on a phone
+    return { rows, layouts, bayHeight: H + (roomy ? HEADROOM : 44) };
   }, [visibleBooks, width, maxHeight, decorSettings]);
 
   const shelfCount = shelf?.rows.length ?? 1;
