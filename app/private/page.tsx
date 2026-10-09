@@ -4,9 +4,9 @@ import { authStatus } from "@/lib/auth/session";
 export default async function PrivatePage({
   searchParams,
 }: {
-  searchParams: Promise<{ link?: string }>;
+  searchParams: Promise<{ link?: string; locked?: string }>;
 }) {
-  const { link } = await searchParams;
+  const { link, locked } = await searchParams;
   const misconfigured = authStatus() === "misconfigured";
 
   return (
@@ -16,11 +16,13 @@ export default async function PrivatePage({
           <span className="hero-emoji" />
         </div>
         <p className="auth-eyebrow">BookTracker</p>
-        <h1>This library is private</h1>
+        <h1>{locked ? "This device is locked" : "This library is private"}</h1>
         <p className="auth-text">
-          {link === "expired"
-            ? "That guest link has been reset and no longer works. Ask the owner for a fresh one."
-            : "If a friend shared their library with you, open the guest link they sent."}
+          {locked
+            ? "You're signed out here. Anyone using this device now needs your passcode or a guest link to get in."
+            : link === "expired"
+              ? "That guest link has been reset and no longer works. Ask the owner for a fresh one."
+              : "If a friend shared their library with you, open the guest link they sent."}
         </p>
         {misconfigured && (
           <p className="auth-note">

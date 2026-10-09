@@ -10,7 +10,7 @@ export type SpineColor = {
   hue: number; // used for the rainbow sort
 };
 
-const CACHE_KEY = "bookshelf-spine-colors-v1";
+const CACHE_KEY = "bookshelf-spine-colors-v4";
 
 // Muted bookcloth colors for books without a usable cover
 const CLOTH = ["#7a3b2e", "#2f4a3a", "#2c3e5c", "#8a6a2f", "#5a2f4a", "#3f3a36", "#9b5b3b", "#46607a", "#6b7a3a", "#7d2f3f"];
@@ -39,29 +39,34 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
 const hsl = (h: number, s: number, l: number) =>
   `hsl(${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%)`;
 
-// Turn any picked color into something that looks like a cloth-bound spine
-function toSpine(h: number, s: number, l: number): SpineColor {
-  const sat = Math.min(s, 0.62);
-  const light = Math.min(Math.max(l, 0.2), 0.6);
+// A spine in the cover's own color, with title ink that stays readable on it
+function toSpine(r: number, g: number, b: number): SpineColor {
+  const [h, sat, l] = rgbToHsl(r, g, b);
+  // Only the extremes are pulled in, so the shading still shows on them
+  const light = Math.min(Math.max(l, 0.1), 0.88);
+  // Perceived brightness decides the ink (yellow is bright, blue is not)
+  const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const pale = luma > 0.6;
   return {
     spine: hsl(h, sat, light),
-    dark: hsl(h, sat, light * 0.6),
-    text: light > 0.5 ? "#1e130b" : "#f6ecdc",
-    foil: light > 0.5 ? "rgba(30,19,11,0.55)" : "rgba(240,205,140,0.85)",
+    dark: hsl(h, sat, light * 0.65),
+    text: pale ? "#1e130b" : "#f6ecdc",
+    foil: pale ? "rgba(30,19,11,0.55)" : "rgba(240,205,140,0.85)",
     hue: sat < 0.12 ? 400 + light : h, // greys sort after the rainbow
   };
 }
 
 export function fallbackColor(title: string): SpineColor {
   const hex = CLOTH[hashString(title) % CLOTH.length];
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return toSpine(...rgbToHsl(r, g, b));
+  return toSpine(parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16));
 }
 
-// Most prominent color of an image: bucket pixels by hue, weighted by
-// saturation, so a bold title band beats a big flat background
+// Near-white paper and near-black backgrounds, common on covers
+const isWhite = (r: number, g: number, b: number) => Math.min(r, g, b) >= 215;
+const isBlack = (r: number, g: number, b: number) => Math.max(r, g, b) <= 45;
+
+// The cover's main color: the one covering the most area. White and black
+// backgrounds are skipped unless the cover is mostly that color.
 function dominantColor(img: HTMLImageElement): SpineColor | null {
   const canvas = document.createElement("canvas");
   canvas.width = 24;
@@ -71,30 +76,38 @@ function dominantColor(img: HTMLImageElement): SpineColor | null {
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-  const buckets = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
-  let total = { n: 0, r: 0, g: 0, b: 0 };
-
+  // Group similar colors: 8 levels per channel
+  type Group = { n: number; r: number; g: number; b: number };
+  const empty = (): Group => ({ n: 0, r: 0, g: 0, b: 0 });
+  const groups = new Map<number, Group>();
+  const white = empty();
+  const black = empty();
+  let total = 0;
   for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue;
     const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-    total = { n: total.n + 1, r: total.r + r, g: total.g + g, b: total.b + b };
-    const [h, s, l] = rgbToHsl(r, g, b);
-    if (l < 0.08 || l > 0.92 || s < 0.18) continue;
-    const bucket = buckets[Math.floor(h / 30) % 12];
-    const weight = s * (1 - Math.abs(l - 0.5));
-    bucket.w += weight;
-    bucket.r += r * weight;
-    bucket.g += g * weight;
-    bucket.b += b * weight;
+    total++;
+    let group: Group;
+    if (isWhite(r, g, b)) group = white;
+    else if (isBlack(r, g, b)) group = black;
+    else {
+      const key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
+      group = groups.get(key) ?? empty();
+      groups.set(key, group);
+    }
+    group.n++;
+    group.r += r;
+    group.g += g;
+    group.b += b;
   }
+  if (total === 0) return null;
 
-  if (total.n === 0) return null;
-  const best = buckets.reduce((a, b) => (b.w > a.w ? b : a));
-
-  // Mostly black-and-white covers keep their overall tone instead
-  if (best.w < total.n * 0.04) {
-    return toSpine(...rgbToHsl(total.r / total.n, total.g / total.n, total.b / total.n));
-  }
-  return toSpine(...rgbToHsl(best.r / best.w, best.g / best.w, best.b / best.w));
+  let best: Group;
+  if (white.n >= total * 0.8) best = white;
+  else if (black.n >= total * 0.6) best = black;
+  else if (groups.size > 0) best = [...groups.values()].reduce((a, b) => (b.n > a.n ? b : a));
+  else best = white.n >= black.n ? white : black;
+  return toSpine(best.r / best.n, best.g / best.n, best.b / best.n);
 }
 
 function readCache(): Record<string, SpineColor> {
@@ -129,7 +142,8 @@ function loadColor(url: string): Promise<SpineColor | null> {
       }
     };
     img.onerror = () => resolve(null);
-    img.src = url;
+    // Remote covers come through our own server so their pixels can be read
+    img.src = /^https?:/.test(url) ? `/api/cover?url=${encodeURIComponent(url)}` : url;
   });
 }
 

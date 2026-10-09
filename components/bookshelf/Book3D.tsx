@@ -1,14 +1,14 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import type { ShelfBook } from "@/lib/actions/bookshelf";
 import type { SpineColor } from "./spineColors";
+import { useSpineFontSizes } from "./spineText";
+import CharmBookmark from "./CharmBookmark";
 import styles from "./Bookshelf.module.css";
 
 export type BookLayout = {
   thickness: number;
   height: number;
   depth: number;
-  variant: number; // spine design: foil bands, label panel or colored cap
-  lean: boolean;
 };
 
 type Props = {
@@ -20,14 +20,13 @@ type Props = {
   onSelect: (id: number, origin: DOMRect | null) => void;
 };
 
-const variants = [styles.bands, styles.panel, styles.cap];
-
 // A book made of four real faces (spine, front cover, back cover, page edges)
 // arranged in 3D with CSS transforms. On the shelf mostly the spine faces you;
 // selecting it hands its position to OpenBook, which flies it out and opens it.
 export default function Book3D({ book, layout, color, lifted, onSelect }: Props) {
-  const { thickness, height, depth, variant, lean } = layout;
-  const lightSpine = color.text !== "#f6ecdc";
+  const { thickness, height, depth } = layout;
+  // .titleBox leaves 2px at each side and 12px at each end
+  const sizes = useSpineFontSizes(book.title, book.author, thickness - 6, height - 30);
 
   const vars = {
     "--t": `${thickness}px`,
@@ -37,11 +36,6 @@ export default function Book3D({ book, layout, color, lifted, onSelect }: Props)
     "--dark": color.dark,
     "--ink": color.text,
     "--foil": color.foil,
-    "--panel": lightSpine ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.3)",
-    "--fs": `${Math.max(9, Math.min(13, thickness * 0.42))}px`,
-    "--lean": lean ? "5deg" : "0deg",
-    "--origin": lean ? "100% 100%" : "50% 100%",
-    marginRight: lean ? `${Math.ceil(height * Math.sin((5 * Math.PI) / 180)) + 2}px` : undefined,
   } as CSSProperties;
 
   const select = (e: MouseEvent | KeyboardEvent) => {
@@ -55,7 +49,7 @@ export default function Book3D({ book, layout, color, lifted, onSelect }: Props)
       tabIndex={0}
       aria-haspopup="dialog"
       aria-label={`${book.title} by ${book.author}`}
-      className={`${styles.book} ${variants[variant]} ${lifted ? styles.lifted : ""}`}
+      className={`${styles.book} ${lifted ? styles.lifted : ""}`}
       style={vars}
       onClick={select}
       onKeyDown={(e) => {
@@ -86,13 +80,20 @@ export default function Book3D({ book, layout, color, lifted, onSelect }: Props)
 
       {/* Spine */}
       <div className={`${styles.face} ${styles.spine}`} data-spine>
-        {book.rating !== null && book.rating >= 4.5 && <span className={styles.sticker}>★</span>}
-        <span className={styles.title}>{book.title}</span>
-        <span className={styles.author}>{book.author.split(" ").slice(-1)[0]}</span>
+        <div className={styles.titleBox}>
+          <div className={styles.title} style={{ fontSize: sizes.title }}>
+            {book.title}
+          </div>
+          {book.author && (
+            <div className={styles.author} style={{ fontSize: sizes.author }}>
+              {book.author}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Bookmark ribbon on books you're in the middle of */}
-      {book.shelf === "reading" && <div className={`${styles.face} ${styles.ribbon}`} />}
+      {/* Charm bookmark hooked over the top of books you're in the middle of */}
+      {book.shelf === "reading" && <CharmBookmark bookId={book.id} height={height} thickness={thickness} />}
     </div>
   );
 }

@@ -43,7 +43,7 @@ export async function unlock(_prev: UnlockState, formData: FormData): Promise<Un
 export async function lock() {
   const store = await cookies();
   store.delete(SESSION_COOKIE);
-  redirect("/private");
+  redirect("/private?locked=1");
 }
 
 export async function resetGuestLink() {
