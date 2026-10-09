@@ -14,6 +14,7 @@ type Filters = {
   minPages: number | null;
   maxPages: number | null;
   onlyStandalone: boolean;
+  moods: string[];
 };
 
 type Props = {
@@ -49,6 +50,7 @@ export default function FilterPanel({
 
   const applyFilters = () => {
     onFilterChange({
+      ...filters,
       genres: selectedGenres,
       seriesId: selectedSeries,
       minPages: minPages ? parseInt(minPages) : null,
@@ -70,6 +72,7 @@ export default function FilterPanel({
       minPages: null,
       maxPages: null,
       onlyStandalone: false,
+      moods: [],
     });
   };
 

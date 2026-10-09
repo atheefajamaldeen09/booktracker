@@ -3,6 +3,7 @@ import {
   text,
   integer,
   real,
+  boolean,
   timestamp,
   serial,
 } from "drizzle-orm/pg-core";
@@ -27,6 +28,12 @@ export const books = pgTable("books", {
   review: text("review"),
   dnfPage: integer("dnf_page"),
   dnfReason: text("dnf_reason"),
+  // How the book feels, e.g. cosy, sad, fast-paced (used by the random picker)
+  moods: text("moods").array(),
+  // Your own order on the visual bookshelf (null = automatic order)
+  shelfOrder: integer("shelf_order"),
+  // Pinned favourites sit on the top shelf
+  pinned: boolean("pinned").notNull().default(false),
 });
 
 // Series table — stores series information
@@ -57,6 +64,20 @@ export const readingSessions = pgTable("reading_sessions", {
   date: timestamp("date").defaultNow(),
   pagesRead: integer("pages_read").notNull(),
   currentPageAfter: integer("current_page_after").notNull(),
+  // Set when the session was timed with the reading timer
+  minutes: integer("minutes"),
+});
+
+// Quotes table — favourite lines and notes saved from a book
+export const quotes = pgTable("quotes", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id")
+    .notNull()
+    .references(() => books.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  page: integer("page"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Goals table — stores your annual reading goals

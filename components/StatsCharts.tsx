@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ResponsiveContainer,
@@ -419,8 +419,14 @@ export function AuthorList({ authors }: { authors: { name: string; books: number
   );
 }
 
-/* ─────────────── reading streak ─────────────── */
+/* ─────────────── reading streak & calendar ─────────────── */
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const CELL = 11;
+const GAP = 3;
+
+// A year of reading as a calendar: one column per week, one square per day,
+// darker the more pages you read. It opens scrolled to the most recent weeks.
 export function StreakCard({
   current,
   longest,
@@ -430,55 +436,113 @@ export function StreakCard({
   longest: number;
   activeDays: { date: string; pages: number }[];
 }) {
-  // Columns are weeks, rows are days — like a calendar heatmap
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, []);
+
   const weeks: { date: string; pages: number }[][] = [];
   for (let i = 0; i < activeDays.length; i += 7) weeks.push(activeDays.slice(i, i + 7));
   const maxPages = Math.max(1, ...activeDays.map((d) => d.pages));
+  const daysRead = activeDays.filter((d) => d.pages > 0).length;
+  const thisYear = activeDays.length ? activeDays[activeDays.length - 1].date.slice(0, 4) : "";
+  const daysThisYear = activeDays.filter((d) => d.pages > 0 && d.date.startsWith(thisYear)).length;
 
   const level = (pages: number) => {
     if (pages <= 0) return 0;
     const ratio = pages / maxPages;
-    return ratio > 0.66 ? 3 : ratio > 0.33 ? 2 : 1;
+    return ratio > 0.75 ? 4 : ratio > 0.5 ? 3 : ratio > 0.25 ? 2 : 1;
   };
-  const shade = ["var(--raised)", "rgb(var(--primary-rgb) / 0.35)", "rgb(var(--primary-rgb) / 0.65)", "var(--primary)"];
+  const shade = [
+    "var(--raised)",
+    "rgb(var(--primary-rgb) / 0.28)",
+    "rgb(var(--primary-rgb) / 0.5)",
+    "rgb(var(--primary-rgb) / 0.75)",
+    "var(--primary)",
+  ];
+  const label = (date: string) =>
+    new Date(date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+
+  // A month name above the first week that starts in that month
+  const monthLabels = weeks.map((week, w) => {
+    const month = new Date(week[0].date).getUTCMonth();
+    const prev = w > 0 ? new Date(weeks[w - 1][0].date).getUTCMonth() : -1;
+    return month !== prev && w < weeks.length - 1 ? MONTH_NAMES[month] : "";
+  });
+
+  const figure = (value: number, caption: string, highlight = false) => (
+    <div style={{ minWidth: "92px" }}>
+      <p
+        style={{
+          fontFamily: "var(--font-heading)",
+          fontSize: "30px",
+          fontWeight: 600,
+          color: highlight ? "var(--text)" : "var(--text-muted)",
+          margin: 0,
+          lineHeight: 1,
+        }}
+      >
+        {value}
+        {highlight && <span style={{ fontSize: "20px" }}> 🔥</span>}
+      </p>
+      <p style={{ color: "var(--text-faint)", fontSize: "12px", margin: "6px 0 0 0" }}>{caption}</p>
+    </div>
+  );
 
   return (
-    <ChartCard title="Reading streak" subtitle="Days you logged pages or finished a book">
-      <div style={{ display: "flex", gap: "24px", marginBottom: "18px", flexWrap: "wrap" }}>
-        <div>
-          <p style={{ fontFamily: "var(--font-heading)", fontSize: "34px", fontWeight: 600, color: "var(--text)", margin: 0, lineHeight: 1 }}>
-            {current} <span style={{ fontSize: "22px" }}>🔥</span>
-          </p>
-          <p style={{ color: "var(--text-muted)", fontSize: "13px", margin: "6px 0 0 0" }}>
-            {current === 1 ? "day" : "days"} in a row
-          </p>
-        </div>
-        <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: "24px" }}>
-          <p style={{ fontFamily: "var(--font-heading)", fontSize: "34px", fontWeight: 600, color: "var(--text-muted)", margin: 0, lineHeight: 1 }}>
-            {longest}
-          </p>
-          <p style={{ color: "var(--text-faint)", fontSize: "13px", margin: "6px 0 0 0" }}>longest streak</p>
-        </div>
+    <ChartCard title="Reading calendar" subtitle="Every day you logged pages or finished a book, over the last year">
+      <div style={{ display: "flex", gap: "22px", marginBottom: "18px", flexWrap: "wrap" }}>
+        {figure(current, current === 1 ? "day in a row" : "days in a row", true)}
+        {figure(longest, "longest streak")}
+        {figure(daysThisYear, `reading days in ${thisYear}`)}
+        {figure(daysRead, "in the last year")}
       </div>
 
-      <div style={{ display: "flex", gap: "4px", overflowX: "auto", paddingBottom: "4px" }}>
-        {weeks.map((week, w) => (
-          <div key={w} style={{ display: "flex", flexDirection: "column", gap: "4px", flex: "1 0 12px", maxWidth: "20px" }}>
-            {week.map((day) => (
-              <div
-                key={day.date}
-                title={`${new Date(day.date).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" })} — ${
-                  day.pages > 0 ? `${day.pages} pages` : "no reading"
-                }`}
-                style={{
-                  aspectRatio: "1",
-                  borderRadius: "3px",
-                  backgroundColor: shade[level(day.pages)],
-                }}
-              />
+      <div ref={scrollRef} style={{ overflowX: "auto", paddingBottom: "6px" }}>
+        <div style={{ display: "inline-flex", gap: "6px" }}>
+          {/* Weekday labels */}
+          <div
+            aria-hidden
+            style={{
+              display: "grid",
+              gridTemplateRows: `14px repeat(7, ${CELL}px)`,
+              rowGap: `${GAP}px`,
+              color: "var(--text-faint)",
+              fontSize: "10px",
+              lineHeight: `${CELL}px`,
+            }}
+          >
+            <span />
+            {["", "Mon", "", "Wed", "", "Fri", ""].map((d, i) => (
+              <span key={i}>{d}</span>
             ))}
           </div>
-        ))}
+          <div style={{ display: "flex", gap: `${GAP}px` }}>
+            {weeks.map((week, w) => (
+              <div
+                key={week[0].date}
+                style={{ display: "grid", gridTemplateRows: `14px repeat(7, ${CELL}px)`, rowGap: `${GAP}px` }}
+              >
+                <span style={{ color: "var(--text-faint)", fontSize: "10px", whiteSpace: "nowrap", width: `${CELL}px` }}>
+                  {monthLabels[w]}
+                </span>
+                {week.map((day) => (
+                  <div
+                    key={day.date}
+                    title={`${label(day.date)} — ${day.pages > 0 ? `${day.pages} pages` : "no reading"}`}
+                    style={{
+                      width: `${CELL}px`,
+                      height: `${CELL}px`,
+                      borderRadius: "3px",
+                      backgroundColor: shade[level(day.pages)],
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       <div
         style={{
@@ -497,6 +561,49 @@ export function StreakCard({
         ))}
         More
       </div>
+    </ChartCard>
+  );
+}
+
+/* ─────────────── reading time (from the timer) ─────────────── */
+
+const hoursAndMinutes = (minutes: number) =>
+  minutes < 60 ? `${minutes}m` : `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ""}`;
+
+export function ReadingTimeCard({
+  sessions,
+  minutes,
+  pagesPerHour,
+  averageSession,
+}: {
+  sessions: number;
+  minutes: number;
+  pages: number;
+  pagesPerHour: number | null;
+  averageSession: number | null;
+}) {
+  const rows = [
+    { label: "Time spent reading", value: hoursAndMinutes(minutes) },
+    { label: "Reading speed", value: pagesPerHour !== null ? `${pagesPerHour} pages / hour` : "—" },
+    { label: "Average session", value: averageSession !== null ? hoursAndMinutes(averageSession) : "—" },
+    { label: "Timed sessions", value: String(sessions) },
+  ];
+  return (
+    <ChartCard title="Reading time" subtitle="From sessions you timed with the reading timer">
+      {sessions === 0 ? (
+        <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: 0, lineHeight: 1.55 }}>
+          Start the ⏱️ reading timer on a book you&apos;re reading, and your reading speed and time will show up here.
+        </p>
+      ) : (
+        <div style={{ display: "grid", gap: "12px" }}>
+          {rows.map((row) => (
+            <div key={row.label} style={{ display: "flex", justifyContent: "space-between", gap: "12px", fontSize: "14px" }}>
+              <span style={{ color: "var(--text-muted)" }}>{row.label}</span>
+              <span style={{ color: "var(--text)", fontWeight: 600 }}>{row.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </ChartCard>
   );
 }

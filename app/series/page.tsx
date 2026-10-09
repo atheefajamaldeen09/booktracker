@@ -1,11 +1,13 @@
 import { connection } from "next/server";
 import { getAllSeriesWithStats } from "@/lib/actions/books";
 import SeriesListView from "@/components/SeriesListView";
+import SeriesReminders from "@/components/SeriesReminders";
+import { getSeriesReminders } from "@/lib/actions/reminders";
 
 export default async function SeriesListPage() {
   // Always read fresh data from the database instead of a build-time snapshot
   await connection();
-  const { series: allSeries } = await getAllSeriesWithStats();
+  const [{ series: allSeries }, reminders] = await Promise.all([getAllSeriesWithStats(), getSeriesReminders()]);
 
   return (
     <div style={{ maxWidth: "800px" }}>
@@ -36,6 +38,13 @@ export default async function SeriesListPage() {
           </p>
         </div>
       </div>
+
+      {reminders.length > 0 && (
+        <section style={{ marginBottom: "32px" }}>
+          <h2 className="section-title">What&apos;s next</h2>
+          <SeriesReminders reminders={reminders} />
+        </section>
+      )}
 
       <SeriesListView series={allSeries} />
     </div>

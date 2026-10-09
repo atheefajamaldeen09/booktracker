@@ -16,6 +16,10 @@ import TagManager from "@/components/TagManager";
 import RatingReview from "@/components/RatingReview";
 import GoalReachedBanner from "@/components/GoalReachedBanner";
 import { getGoalProgress } from "@/lib/actions/goals";
+import { getQuotes } from "@/lib/actions/quotes";
+import MoodPicker from "@/components/MoodPicker";
+import BookQuotes from "@/components/BookQuotes";
+import PinToShelfButton from "@/components/PinToShelfButton";
 
 export default async function BookDetailPage({
   params,
@@ -31,10 +35,15 @@ export default async function BookDetailPage({
 
   if (!book) return notFound();
 
-  const { series: bookSeriesInfo } = await getSeriesForBook(bookId);
-  const { tags: allTags } = await getAllTags();
-  const { tags: bookTagsList } = await getTagsForBook(bookId);
-  const { sessions } = await getReadingSessions(bookId);
+  const [{ series: bookSeriesInfo }, { tags: allTags }, { tags: bookTagsList }, { sessions }, { quotes }] =
+    await Promise.all([
+      getSeriesForBook(bookId),
+      getAllTags(),
+      getTagsForBook(bookId),
+      getReadingSessions(bookId),
+      getQuotes(bookId),
+    ]);
+  const onBookshelf = ["read", "reading", "tbr"].includes(book.shelf);
   const goal = goalReached === "1" ? await getGoalProgress() : null;
 
   const shelfLabels: Record<string, string> = {
@@ -143,6 +152,7 @@ export default async function BookDetailPage({
           >
             {shelfLabels[book.shelf] || book.shelf}
           </span>
+          {onBookshelf && <PinToShelfButton bookId={book.id} initial={book.pinned} />}
 
           {/* Book Meta */}
           <div
@@ -208,6 +218,8 @@ export default async function BookDetailPage({
         </div>
       )}
 
+      <MoodPicker bookId={book.id} initial={book.moods ?? []} />
+
       {/* Series Info */}
       {bookSeriesInfo && (
         <div style={{ marginBottom: "28px" }}>
@@ -265,6 +277,13 @@ export default async function BookDetailPage({
         allTags={allTags}
         bookTags={bookTagsList}
       />
+
+      {book.shelf !== "wishlist" && (
+        <>
+          <div style={{ borderTop: "1px solid var(--border)", marginBottom: "28px" }} />
+          <BookQuotes bookId={book.id} quotes={quotes} />
+        </>
+      )}
 
       {/* Rating & Review — only shown for read books */}
       {book.shelf === "read" && (

@@ -6,6 +6,9 @@ import {
   getRecentlyCompleted,
 } from "@/lib/actions/books";
 import { getGoalProgress } from "@/lib/actions/goals";
+import { getReadingStats } from "@/lib/actions/stats";
+import { getSeriesReminders } from "@/lib/actions/reminders";
+import SeriesReminders from "@/components/SeriesReminders";
 import StatsCard from "@/components/StatsCard";
 import CurrentlyReadingWidget from "@/components/CurrentlyReadingWidget";
 import RecentBooksCarousel from "@/components/RecentBooksCarousel";
@@ -22,13 +25,18 @@ export default async function HomePage() {
     { books: recentlyAdded },
     { books: recentlyCompleted },
     goal,
+    readingStats,
+    reminders,
   ] = await Promise.all([
     getDashboardStats(),
     getCurrentlyReading(),
     getRecentlyAdded(8),
     getRecentlyCompleted(8),
     getGoalProgress(),
+    getReadingStats(),
+    getSeriesReminders(),
   ]);
+  const { streak } = readingStats;
 
   const isNewUser = recentlyAdded.length === 0;
 
@@ -247,6 +255,19 @@ export default async function HomePage() {
                   subtitle="waiting to be read"
                 />
               </Link>
+              <Link href="/stats" style={{ textDecoration: "none" }}>
+                <StatsCard
+                  icon="🔥"
+                  label="Streak"
+                  value={`${streak.current} ${streak.current === 1 ? "day" : "days"}`}
+                  color="var(--success)"
+                  subtitle={
+                    streak.current > 0
+                      ? `in a row · best ${streak.longest}`
+                      : "read today to start one"
+                  }
+                />
+              </Link>
               <Link href="/wishlist" style={{ textDecoration: "none" }}>
                 <StatsCard
                   icon="💛"
@@ -258,6 +279,13 @@ export default async function HomePage() {
               </Link>
             </div>
           </section>
+
+          {reminders.length > 0 && (
+            <section style={{ marginBottom: "36px" }}>
+              <h2 className="section-title">📚 Continue Your Series</h2>
+              <SeriesReminders reminders={reminders.slice(0, 4)} />
+            </section>
+          )}
 
           {/* Random picker */}
           {stats.tbr > 0 && (

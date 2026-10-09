@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Search, BookOpen, User, Barcode, PenLine, Camera } from "lucide-react";
 import BookCover from "@/components/BookCover";
@@ -68,6 +68,19 @@ export default function AddBookPage() {
       setLoading(false);
     }
   };
+
+  // Links like /add?q=... (from the series reminders) start a search straight away
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (!q) return;
+    const id = window.setTimeout(() => {
+      setQuery(q);
+      handleSearch(q, "title");
+    }, 0);
+    return () => window.clearTimeout(id);
+    // Only on arrival
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleSearch();

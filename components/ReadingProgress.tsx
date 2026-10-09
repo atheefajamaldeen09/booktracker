@@ -8,12 +8,14 @@ import {
   markDNF,
 } from "@/lib/actions/books";
 import ProgressBar from "@/components/ProgressBar";
+import ReadingTimer from "@/components/ReadingTimer";
 
 type Session = {
   id: number;
   date: Date | null;
   pagesRead: number;
   currentPageAfter: number;
+  minutes: number | null;
 };
 
 type Props = {
@@ -130,6 +132,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
       >
         Reading Progress
       </p>
+
+      <ReadingTimer bookId={book.id} currentPage={currentPageNum} pageCount={book.pageCount} />
 
       {/* Progress Bar */}
       <div
@@ -513,6 +517,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
                       {session.pagesRead > 0
                         ? `Read ${session.pagesRead} pages`
                         : "Started reading"}
+                      {session.minutes ? ` · ${session.minutes} min` : ""}
                     </p>
                     <p
                       style={{

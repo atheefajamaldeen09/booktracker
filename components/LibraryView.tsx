@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { MOODS } from "@/lib/moods";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import BookCard from "@/components/BookCard";
 import EmptyState from "@/components/EmptyState";
@@ -24,6 +25,10 @@ type Book = {
   dateAdded: Date | null;
   publicationYear: number | null;
   dateCompleted: Date | null;
+  review?: string | null;
+  dnfReason?: string | null;
+  moods?: string[] | null;
+  quoteTexts?: string[];
   bookTags?: Tag[];
   bookSeries?: {
     id: number;
@@ -46,7 +51,17 @@ type SortOption =
   | "rating_desc"
   | "rating_asc"
   | "year_desc"
-  | "year_asc";
+  | "year_asc"
+  | "finished_desc"
+  | "finished_asc"
+  | "pages_desc"
+  | "pages_asc";
+
+// Books missing the value being sorted on always go to the end
+const byValue = (a: number | null, b: number | null, direction: 1 | -1) =>
+  a === null && b === null ? 0 : a === null ? 1 : b === null ? -1 : (a - b) * direction;
+const finishedTime = (book: { shelf: string; dateCompleted: Date | null }) =>
+  book.shelf === "read" && book.dateCompleted ? new Date(book.dateCompleted).getTime() : null;
 
 export default function LibraryView({ books, initialShelf = "all" }: Props) {
   const [search, setSearch] = useState("");
@@ -58,6 +73,13 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTag, setSelectedTag] = useState("all");
   const [selectedSeries, setSelectedSeries] = useState("all");
+  const [selectedMood, setSelectedMood] = useState("all");
+
+  // Moods used on at least one book
+  const usedMoods = useMemo(() => {
+    const used = new Set(books.flatMap((b) => b.moods ?? []));
+    return MOODS.filter((m) => used.has(m.id));
+  }, [books]);
 
   // Get all unique genres from all books
   const allGenres = useMemo(() => {
@@ -116,11 +138,19 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
     // Search filter
     if (search.trim()) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(
-        (book) =>
-          book.title.toLowerCase().includes(searchLower) ||
-          book.author?.toLowerCase().includes(searchLower) ||
-          book.genres?.some((g) => g.toLowerCase().includes(searchLower))
+      // Looks through everything you've written about a book too
+      filtered = filtered.filter((book) =>
+        [
+          book.title,
+          book.author,
+          book.review,
+          book.dnfReason,
+          book.bookSeries?.name,
+          ...(book.genres ?? []),
+          ...(book.bookTags ?? []).map((t) => t.name),
+          ...(book.moods ?? []),
+          ...(book.quoteTexts ?? []),
+        ].some((field) => field?.toLowerCase().includes(searchLower))
       );
     }
 
@@ -169,9 +199,22 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
       );
     }
 
+    // Mood filter
+    if (selectedMood !== "all") {
+      filtered = filtered.filter((book) => book.moods?.includes(selectedMood));
+    }
+
     // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
+        case "finished_desc":
+          return byValue(finishedTime(a), finishedTime(b), -1);
+        case "finished_asc":
+          return byValue(finishedTime(a), finishedTime(b), 1);
+        case "pages_desc":
+          return byValue(a.pageCount, b.pageCount, -1);
+        case "pages_asc":
+          return byValue(a.pageCount, b.pageCount, 1);
         case "title_asc":
           return a.title.localeCompare(b.title);
         case "title_desc":
@@ -210,6 +253,7 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
     selectedYear,
     selectedTag,
     selectedSeries,
+    selectedMood,
     sortBy,
   ]);
 
@@ -220,6 +264,7 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
     selectedYear !== "all" ||
     selectedTag !== "all" ||
     selectedSeries !== "all" ||
+    selectedMood !== "all" ||
     search.trim() !== "";
 
   const clearFilters = () => {
@@ -230,6 +275,7 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
     setSelectedYear("all");
     setSelectedTag("all");
     setSelectedSeries("all");
+    setSelectedMood("all");
     setSortBy("date_added_desc");
   };
 
@@ -269,7 +315,7 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search your library..."
+            placeholder="Search titles, authors, reviews, quotes, tags…"
             style={{
               width: "100%",
               padding: "10px 12px 10px 38px",
@@ -539,6 +585,32 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
             </div>
           )}
 
+          {/* Mood */}
+          {usedMoods.length > 0 && (
+            <div>
+              <label
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: "11px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  display: "block",
+                  marginBottom: "6px",
+                }}
+              >
+                Mood
+              </label>
+              <select value={selectedMood} onChange={(e) => setSelectedMood(e.target.value)} style={selectStyle}>
+                <option value="all">Any Mood</option>
+                {usedMoods.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.emoji} {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Row 3 — Sort */}
           <div>
             <label
@@ -563,6 +635,10 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
               <option value="title_asc">Title — A to Z</option>
               <option value="title_desc">Title — Z to A</option>
               <option value="author_asc">Author — A to Z</option>
+              <option value="finished_desc">Date Finished — Most Recent</option>
+              <option value="finished_asc">Date Finished — Oldest First</option>
+              <option value="pages_desc">Length — Longest First</option>
+              <option value="pages_asc">Length — Shortest First</option>
               <option value="rating_desc">Rating — Highest First</option>
               <option value="rating_asc">Rating — Lowest First</option>
               <option value="year_desc">Year — Newest First</option>

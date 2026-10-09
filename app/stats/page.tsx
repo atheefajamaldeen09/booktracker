@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { getReadingStats } from "@/lib/actions/stats";
+import { getReadingSpeed } from "@/lib/actions/reading";
 import PageHeader from "@/components/PageHeader";
 import StatsCard from "@/components/StatsCard";
 import {
@@ -10,6 +11,7 @@ import {
   BarList,
   AuthorList,
   StreakCard,
+  ReadingTimeCard,
 } from "@/components/StatsCharts";
 
 const grid: React.CSSProperties = {
@@ -22,7 +24,7 @@ const grid: React.CSSProperties = {
 export default async function StatsPage() {
   // Always read fresh data from the database instead of a build-time snapshot
   await connection();
-  const stats = await getReadingStats();
+  const [stats, speed] = await Promise.all([getReadingStats(), getReadingSpeed()]);
   const totalBooks = stats.shelves.reduce((sum, s) => sum + s.books, 0);
 
   return (
@@ -115,6 +117,10 @@ export default async function StatsPage() {
           </div>
 
           <div style={{ marginTop: "20px" }}>
+            <StreakCard {...stats.streak} />
+          </div>
+
+          <div style={{ marginTop: "20px" }}>
             <BooksPerMonthChart years={stats.years} data={stats.booksPerMonth} />
           </div>
 
@@ -134,7 +140,7 @@ export default async function StatsPage() {
           </div>
 
           <div style={grid}>
-            <StreakCard {...stats.streak} />
+            <ReadingTimeCard {...speed} />
             <BarList
               title="Books per shelf"
               subtitle={`${totalBooks} books in your library`}

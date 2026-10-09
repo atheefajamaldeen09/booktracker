@@ -14,7 +14,8 @@ const SHELVES = [
   { id: "dnf", label: "DNF" },
 ];
 
-const HEATMAP_DAYS = 7 * 15;
+// The calendar shows the last 53 weeks, Sunday to Saturday
+const HEATMAP_WEEKS = 53;
 
 // "2026-10-08" — one key per calendar day
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
@@ -176,11 +177,13 @@ export async function getReadingStats(): Promise<ReadingStats> {
         prev = t;
       });
 
+    // From the Sunday 52 weeks back up to today, so columns line up as weeks
+    const calendarDays = (HEATMAP_WEEKS - 1) * 7 + today.getUTCDay() + 1;
     stats.streak = {
       current,
       longest,
-      activeDays: Array.from({ length: HEATMAP_DAYS }, (_, i) => {
-        const key = dayKey(new Date(today.getTime() - (HEATMAP_DAYS - 1 - i) * DAY));
+      activeDays: Array.from({ length: calendarDays }, (_, i) => {
+        const key = dayKey(new Date(today.getTime() - (calendarDays - 1 - i) * DAY));
         return { date: key, pages: pagesByDay.get(key) ?? 0 };
       }),
     };

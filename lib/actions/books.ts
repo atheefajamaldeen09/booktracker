@@ -2,7 +2,7 @@
 
 import { requireOwner, requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
-import { books, series, bookSeries, tags, bookTags, readingSessions, goals } from "@/lib/db/schema";
+import { books, series, bookSeries, tags, bookTags, readingSessions, goals, quotes } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 type AddBookInput = {
@@ -329,6 +329,14 @@ export async function getAllBooksWithTags() {
       .from(bookSeries)
       .innerJoin(series, eq(bookSeries.seriesId, series.id));
 
+    // Saved quotes, so the library search can look inside them
+    const allQuotes = await db.select({ bookId: quotes.bookId, text: quotes.text, note: quotes.note }).from(quotes);
+    const quotesByBookId = new Map<number, string[]>();
+    allQuotes.forEach((q) => {
+      if (!quotesByBookId.has(q.bookId)) quotesByBookId.set(q.bookId, []);
+      quotesByBookId.get(q.bookId)!.push(q.note ? `${q.text} ${q.note}` : q.text);
+    });
+
     // Group tags by bookId
     const tagsByBookId = new Map<number, { id: number; name: string | null; color: string | null }[]>();
 
@@ -364,6 +372,7 @@ export async function getAllBooksWithTags() {
       ...book,
       bookTags: tagsByBookId.get(book.id) || [],
       bookSeries: seriesByBookId.get(book.id) || null,
+      quoteTexts: quotesByBookId.get(book.id) || [],
     }));
 
     return { success: true, books: booksWithTagsAndSeries };
@@ -394,7 +403,9 @@ export async function startReading(bookId: number) {
 export async function updateReadingProgress(
   bookId: number,
   currentPage: number,
-  previousPage: number
+  previousPage: number,
+  // From the reading timer, when the session was timed
+  minutes?: number
 ) {
   await requireOwner();
   try {
@@ -412,6 +423,7 @@ export async function updateReadingProgress(
       pagesRead,
       currentPageAfter: currentPage,
       date: new Date(),
+      minutes: minutes && minutes > 0 ? Math.round(minutes) : null,
     });
 
     return { success: true };
@@ -517,6 +529,20 @@ export async function getAllSeries() {
   } catch (error) {
     console.error("Error fetching series:", error);
     return { success: false, series: [] };
+  }
+}
+
+export async function updateBookMoods(bookId: number, moods: string[]) {
+  await requireOwner();
+  try {
+    await db
+      .update(books)
+      .set({ moods: Array.from(new Set(moods)) })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating moods:", error);
+    return { success: false, error: "Failed to update moods" };
   }
 }
 
@@ -711,6 +737,7 @@ export async function getEligibleTBRBooks(filters?: {
   minPages?: number;
   maxPages?: number;
   onlyStandalone?: boolean;
+  moods?: string[];
 }) {
   await requireViewer();
   try {
@@ -721,6 +748,7 @@ export async function getEligibleTBRBooks(filters?: {
         author: books.author,
         cover: books.cover,
         genres: books.genres,
+        moods: books.moods,
         pageCount: books.pageCount,
         shelf: books.shelf,
       })
@@ -772,6 +800,12 @@ export async function getEligibleTBRBooks(filters?: {
     if (filters?.genres && filters.genres.length > 0) {
       filtered = filtered.filter((book) =>
         book.genres?.some((g) => filters.genres?.includes(g))
+      );
+    }
+
+    if (filters?.moods && filters.moods.length > 0) {
+      filtered = filtered.filter((book) =>
+        book.moods?.some((m) => filters.moods?.includes(m))
       );
     }
 

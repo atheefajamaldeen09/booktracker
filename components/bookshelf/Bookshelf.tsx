@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown } from "lucide-react";
-import type { ShelfBook } from "@/lib/actions/bookshelf";
+import { ChevronUp, ChevronDown, Move, Palette } from "lucide-react";
+import { saveShelfOrder, saveShelfDecor, type ShelfBook, type ShelfDecorSettings } from "@/lib/actions/bookshelf";
+import { useCanEdit } from "@/components/Viewer";
+import DecorPanel from "./DecorPanel";
 import Book3D, { type BookLayout } from "./Book3D";
 import OpenBook from "./OpenBook";
 import {
@@ -19,13 +21,27 @@ import { useSpineColors, fallbackColor, hashString } from "./spineColors";
 import styles from "./Bookshelf.module.css";
 
 type Filter = "all" | "read" | "reading" | "tbr";
-type Sort = "shelf" | "author" | "colour";
+type Sort = "shelf" | "author" | "colour" | "mine";
 
 type Item =
   | { kind: "book"; key: string; book: ShelfBook; layout: BookLayout; width: number }
   | { kind: "deco"; key: string; type: DecorationType; seed: number; width: number; margin: number; height: number; push?: boolean };
 
-type Row = { key: string; items: Item[]; extra: "lights" | "ivy"; ivySide: "left" | "right" };
+type Row = { key: string; items: Item[]; extra: "lights" | "ivy" | null; ivySide: "left" | "right"; top: boolean };
+
+// A book being dragged in arrange mode. mids are the centres of the other
+// books on the shelf, so the drop slot is simply how many of them the pointer
+// has passed; nav is set while hovering the shelf-above/below arrows.
+type DragState = {
+  id: number;
+  pointerId: number;
+  startX: number;
+  dx: number;
+  rowIds: number[];
+  mids: number[];
+  target: number;
+  nav: -1 | 0 | 1;
+};
 
 const SHELF_ORDER = { read: 0, reading: 1, tbr: 2 };
 const BOOKS_PER_SHELF = 10;
@@ -55,12 +71,13 @@ const TALL: DecorationType[] = ["plant", "roses", "lantern", "globe"];
 const SLIM_TALL: DecorationType[] = ["roses", "lantern"];
 const pick = (list: DecorationType[], r: number, seed: number) => list[(seed + r * 3) % list.length];
 
-export default function Bookshelf({ books }: { books: ShelfBook[] }) {
+export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor: ShelfDecorSettings }) {
   // Everything here depends on the browser (width, cover colors)
   const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   const [filter, setFilter] = useState<Filter>("all");
-  const [sort, setSort] = useState<Sort>("shelf");
+  // Your own order is the default once you've arranged the shelf
+  const [sort, setSort] = useState<Sort>(() => (books.some((b) => b.shelfOrder !== null) ? "mine" : "shelf"));
   // The book lifted off the shelf, and where it was sitting when you clicked it
   const [open, setOpen] = useState<{ id: number; origin: DOMRect | null } | null>(null);
   const [width, setWidth] = useState(0);
@@ -68,6 +85,15 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
   // Which shelf is in view; the arrows move between them
   const [shelfIndex, setShelfIndex] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  const canEdit = useCanEdit();
+  const [arranging, setArranging] = useState(false);
+  // The order you arranged in this visit, as book ids (saved to the server too)
+  const [order, setOrder] = useState<number[] | null>(null);
+  const [decorSettings, setDecorSettings] = useState(decor);
+  const [showDecor, setShowDecor] = useState(false);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const dragRef = useRef<DragState | null>(null);
 
   const colors = useSpineColors(books.map((b) => b.cover));
   const colorFor = (book: ShelfBook) => (book.cover && colors[book.cover]) || fallbackColor(book.title);
@@ -100,7 +126,10 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
   const visibleBooks = useMemo(() => {
     const list = books.filter((b) => filter === "all" || b.shelf === filter);
     const lastName = (a: string) => a.trim().split(" ").slice(-1)[0].toLowerCase();
-    return list.sort((a, b) => {
+    const rank = new Map((order ?? []).map((id, i) => [id, i]));
+    const place = (b: ShelfBook) => (order ? rank.get(b.id) : b.shelfOrder) ?? Number.MAX_SAFE_INTEGER;
+    list.sort((a, b) => {
+      if (sort === "mine" && place(a) !== place(b)) return place(a) - place(b);
       if (sort === "author") return lastName(a.author).localeCompare(lastName(b.author)) || a.title.localeCompare(b.title);
       if (sort === "colour") {
         const ca = (a.cover && colors[a.cover]) || fallbackColor(a.title);
@@ -113,7 +142,9 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
         (a.dateCompleted ?? a.dateAdded ?? "").localeCompare(b.dateCompleted ?? b.dateAdded ?? "")
       );
     });
-  }, [books, filter, sort, colors]);
+    // Pinned favourites go first, onto their own top shelf
+    return [...list.filter((b) => b.pinned), ...list.filter((b) => !b.pinned)];
+  }, [books, filter, sort, colors, order]);
 
   // The tallest a book can be: one shelf should fill most of the screen
   const maxHeight = Math.round(Math.min(470, Math.max(220, viewportHeight * 0.56)));
@@ -125,13 +156,23 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
     // Phones get slimmer ornaments with less space around them
     const roomy = width >= 600;
     const margin = roomy ? 16 : 6;
-    const decoFor = (r: number, seed: number) => pick(roomy ? DECORATION_TYPES : SLIM_DECORATIONS, r, seed);
+    // Only the ornaments you've chosen to show
+    const allowed = DECORATION_TYPES.filter((t) => !decorSettings.hidden.includes(t));
+    const slim = SLIM_DECORATIONS.filter((t) => allowed.includes(t));
+    const pool = roomy ? allowed : slim.length > 0 ? slim : allowed;
+    const tallPool = (roomy ? TALL : SLIM_TALL).filter((t) => allowed.includes(t));
+    const hasDecor = pool.length > 0;
+    const decoFor = (r: number, seed: number) => pick(pool, r, seed);
 
-    const chunks: ShelfBook[][] = [];
-    for (let i = 0; i < visibleBooks.length; i += BOOKS_PER_SHELF) {
-      chunks.push(visibleBooks.slice(i, i + BOOKS_PER_SHELF));
-    }
-    if (chunks.length === 0) chunks.push([]);
+    // Pinned books fill the top shelves, then everything else follows
+    const pinnedCount = visibleBooks.filter((b) => b.pinned).length;
+    const chunks: { books: ShelfBook[]; top: boolean }[] = [];
+    const addChunks = (list: ShelfBook[], top: boolean) => {
+      for (let i = 0; i < list.length; i += BOOKS_PER_SHELF) chunks.push({ books: list.slice(i, i + BOOKS_PER_SHELF), top });
+    };
+    addChunks(visibleBooks.slice(0, pinnedCount), true);
+    addChunks(visibleBooks.slice(pinnedCount), false);
+    if (chunks.length === 0) chunks.push({ books: [], top: false });
 
     // How wide one unit of book weight is on a typical full shelf
     const meanWeight =
@@ -140,15 +181,25 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
     // tallest books that still leave ten of them book-shaped (no wider than
     // height / ratio) beside an ornament scaled to the same height
     const ratio = roomy ? 6.2 : 7.5;
-    const ornament = DECORATION_SIZE[roomy ? "candles" : "cat"].w / DECO_REF;
-    const free = available - margin - BOOKS_PER_SHELF * BOOK_GAP;
+    const basis: DecorationType = roomy ? "candles" : "cat";
+    const ornament = hasDecor ? DECORATION_SIZE[pool.includes(basis) ? basis : pool[0]].w / DECO_REF : 0;
+    const free = available - (hasDecor ? margin : 0) - BOOKS_PER_SHELF * BOOK_GAP;
     const H = Math.round(Math.min(maxHeight, (ratio * free) / (BOOKS_PER_SHELF * meanWeight + ratio * ornament)));
     const typicalUnit = (free - ornament * H) / (BOOKS_PER_SHELF * meanWeight);
 
     const layouts = new Map<number, BookLayout>();
-    const rows: Row[] = chunks.map((chunk, r) => {
+    const rows: Row[] = chunks.map(({ books: chunk, top }, r) => {
       const seed = hashString(`shelf-${r}-${chunk[0]?.id ?? "empty"}`);
-      const extra = r % 2 === 0 ? "lights" : "ivy";
+      const extra =
+        decorSettings.lights && decorSettings.ivy
+          ? r % 2 === 0
+            ? "lights"
+            : "ivy"
+          : decorSettings.lights
+            ? "lights"
+            : decorSettings.ivy
+              ? "ivy"
+              : null;
       const decos: Extract<Item, { kind: "deco" }>[] = [];
       const addDeco = (type: DecorationType, key: string) => {
         decos.push({
@@ -161,7 +212,7 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
           height: Math.round((DECORATION_SIZE[type].h * H) / DECO_REF),
         });
       };
-      addDeco(decoFor(r, seed), `deco-${r}`);
+      if (hasDecor) addDeco(decoFor(r, seed), `deco-${r}`);
 
       const decoSpace = decos.reduce((sum, d) => sum + d.width, 0);
       const shapes = chunk.map(bookShape);
@@ -189,7 +240,8 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
         let used = bookItems.reduce((sum, b) => sum + b.width, 0) + decoSpace;
         // Fill the gap on a short shelf with a few more ornaments
         for (let k = 1; k <= 3; k++) {
-          const type = k === 1 ? pick(roomy ? TALL : SLIM_TALL, r, seed) : decoFor(r + k * 2, seed + k);
+          const type = k === 1 && tallPool.length > 0 ? pick(tallPool, r, seed) : hasDecor ? decoFor(r + k * 2, seed + k) : null;
+          if (!type) continue;
           const w = decoWidth(type, H) + margin;
           if (available - used < w + 40 || decos.some((d) => d.type === type)) continue;
           addDeco(type, `deco-${r}-${k}`);
@@ -197,7 +249,7 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
         }
         // Spread the ornaments evenly through the free space
         if (bookItems.length > 0) decos.forEach((d) => (d.push = true));
-        return { key: `shelf-${r}`, items: [...bookItems, ...decos], extra, ivySide: "left" };
+        return { key: `shelf-${r}`, items: [...bookItems, ...decos], extra, ivySide: "left", top };
       }
 
       // Ornament alternates ends; ivy hangs on the other side
@@ -207,11 +259,12 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
         items: decoRight ? [...bookItems, ...decos] : [...decos, ...bookItems],
         extra,
         ivySide: decoRight ? "left" : "right",
+        top,
       };
     });
 
     return { rows, layouts, bayHeight: H + HEADROOM };
-  }, [visibleBooks, width, maxHeight]);
+  }, [visibleBooks, width, maxHeight, decorSettings]);
 
   const shelfCount = shelf?.rows.length ?? 1;
   const current = Math.min(shelfIndex, shelfCount - 1);
@@ -219,6 +272,109 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
   const go = (delta: number) => setShelfIndex(Math.max(0, Math.min(shelfCount - 1, current + delta)));
 
   const openBook = open ? books.find((b) => b.id === open.id) ?? null : null;
+
+  const startDrag = (book: ShelfBook, row: Row, e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const rowEl = e.currentTarget.parentElement;
+    const rowIds = row.items.flatMap((item) => (item.kind === "book" ? [item.book.id] : []));
+    const mids = rowIds
+      .filter((id) => id !== book.id)
+      .map((id) => {
+        const rect = rowEl?.querySelector(`[data-book-id="${id}"]`)?.getBoundingClientRect();
+        return rect ? rect.left + rect.width / 2 : 0;
+      });
+    const next: DragState = {
+      id: book.id,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      dx: 0,
+      rowIds,
+      mids,
+      target: rowIds.indexOf(book.id),
+      nav: 0,
+    };
+    dragRef.current = next;
+    setDrag(next);
+  };
+
+  const dragId = drag?.id ?? null;
+  useEffect(() => {
+    if (dragId === null) return;
+
+    const move = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d || e.pointerId !== d.pointerId) return;
+      const over = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-nav]");
+      const next: DragState = {
+        ...d,
+        dx: e.clientX - d.startX,
+        target: d.mids.filter((m) => m < e.clientX).length,
+        nav: over ? (Number(over.getAttribute("data-nav")) as -1 | 1) : 0,
+      };
+      dragRef.current = next;
+      setDrag(next);
+    };
+
+    const end = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d || e.pointerId !== d.pointerId) return;
+      dragRef.current = null;
+      setDrag(null);
+      if (e.type === "pointercancel" || (d.nav === 0 && Math.abs(d.dx) < 6)) return;
+
+      // Put the book back into the full order next to its new neighbour
+      const rest = d.rowIds.filter((id) => id !== d.id);
+      if (rest.length === 0) return;
+      const list = visibleBooks.map((b) => b.id).filter((id) => id !== d.id);
+      const before = (id: number) => list.splice(list.indexOf(id), 0, d.id);
+      const after = (id: number) => list.splice(list.indexOf(id) + 1, 0, d.id);
+      if (d.nav === -1) before(rest[0]); // last book on the shelf above
+      else if (d.nav === 1) after(rest[rest.length - 1]); // first book on the shelf below
+      else if (d.target < rest.length) before(rest[d.target]);
+      else after(rest[rest.length - 1]);
+
+      setOrder(list);
+      saveShelfOrder(list);
+      if (d.nav !== 0) setShelfIndex((i) => Math.max(0, i + d.nav));
+    };
+
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
+  }, [dragId, visibleBooks]);
+
+  // Where the drop marker shows while dragging
+  const dropFor = (id: number): "before" | "after" | null => {
+    if (!drag || drag.nav !== 0 || id === drag.id) return null;
+    const rest = drag.rowIds.filter((r) => r !== drag.id);
+    const i = rest.indexOf(id);
+    if (i === drag.target) return "before";
+    if (drag.target === rest.length && i === rest.length - 1) return "after";
+    return null;
+  };
+
+  const changeDecor = (next: ShelfDecorSettings) => {
+    setDecorSettings(next);
+    saveShelfDecor(next);
+  };
+
+  const toggleArrange = () => {
+    if (arranging) {
+      setArranging(false);
+      return;
+    }
+    setFilter("all");
+    setSort("mine");
+    setShelfIndex(0);
+    setOpen(null);
+    setArranging(true);
+  };
 
   if (!mounted) {
     return <div style={{ height: "60vh", borderRadius: "14px", backgroundColor: "var(--surface)" }} />;
@@ -230,6 +386,12 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
     { id: "reading", label: "Reading" },
     { id: "tbr", label: "TBR" },
   ];
+
+  const activeTool: React.CSSProperties = {
+    backgroundColor: "var(--primary)",
+    border: "1px solid var(--primary)",
+    color: "var(--on-primary)",
+  };
 
   const selectStyle: React.CSSProperties = {
     padding: "8px 12px",
@@ -277,6 +439,7 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
                 onClick={() => {
                   setFilter(f.id);
                   setShelfIndex(0);
+                  setArranging(false);
                 }}
                 style={{
                   display: "flex",
@@ -299,7 +462,27 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
           })}
         </div>
 
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          {canEdit && (
+            <>
+              <button
+                type="button"
+                onClick={toggleArrange}
+                aria-pressed={arranging}
+                style={{ ...selectStyle, display: "inline-flex", alignItems: "center", gap: "6px", ...(arranging ? activeTool : {}) }}
+              >
+                <Move size={15} /> Arrange
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDecor((v) => !v)}
+                aria-pressed={showDecor}
+                style={{ ...selectStyle, display: "inline-flex", alignItems: "center", gap: "6px", ...(showDecor ? activeTool : {}) }}
+              >
+                <Palette size={15} /> Decorations
+              </button>
+            </>
+          )}
           <label style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--text-faint)", fontSize: "12px" }}>
             Sort
             <select
@@ -307,9 +490,11 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
               onChange={(e) => {
                 setSort(e.target.value as Sort);
                 setShelfIndex(0);
+                setArranging(false);
               }}
               style={selectStyle}
             >
+              <option value="mine">My order</option>
               <option value="shelf">By shelf</option>
               <option value="author">By author</option>
               <option value="colour">Rainbow 🌈</option>
@@ -317,6 +502,47 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
           </label>
         </div>
       </div>
+
+      {showDecor && <DecorPanel settings={decorSettings} onChange={changeDecor} onClose={() => setShowDecor(false)} />}
+
+      {arranging && (
+        <div
+          role="status"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "18px",
+            padding: "12px 16px",
+            backgroundColor: "rgb(var(--primary-rgb) / 0.12)",
+            border: "1px solid var(--primary)",
+            borderRadius: "14px",
+            color: "var(--text)",
+            fontSize: "14px",
+          }}
+        >
+          <span style={{ flex: 1, minWidth: "220px" }}>
+            ✋ Drag books left or right to reorder them. To move one to another shelf, drop it on the ▲ ▼ arrows.
+          </span>
+          <button
+            type="button"
+            onClick={() => setArranging(false)}
+            style={{
+              padding: "7px 16px",
+              border: "none",
+              borderRadius: "10px",
+              backgroundColor: "var(--primary)",
+              color: "var(--on-primary)",
+              fontWeight: 600,
+              fontSize: "13px",
+              cursor: "pointer",
+            }}
+          >
+            Done
+          </button>
+        </div>
+      )}
 
       {/* The bookcase, one shelf at a time */}
       <div
@@ -340,7 +566,8 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
             <div className={styles.track} style={{ transform: `translate3d(0, ${-current * pitch}px, 0)` }}>
               {shelf?.rows.map((row, r) => (
                 <div key={row.key} className={styles.bay} inert={r !== current}>
-                  {row.extra === "lights" ? <FairyLights seed={r * 5} /> : <HangingIvy side={row.ivySide} height={Math.round(shelf.bayHeight * 0.45)} />}
+                  {row.extra === "lights" && <FairyLights seed={r * 5} />}
+                  {row.extra === "ivy" && <HangingIvy side={row.ivySide} height={Math.round(shelf.bayHeight * 0.45)} />}
                   <div className={styles.row} style={{ height: shelf.bayHeight }}>
                     {row.items.map((item) =>
                       item.kind === "book" ? (
@@ -351,6 +578,16 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
                           color={colorFor(item.book)}
                           lifted={open?.id === item.book.id}
                           onSelect={(id, origin) => setOpen({ id, origin })}
+                          arrange={
+                            arranging && r === current
+                              ? {
+                                  dragging: drag?.id === item.book.id,
+                                  offset: drag?.id === item.book.id ? drag.dx : 0,
+                                  drop: dropFor(item.book.id),
+                                  onDragStart: (e) => startDrag(item.book, row, e),
+                                }
+                              : undefined
+                          }
                         />
                       ) : (
                         <div
@@ -369,7 +606,9 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
                       )
                     )}
                   </div>
-                  <div className={styles.board} />
+                  <div className={styles.board}>
+                    {row.top && <span className={styles.plaque}>★ Favourites</span>}
+                  </div>
                 </div>
               ))}
               <div className={styles.plinth} style={{ height: PEEK }} />
@@ -384,6 +623,8 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
             onClick={() => go(-1)}
             disabled={current === 0}
             aria-label="Shelf above"
+            data-nav="-1"
+            data-over={drag?.nav === -1 || undefined}
           >
             <ChevronUp size={22} />
           </button>
@@ -397,6 +638,8 @@ export default function Bookshelf({ books }: { books: ShelfBook[] }) {
             onClick={() => go(1)}
             disabled={current >= shelfCount - 1}
             aria-label="Shelf below"
+            data-nav="1"
+            data-over={drag?.nav === 1 || undefined}
           >
             <ChevronDown size={22} />
           </button>

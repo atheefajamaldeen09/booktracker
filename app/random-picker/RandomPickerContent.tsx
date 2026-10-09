@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { MOODS } from "@/lib/moods";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   getEligibleTBRBooks,
@@ -62,7 +63,10 @@ export default function RandomPickerContent() {
     minPages: null as number | null,
     maxPages: null as number | null,
     onlyStandalone: false,
+    moods: [] as string[],
   });
+  // Moods that at least one TBR book is tagged with
+  const [tbrMoods, setTbrMoods] = useState<string[]>([]);
 
   // Filter options only need to be loaded once
   useEffect(() => {
@@ -77,6 +81,7 @@ export default function RandomPickerContent() {
         .forEach((book) => book.genres?.forEach((g) => genres.add(g)));
       setAllGenres(Array.from(genres).sort());
       setAllSeries(seriesInTBR);
+      setTbrMoods(Array.from(new Set(allBooks.filter((b) => b.shelf === "tbr").flatMap((b) => b.moods ?? []))));
     };
     loadOptions();
   }, []);
@@ -93,6 +98,7 @@ export default function RandomPickerContent() {
         minPages?: number;
         maxPages?: number;
         onlyStandalone?: boolean;
+        moods?: string[];
       } = {};
 
       if (filters.genres.length > 0) activeFilters.genres = filters.genres;
@@ -100,6 +106,7 @@ export default function RandomPickerContent() {
       if (filters.minPages) activeFilters.minPages = filters.minPages;
       if (filters.maxPages) activeFilters.maxPages = filters.maxPages;
       if (filters.onlyStandalone) activeFilters.onlyStandalone = true;
+      if (filters.moods.length > 0) activeFilters.moods = filters.moods;
 
       const { books: eligibleBooks } = await getEligibleTBRBooks(
         Object.keys(activeFilters).length > 0 ? activeFilters : undefined
@@ -134,7 +141,14 @@ export default function RandomPickerContent() {
     filters.seriesId !== null ||
     filters.minPages !== null ||
     filters.maxPages !== null ||
-    filters.onlyStandalone;
+    filters.onlyStandalone ||
+    filters.moods.length > 0;
+
+  const toggleMood = (id: string) =>
+    setFilters((f) => ({
+      ...f,
+      moods: f.moods.includes(id) ? f.moods.filter((m) => m !== id) : [...f.moods, id],
+    }));
 
   if (initialLoading) {
     return (
@@ -166,6 +180,44 @@ export default function RandomPickerContent() {
           />
         }
       />
+
+      {/* Pick by mood */}
+      <div style={{ marginBottom: "24px" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "13px", fontWeight: 600, margin: "0 0 10px" }}>
+          What are you in the mood for?
+        </p>
+        {tbrMoods.length === 0 ? (
+          <p style={{ color: "var(--text-faint)", fontSize: "13px", margin: 0 }}>
+            Tag your TBR books with moods (on each book&apos;s page) and you can pick by how you feel.
+          </p>
+        ) : (
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {MOODS.filter((m) => tbrMoods.includes(m.id)).map((m) => {
+              const on = filters.moods.includes(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleMood(m.id)}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: "999px",
+                    border: `1px solid ${on ? "var(--primary)" : "var(--border)"}`,
+                    backgroundColor: on ? "var(--primary)" : "var(--surface)",
+                    color: on ? "var(--on-primary)" : "var(--text-muted)",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {m.emoji} {m.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Mode switcher */}
       <div
