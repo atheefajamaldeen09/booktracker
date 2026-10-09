@@ -52,8 +52,11 @@ type DragState = {
 };
 
 const SHELF_ORDER = { read: 0, reading: 1, tbr: 2 };
+// Ten books per shelf; phones get seven so each book is big enough to read
 const BOOKS_PER_SHELF = 10;
+const PHONE_BOOKS_PER_SHELF = 7;
 const ROW_PADDING = 36; // .row horizontal padding
+const PHONE_ROW_PADDING = 16; // .row horizontal padding on phones
 const BOOK_GAP = 2; // .book margin-right
 const HEADROOM = 64; // space above the tallest book for the lights and hover lift
 const BOARD = 22; // shelf plank thickness, matches .board
@@ -90,6 +93,8 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
   const [open, setOpen] = useState<{ id: number; origin: DOMRect | null } | null>(null);
   const [width, setWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(800);
+  // Matches the phone breakpoint in Bookshelf.module.css
+  const [phone, setPhone] = useState(false);
   // Which shelf is in view; the arrows move between them
   const [shelfIndex, setShelfIndex] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -112,7 +117,10 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     if (!el) return;
     const observer = new ResizeObserver(([entry]) => setWidth(Math.floor(entry.contentRect.width)));
     observer.observe(el);
-    const onResize = () => setViewportHeight(window.innerHeight);
+    const onResize = () => {
+      setViewportHeight(window.innerHeight);
+      setPhone(window.matchMedia("(max-width: 600px)").matches);
+    };
     onResize();
     window.addEventListener("resize", onResize);
     return () => {
@@ -155,14 +163,15 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
   }, [books, filter, sort, colors, order]);
 
   // The tallest a book can be: one shelf should fill most of the screen
-  const maxHeight = Math.round(Math.min(470, Math.max(220, viewportHeight * 0.56)));
+  const maxHeight = Math.round(Math.min(470, Math.max(220, viewportHeight * (phone ? 0.5 : 0.56))));
 
   // Ten books per shelf plus an ornament, sized to fill the shelf width
   const shelf = useMemo(() => {
     if (width === 0) return null;
-    const available = width - ROW_PADDING;
-    // Phones get slimmer ornaments with less space around them
-    const roomy = width >= 600;
+    // Phones get fewer, bigger books and slimmer ornaments with less space around them
+    const roomy = !phone;
+    const perShelf = roomy ? BOOKS_PER_SHELF : PHONE_BOOKS_PER_SHELF;
+    const available = width - (roomy ? ROW_PADDING : PHONE_ROW_PADDING);
     const margin = roomy ? 16 : 6;
     // Only the ornaments you've chosen to show
     const allowed = DECORATION_TYPES.filter((t) => !decorSettings.hidden.includes(t));
@@ -173,8 +182,8 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     const decoFor = (r: number, seed: number) => pick(pool, r, seed);
 
     const chunks: ShelfBook[][] = [];
-    for (let i = 0; i < visibleBooks.length; i += BOOKS_PER_SHELF) {
-      chunks.push(visibleBooks.slice(i, i + BOOKS_PER_SHELF));
+    for (let i = 0; i < visibleBooks.length; i += perShelf) {
+      chunks.push(visibleBooks.slice(i, i + perShelf));
     }
     if (chunks.length === 0) chunks.push([]);
 
@@ -182,15 +191,14 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     const meanWeight =
       visibleBooks.reduce((sum, b) => sum + bookShape(b).weight, 0) / Math.max(1, visibleBooks.length) || 1;
     // Book height and ornament width grow together, so solve for both: the
-    // tallest books that still leave ten of them book-shaped (no wider than
-    // height / ratio) beside an ornament scaled to the same height
-    // Phones get taller, slimmer books so ten still look a good size
-    const ratio = roomy ? 6.2 : 9;
+    // tallest books that still leave a full shelf of them book-shaped (no
+    // wider than height / ratio) beside an ornament scaled to the same height
+    const ratio = roomy ? 6.2 : 8;
     const basis: DecorationType = roomy ? "candles" : "cat";
     const ornament = hasDecor ? DECORATION_SIZE[pool.includes(basis) ? basis : pool[0]].w / DECO_REF : 0;
-    const free = available - (hasDecor ? margin : 0) - BOOKS_PER_SHELF * BOOK_GAP;
-    const H = Math.round(Math.min(maxHeight, (ratio * free) / (BOOKS_PER_SHELF * meanWeight + ratio * ornament)));
-    const typicalUnit = (free - ornament * H) / (BOOKS_PER_SHELF * meanWeight);
+    const free = available - (hasDecor ? margin : 0) - perShelf * BOOK_GAP;
+    const H = Math.round(Math.min(maxHeight, (ratio * free) / (perShelf * meanWeight + ratio * ornament)));
+    const typicalUnit = (free - ornament * H) / (perShelf * meanWeight);
 
     const layouts = new Map<number, BookLayout>();
     const rows: Row[] = chunks.map((chunk, r) => {
@@ -227,7 +235,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
       const space = available - decoSpace - chunk.length * BOOK_GAP;
       // A full shelf is packed edge to edge; a short one keeps the usual sizes
       const unit =
-        chunk.length === BOOKS_PER_SHELF
+        chunk.length === perShelf
           ? space / totalWeight
           : Math.min(typicalUnit, space / Math.max(totalWeight, 1));
 
@@ -243,7 +251,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
         return { kind: "book", key: `book-${book.id}`, book, layout, width: layout.thickness + BOOK_GAP };
       });
 
-      if (chunk.length < BOOKS_PER_SHELF) {
+      if (chunk.length < perShelf) {
         let used = bookItems.reduce((sum, b) => sum + b.width, 0) + decoSpace;
         // Fill the gap on a short shelf with a few more ornaments
         for (let k = 1; k <= 3; k++) {
@@ -269,21 +277,26 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
         return { key: `shelf-${r}`, items, extra, ivySide: "left", vines };
       }
 
-      // On a full shelf the ornament stands between the books on most
-      // shelves, and at one end on the rest; ivy hangs on the other side.
-      // Between books it always has at least 3 on each side (3 to 7 of 10)
-      const spot = seed % 4;
-      if (spot >= 2) {
-        const at = 3 + ((seed >> 3) % (BOOKS_PER_SHELF - 5));
+      // On a full shelf the ornament follows a set pattern so neighbouring
+      // shelves never look alike: between the books on the first shelf and
+      // every other one after it, and at the right or left end in between.
+      // Ivy hangs on the other side. Between books it keeps at least 3 on
+      // each side (3 to 7 of 10, or 3 to 4 of 7 on a phone)
+      const spot = (["between", "right", "between", "left"] as const)[r % 4];
+      if (spot === "between") {
+        const side = perShelf >= 7 ? 3 : 2;
+        const choices = perShelf - 2 * side + 1;
+        // Move along the shelf from one "between" shelf to the next
+        const at = side + (((seed >> 3) + r) % choices);
         return {
           key: `shelf-${r}`,
           items: [...bookItems.slice(0, at), ...decos, ...bookItems.slice(at)],
           extra,
-          ivySide: spot === 2 ? "left" : "right",
+          ivySide: at < perShelf / 2 ? "right" : "left",
           vines,
         };
       }
-      const decoRight = spot === 0;
+      const decoRight = spot === "right";
       return {
         key: `shelf-${r}`,
         items: decoRight ? [...bookItems, ...decos] : [...decos, ...bookItems],
@@ -295,7 +308,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
 
     // Less empty space above the books on a phone
     return { rows, layouts, bayHeight: H + (roomy ? HEADROOM : 44) };
-  }, [visibleBooks, width, maxHeight, decorSettings]);
+  }, [visibleBooks, width, maxHeight, decorSettings, phone]);
 
   const shelfCount = shelf?.rows.length ?? 1;
   const current = Math.min(shelfIndex, shelfCount - 1);
