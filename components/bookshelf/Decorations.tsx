@@ -3,6 +3,7 @@ import styles from "./Bookshelf.module.css";
 
 export type DecorationType =
   | "plant"
+  | "pothos"
   | "roses"
   | "stack"
   | "candles"
@@ -19,6 +20,7 @@ export const DECORATION_TYPES: DecorationType[] = [
   "plant",
   "stack",
   "candles",
+  "pothos",
   "roses",
   "radio",
   "cat",
@@ -31,11 +33,12 @@ export const DECORATION_TYPES: DecorationType[] = [
 ];
 
 // Ornaments slim enough to stand beside ten books on a phone
-export const SLIM_DECORATIONS: DecorationType[] = ["cat", "roses", "clock", "lantern"];
+export const SLIM_DECORATIONS: DecorationType[] = ["cat", "roses", "pothos", "clock", "lantern"];
 
 // Size in px next to a 340px-tall book; the shelf scales these with the books
 export const DECORATION_SIZE: Record<DecorationType, { w: number; h: number }> = {
   plant: { w: 150, h: 230 },
+  pothos: { w: 110, h: 150 },
   roses: { w: 100, h: 240 },
   stack: { w: 140, h: 170 },
   candles: { w: 130, h: 160 },
@@ -273,6 +276,48 @@ function Plant() {
       <Shape d={rr(31, 146, 88, 16, 4)} c="--deco-pot" ids={ids} />
       <path d={ell(75, 146, 44, 6)} style={paint("--deco-pot")} {...ink} />
       <path d={ell(75, 146.5, 38, 4)} fill={SOIL} />
+    </>
+  );
+}
+
+// A pothos in a little pot, its vines spilling over the front of the shelf
+// and hanging below it (drawn past the bottom of the box on purpose)
+function Pothos() {
+  const ids = useIds();
+  const crown: [number, number, number, number][] = [
+    [36, 92, 200, 1.5], [46, 78, 175, 1.6], [58, 70, 185, 1.7], [70, 76, 165, 1.6], [80, 90, 150, 1.5],
+    [50, 92, 215, 1.4], [66, 90, 145, 1.4], [58, 86, 180, 1.3],
+  ];
+  const vines = [
+    { d: "M30 104 C12 118 16 160 12 196 C10 214 14 226 12 240", leaves: [[20, 120, 25], [14, 142, -20], [15, 164, 20], [12, 186, -15], [12, 208, 15], [12, 230, -10]] },
+    { d: "M82 106 C98 124 94 160 98 204", leaves: [[92, 124, -25], [96, 146, 20], [95, 168, -15], [97, 192, 15]] },
+    { d: "M46 108 C40 130 46 150 42 172", leaves: [[42, 128, 20], [45, 148, -20], [42, 168, 10]] },
+  ];
+  return svg(
+    "0 0 110 150",
+    ids,
+    <>
+      <Ground cx={55} cy={148} rx={30} />
+      {vines.map((v, i) => (
+        <g key={i}>
+          <path d={v.d} style={{ stroke: col("--deco-leaf-dark") }} strokeWidth="1.8" fill="none" strokeLinecap="round" />
+          {v.leaves.map(([x, y, r], j) => (
+            <Heart key={j} x={x} y={y} s={1.15 + ((i + j) % 3) * 0.1} rot={r} />
+          ))}
+        </g>
+      ))}
+      {crown.map(([x, y, r, sc], i) => (
+        <Heart key={i} x={x} y={y} s={sc} rot={r} />
+      ))}
+      <Shape d={taper(55, 110, 146, 26, 19, 4)} c="--deco-ceramic" ids={ids} />
+      <path d="M32 126 Q55 132 78 126" fill="none" style={{ stroke: col("--deco-pot") }} strokeWidth="2.5" />
+      <Shape d={rr(26, 100, 58, 12, 3)} c="--deco-ceramic" ids={ids} />
+      <path d={ell(55, 100, 29, 4.5)} style={paint("--deco-ceramic")} {...ink} />
+      <path d={ell(55, 100.5, 24, 3)} fill={SOIL} />
+      {/* The vines in front of the rim, falling over the edge */}
+      <path d="M34 101 C28 104 26 108 30 104" style={{ stroke: col("--deco-leaf-dark") }} strokeWidth="1.8" fill="none" />
+      <Heart x={30} y={106} s={1.3} rot={30} />
+      <Heart x={82} y={108} s={1.3} rot={-30} />
     </>
   );
 }
@@ -621,6 +666,8 @@ export function Decoration({ type, seed = 0 }: { type: DecorationType; seed?: nu
   switch (type) {
     case "plant":
       return <Plant />;
+    case "pothos":
+      return <Pothos />;
     case "roses":
       return <Roses />;
     case "stack":
@@ -698,6 +745,70 @@ export function HangingIvy({ side, height }: { side: "left" | "right"; height: n
           {vine.leaves.map(([x, y, r], j) => (
             <Heart key={j} x={x} y={y} s={1 + ((i + j) % 3) * 0.12} rot={r + 180} />
           ))}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// Vines trailing along the front edge of a shelf from one side, with a few
+// strands hanging down over it. Drawn in pixels across the shelf's width.
+export function ShelfVines({ width, side, seed }: { width: number; side: "left" | "right"; seed: number }) {
+  const scale = Math.min(1.5, Math.max(0.7, width / 750));
+  const step = 20 * scale;
+  const length = width * (0.34 + (seed % 17) / 100); // a third to a half of the shelf
+  const count = Math.max(4, Math.floor(length / step));
+  const points = Array.from({ length: count + 1 }, (_, i) => {
+    const x = i * step;
+    return [x, 10 + Math.sin(i * 0.9 + seed) * 3 * scale] as const;
+  });
+  const n = (v: number) => Math.round(v * 10) / 10;
+  const stem = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${n(x)} ${n(y)}`).join(" ");
+
+  // A few strands hang down from along the vine, shorter towards its tip
+  const strands = points
+    .map(([x, y], i) => ({ x, y, i }))
+    .filter(({ i }) => i > 0 && (i + seed) % 3 === 0)
+    .map(({ x, y, i }) => {
+      const fall = (22 + ((seed * 7 + i * 13) % 40)) * scale * (1 - (i / count) * 0.5);
+      return { x, y, fall, i };
+    });
+
+  const height = 120;
+  return (
+    <svg
+      className={styles.vines}
+      width={Math.ceil(length + 20)}
+      height={height}
+      viewBox={`0 0 ${Math.ceil(length + 20)} ${height}`}
+      style={{ [side]: 0, transform: side === "right" ? "scaleX(-1)" : undefined }}
+      aria-hidden
+    >
+      <path d={stem} style={{ stroke: col("--deco-leaf-dark") }} strokeWidth={2.4 * scale} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+      {strands.map(({ x, y, fall, i }) => (
+        <g key={i}>
+          <path
+            d={`M${n(x)} ${n(y)} C${n(x + 5 * scale)} ${n(y + fall * 0.35)} ${n(x - 5 * scale)} ${n(y + fall * 0.7)} ${n(x + 2 * scale)} ${n(y + fall)}`}
+            style={{ stroke: col("--deco-leaf-dark") }}
+            strokeWidth={1.4 * scale}
+            fill="none"
+          />
+          {Array.from({ length: Math.max(1, Math.floor(fall / (12 * scale))) }, (_, j) => (
+            <Heart
+              key={j}
+              x={n(x + (j % 2 ? 3 : -3) * scale)}
+              y={n(y + (j + 1) * 12 * scale)}
+              s={1.05 * scale}
+              rot={j % 2 ? -25 : 25}
+            />
+          ))}
+        </g>
+      ))}
+      {/* Two leaves per stretch of vine, one above and one below, for a full look */}
+      {points.slice(1).map(([x, y], i) => (
+        <g key={i}>
+          <Heart x={n(x - step * 0.7)} y={n(y - 3 * scale)} s={(1.15 + (i % 3) * 0.12) * scale} rot={i % 2 ? 200 : 150} />
+          <Heart x={n(x - step * 0.2)} y={n(y + 5 * scale)} s={(1.05 + ((i + 1) % 3) * 0.12) * scale} rot={i % 2 ? 25 : -20} />
         </g>
       ))}
     </svg>

@@ -3,7 +3,7 @@ import LibraryView from "@/components/LibraryView";
 import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 
-const validShelves = ["tbr", "reading", "read", "dnf"];
+const validShelves = ["tbr", "reading", "read", "dnf", "fav"];
 
 export default async function LibraryPage({
   searchParams,

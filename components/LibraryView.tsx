@@ -25,6 +25,7 @@ type Book = {
   dateAdded: Date | null;
   publicationYear: number | null;
   dateCompleted: Date | null;
+  favorite?: boolean;
   review?: string | null;
   dnfReason?: string | null;
   moods?: string[] | null;
@@ -155,7 +156,9 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
     }
 
     // Shelf filter
-    if (selectedShelf !== "all") {
+    if (selectedShelf === "fav") {
+      filtered = filtered.filter((book) => book.favorite);
+    } else if (selectedShelf !== "all") {
       filtered = filtered.filter((book) => book.shelf === selectedShelf);
     }
 
@@ -427,6 +430,7 @@ export default function LibraryView({ books, initialShelf = "all" }: Props) {
                 style={selectStyle}
               >
                 <option value="all">All Shelves</option>
+                <option value="fav">♥ Favourites</option>
                 <option value="tbr">📚 TBR</option>
                 <option value="reading">📖 Currently Reading</option>
                 <option value="read">✅ Read</option>

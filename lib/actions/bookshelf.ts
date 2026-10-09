@@ -22,7 +22,7 @@ export type ShelfBook = {
   dateStarted: string | null;
   dateCompleted: string | null;
   shelfOrder: number | null;
-  pinned: boolean;
+  favorite: boolean;
 };
 
 // Everything that belongs on the visual shelf: books you've read, are reading,
@@ -47,7 +47,7 @@ export async function getShelfBooks(): Promise<ShelfBook[]> {
         dateStarted: books.dateStarted,
         dateCompleted: books.dateCompleted,
         shelfOrder: books.shelfOrder,
-        pinned: books.pinned,
+        favorite: books.favorite,
       })
       .from(books)
       .where(inArray(books.shelf, ["read", "reading", "tbr"]));
@@ -65,16 +65,16 @@ export async function getShelfBooks(): Promise<ShelfBook[]> {
   }
 }
 
-// Pinned favourites sit together on the top shelf
-export async function setPinned(bookId: number, pinned: boolean) {
+export async function setFavorite(bookId: number, favorite: boolean) {
   await requireOwner();
   try {
-    await db.update(books).set({ pinned }).where(eq(books.id, bookId));
+    await db.update(books).set({ favorite }).where(eq(books.id, bookId));
     revalidatePath("/bookshelf");
+    revalidatePath("/library");
     return { success: true };
   } catch (error) {
-    console.error("Error pinning book:", error);
-    return { success: false, error: "Failed to pin the book" };
+    console.error("Error marking favourite:", error);
+    return { success: false, error: "Failed to update favourite" };
   }
 }
 
@@ -92,9 +92,9 @@ export async function saveShelfOrder(bookIds: number[]) {
   }
 }
 
-export type ShelfDecorSettings = { hidden: string[]; lights: boolean; ivy: boolean };
+export type ShelfDecorSettings = { hidden: string[]; lights: boolean; ivy: boolean; vines: boolean };
 const DECOR_KEY = "shelf-decorations";
-const DEFAULT_DECOR: ShelfDecorSettings = { hidden: [], lights: true, ivy: true };
+const DEFAULT_DECOR: ShelfDecorSettings = { hidden: [], lights: true, ivy: true, vines: true };
 
 // Which ornaments appear on the shelf; everyone visiting sees the same choice
 export async function getShelfDecor(): Promise<ShelfDecorSettings> {
@@ -114,6 +114,7 @@ export async function saveShelfDecor(settings: ShelfDecorSettings) {
     hidden: settings.hidden.filter((h) => typeof h === "string").slice(0, 50),
     lights: Boolean(settings.lights),
     ivy: Boolean(settings.ivy),
+    vines: Boolean(settings.vines),
   });
   try {
     await db

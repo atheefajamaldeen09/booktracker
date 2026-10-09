@@ -5,6 +5,7 @@ import type { ShelfDecorSettings } from "@/lib/actions/bookshelf";
 
 const NAMES: Record<DecorationType, string> = {
   plant: "Potted plant",
+  pothos: "Trailing pothos",
   roses: "Roses",
   stack: "Book stack",
   candles: "Candles",
@@ -108,6 +109,10 @@ export default function DecorPanel({
         <button type="button" aria-pressed={settings.ivy} onClick={() => onChange({ ...settings, ivy: !settings.ivy })} style={chip(settings.ivy)}>
           <span style={{ fontSize: "30px", lineHeight: "52px" }}>🌿</span>
           Hanging ivy
+        </button>
+        <button type="button" aria-pressed={settings.vines} onClick={() => onChange({ ...settings, vines: !settings.vines })} style={chip(settings.vines)}>
+          <span style={{ fontSize: "30px", lineHeight: "52px" }}>🍃</span>
+          Shelf vines
         </button>
       </div>
     </div>

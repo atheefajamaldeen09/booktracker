@@ -32,8 +32,8 @@ export const books = pgTable("books", {
   moods: text("moods").array(),
   // Your own order on the visual bookshelf (null = automatic order)
   shelfOrder: integer("shelf_order"),
-  // Pinned favourites sit on the top shelf
-  pinned: boolean("pinned").notNull().default(false),
+  // Books you've marked as favourites
+  favorite: boolean("favorite").notNull().default(false),
 });
 
 // Series table — stores series information

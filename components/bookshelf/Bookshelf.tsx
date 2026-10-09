@@ -15,19 +15,27 @@ import {
   SLIM_DECORATIONS,
   FairyLights,
   HangingIvy,
+  ShelfVines,
   type DecorationType,
 } from "./Decorations";
 import { useSpineColors, fallbackColor, hashString } from "./spineColors";
 import styles from "./Bookshelf.module.css";
 
-type Filter = "all" | "read" | "reading" | "tbr";
+type Filter = "all" | "read" | "reading" | "tbr" | "fav";
 type Sort = "shelf" | "author" | "colour" | "mine";
 
 type Item =
   | { kind: "book"; key: string; book: ShelfBook; layout: BookLayout; width: number }
   | { kind: "deco"; key: string; type: DecorationType; seed: number; width: number; margin: number; height: number; push?: boolean };
 
-type Row = { key: string; items: Item[]; extra: "lights" | "ivy" | null; ivySide: "left" | "right"; top: boolean };
+type Row = {
+  key: string;
+  items: Item[];
+  extra: "lights" | "ivy" | null;
+  ivySide: "left" | "right";
+  // Vines trailing along the front of the shelf board, from one side
+  vines: "left" | "right" | null;
+};
 
 // A book being dragged in arrange mode. mids are the centres of the other
 // books on the shelf, so the drop slot is simply how many of them the pointer
@@ -119,12 +127,13 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
       read: books.filter((b) => b.shelf === "read").length,
       reading: books.filter((b) => b.shelf === "reading").length,
       tbr: books.filter((b) => b.shelf === "tbr").length,
+      fav: books.filter((b) => b.favorite).length,
     }),
     [books]
   );
 
   const visibleBooks = useMemo(() => {
-    const list = books.filter((b) => filter === "all" || b.shelf === filter);
+    const list = books.filter((b) => filter === "all" || (filter === "fav" ? b.favorite : b.shelf === filter));
     const lastName = (a: string) => a.trim().split(" ").slice(-1)[0].toLowerCase();
     const rank = new Map((order ?? []).map((id, i) => [id, i]));
     const place = (b: ShelfBook) => (order ? rank.get(b.id) : b.shelfOrder) ?? Number.MAX_SAFE_INTEGER;
@@ -142,8 +151,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
         (a.dateCompleted ?? a.dateAdded ?? "").localeCompare(b.dateCompleted ?? b.dateAdded ?? "")
       );
     });
-    // Pinned favourites go first, onto their own top shelf
-    return [...list.filter((b) => b.pinned), ...list.filter((b) => !b.pinned)];
+    return list;
   }, [books, filter, sort, colors, order]);
 
   // The tallest a book can be: one shelf should fill most of the screen
@@ -164,15 +172,11 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     const hasDecor = pool.length > 0;
     const decoFor = (r: number, seed: number) => pick(pool, r, seed);
 
-    // Pinned books fill the top shelves, then everything else follows
-    const pinnedCount = visibleBooks.filter((b) => b.pinned).length;
-    const chunks: { books: ShelfBook[]; top: boolean }[] = [];
-    const addChunks = (list: ShelfBook[], top: boolean) => {
-      for (let i = 0; i < list.length; i += BOOKS_PER_SHELF) chunks.push({ books: list.slice(i, i + BOOKS_PER_SHELF), top });
-    };
-    addChunks(visibleBooks.slice(0, pinnedCount), true);
-    addChunks(visibleBooks.slice(pinnedCount), false);
-    if (chunks.length === 0) chunks.push({ books: [], top: false });
+    const chunks: ShelfBook[][] = [];
+    for (let i = 0; i < visibleBooks.length; i += BOOKS_PER_SHELF) {
+      chunks.push(visibleBooks.slice(i, i + BOOKS_PER_SHELF));
+    }
+    if (chunks.length === 0) chunks.push([]);
 
     // How wide one unit of book weight is on a typical full shelf
     const meanWeight =
@@ -188,7 +192,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     const typicalUnit = (free - ornament * H) / (BOOKS_PER_SHELF * meanWeight);
 
     const layouts = new Map<number, BookLayout>();
-    const rows: Row[] = chunks.map(({ books: chunk, top }, r) => {
+    const rows: Row[] = chunks.map((chunk, r) => {
       const seed = hashString(`shelf-${r}-${chunk[0]?.id ?? "empty"}`);
       const extra =
         decorSettings.lights && decorSettings.ivy
@@ -200,6 +204,8 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
             : decorSettings.ivy
               ? "ivy"
               : null;
+      // Every other shelf gets vines draping over its front edge
+      const vines = decorSettings.vines && r % 2 === 0 ? (r % 4 === 0 ? "right" : "left") : null;
       const decos: Extract<Item, { kind: "deco" }>[] = [];
       const addDeco = (type: DecorationType, key: string) => {
         decos.push({
@@ -247,19 +253,41 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
           addDeco(type, `deco-${r}-${k}`);
           used += w;
         }
-        // Spread the ornaments evenly through the free space
+        // Spread the ornaments evenly through the free space, with one
+        // standing between the books when there are enough of both
         if (bookItems.length > 0) decos.forEach((d) => (d.push = true));
-        return { key: `shelf-${r}`, items: [...bookItems, ...decos], extra, ivySide: "left", top };
+        const items: Item[] =
+          bookItems.length >= 2 && decos.length >= 2
+            ? [
+                ...bookItems.slice(0, Math.ceil(bookItems.length / 2)),
+                decos[0],
+                ...bookItems.slice(Math.ceil(bookItems.length / 2)),
+                ...decos.slice(1),
+              ]
+            : [...bookItems, ...decos];
+        return { key: `shelf-${r}`, items, extra, ivySide: "left", vines };
       }
 
-      // Ornament alternates ends; ivy hangs on the other side
-      const decoRight = r % 2 === 0;
+      // On a full shelf the ornament stands between the books on most
+      // shelves, and at one end on the rest; ivy hangs on the other side
+      const spot = seed % 4;
+      if (spot >= 2) {
+        const at = 3 + ((seed >> 3) % 5);
+        return {
+          key: `shelf-${r}`,
+          items: [...bookItems.slice(0, at), ...decos, ...bookItems.slice(at)],
+          extra,
+          ivySide: spot === 2 ? "left" : "right",
+          vines,
+        };
+      }
+      const decoRight = spot === 0;
       return {
         key: `shelf-${r}`,
         items: decoRight ? [...bookItems, ...decos] : [...decos, ...bookItems],
         extra,
         ivySide: decoRight ? "left" : "right",
-        top,
+        vines,
       };
     });
 
@@ -385,6 +413,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     { id: "read", label: "Read" },
     { id: "reading", label: "Reading" },
     { id: "tbr", label: "TBR" },
+    { id: "fav", label: "♥ Favourites" },
   ];
 
   const activeTool: React.CSSProperties = {
@@ -607,7 +636,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
                     )}
                   </div>
                   <div className={styles.board}>
-                    {row.top && <span className={styles.plaque}>★ Favourites</span>}
+                    {row.vines && <ShelfVines width={width} side={row.vines} seed={r * 7 + 3} />}
                   </div>
                 </div>
               ))}
@@ -647,7 +676,9 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
       </div>
 
       <p style={{ color: "var(--text-faint)", fontSize: "13px", textAlign: "center", marginTop: "18px" }}>
-        {books.length === 0
+        {filter === "fav" && visibleBooks.length === 0
+          ? "No favourites yet — open a book and tap ♡ Favourite to add it here."
+          : books.length === 0
           ? "Your shelf is waiting — add books to your TBR or mark one as read and they'll appear here."
           : "Tap a book to take it off the shelf and open it. Use the arrows to move between shelves."}
       </p>

@@ -19,7 +19,7 @@ import { getGoalProgress } from "@/lib/actions/goals";
 import { getQuotes } from "@/lib/actions/quotes";
 import MoodPicker from "@/components/MoodPicker";
 import BookQuotes from "@/components/BookQuotes";
-import PinToShelfButton from "@/components/PinToShelfButton";
+import FavoriteButton from "@/components/FavoriteButton";
 
 export default async function BookDetailPage({
   params,
@@ -43,7 +43,6 @@ export default async function BookDetailPage({
       getReadingSessions(bookId),
       getQuotes(bookId),
     ]);
-  const onBookshelf = ["read", "reading", "tbr"].includes(book.shelf);
   const goal = goalReached === "1" ? await getGoalProgress() : null;
 
   const shelfLabels: Record<string, string> = {
@@ -152,7 +151,7 @@ export default async function BookDetailPage({
           >
             {shelfLabels[book.shelf] || book.shelf}
           </span>
-          {onBookshelf && <PinToShelfButton bookId={book.id} initial={book.pinned} />}
+          <FavoriteButton bookId={book.id} initial={book.favorite} />
 
           {/* Book Meta */}
           <div
