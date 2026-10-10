@@ -158,6 +158,33 @@
   color: var(--primary);
 }
 
+.plain {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.plain:hover {
+  border-color: var(--primary);
+}
+.locked {
+  margin: 14px 0 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--text-faint);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .heading {
   margin: 0;
   color: var(--text);

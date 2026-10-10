@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Hammer, Lightbulb } from "lucide-react";
+import { ArrowLeft, Check, Hammer, LayoutGrid, Lightbulb } from "lucide-react";
 import { chooseNook, placeNookPiece } from "@/lib/actions/nooks";
 import { NOOKS, PIECES_PER_BOOK, PIECES_PER_KIT, nookById, type NookId, type NookProgress } from "@/lib/nooks";
 import { MONTH_NAMES } from "@/lib/finishDate";
@@ -27,6 +27,8 @@ export default function NookBuilder({ progress }: { progress: NookProgress }) {
   const [justPlaced, setJustPlaced] = useState<string | null>(null);
   const [justFinished, setJustFinished] = useState<NookId | null>(null);
   const artRef = useRef<HTMLDivElement>(null);
+  // Looking through the other kits while one is still on the workbench
+  const [browsing, setBrowsing] = useState(false);
 
   // Web Animations rather than CSS, so pieces drop in even with reduced
   // motion switched on in the system settings
@@ -58,6 +60,9 @@ export default function NookBuilder({ progress }: { progress: NookProgress }) {
   const finished = justFinished ? nookById(justFinished) : null;
   const doneIds = state.done.map((d) => d.id);
   const kitsLeft = NOOKS.filter((n) => !doneIds.includes(n.id));
+  // The kits on show: everything unbuilt, minus the one you're building
+  const kitsShown = kitsLeft.filter((n) => n.id !== state.current);
+  const windowShopping = !!building && browsing;
 
   const place = async () => {
     if (!building || busy || state.available < 1) return;
@@ -91,6 +96,7 @@ export default function NookBuilder({ progress }: { progress: NookProgress }) {
     if (!result.success) return setError(result.error ?? "Couldn't open that kit");
     setJustFinished(null);
     setJustPlaced(null);
+    setBrowsing(false);
     setState({ ...state, current: id, placed: 0 });
   };
 
@@ -104,7 +110,7 @@ export default function NookBuilder({ progress }: { progress: NookProgress }) {
   return (
     <div className={styles.wrap}>
       {/* ── The nook you're building, or the one you just finished ── */}
-      {(building || finished) && (
+      {(building || finished) && !windowShopping && (
         <section className={styles.bench}>
           <div className={styles.art} ref={artRef}>
             {building ? <NookArt nook={building.id} placed={state.placed} /> : <NookArt nook={finished!.id} />}
@@ -136,6 +142,11 @@ export default function NookBuilder({ progress }: { progress: NookProgress }) {
                 </>
               )}
               {error && <p className={styles.error}>{error}</p>}
+              {kitsShown.length > 0 && (
+                <button className={styles.plain} onClick={() => setBrowsing(true)}>
+                  <LayoutGrid size={15} /> See the other kits
+                </button>
+              )}
 
               <ol className={styles.pieces}>
                 {building.pieces.map((p, i) => (
@@ -163,18 +174,27 @@ export default function NookBuilder({ progress }: { progress: NookProgress }) {
       )}
 
       {/* ── Kits to choose from ── */}
-      {!building && (
+      {(!building || windowShopping) && (
         <section>
-          <h2 className={styles.heading}>{state.done.length === 0 ? "Choose your first kit" : kitsLeft.length > 0 ? "Choose your next kit" : "Every kit is built!"}</h2>
+          {windowShopping && (
+            <button className={styles.plain} style={{ marginTop: 0, marginBottom: "18px" }} onClick={() => setBrowsing(false)}>
+              <ArrowLeft size={15} /> Back to my workbench
+            </button>
+          )}
+          <h2 className={styles.heading}>
+            {windowShopping ? "The other kits" : state.done.length === 0 ? "Choose your first kit" : kitsLeft.length > 0 ? "Choose your next kit" : "Every kit is built!"}
+          </h2>
           <p className={styles.lead}>
-            {kitsLeft.length > 0
+            {windowShopping
+              ? `Have a look at what's waiting. You can open one of these once ${building!.name} is finished.`
+              : kitsLeft.length > 0
               ? `Each kit has ${PIECES_PER_KIT} pieces. Every book you finish earns ${PIECES_PER_BOOK === 1 ? "one" : PIECES_PER_BOOK}, and you start with a couple to get going.`
               : "You've finished every nook there is. More kits will arrive on this shelf later."}
           </p>
-          {canEdit && kitsLeft.length > 0 && inHand}
-          {error && <p className={styles.error}>{error}</p>}
+          {canEdit && !windowShopping && kitsLeft.length > 0 && inHand}
+          {error && !windowShopping && <p className={styles.error}>{error}</p>}
           <div className={styles.kits}>
-            {kitsLeft.map((kit) => (
+            {kitsShown.map((kit) => (
               <div key={kit.id} className={styles.kit}>
                 <div className={styles.kitArt}>
                   {/* The picture on the box: finished, lights off */}
@@ -182,10 +202,14 @@ export default function NookBuilder({ progress }: { progress: NookProgress }) {
                 </div>
                 <h3 className={styles.kitName}>{kit.name}</h3>
                 <p className={styles.kitBlurb}>{kit.blurb}</p>
-                {canEdit && (
-                  <button className={styles.primary} onClick={() => open(kit.id)} disabled={busy}>
-                    Open this kit
-                  </button>
+                {windowShopping ? (
+                  <p className={styles.locked}>Finish {building!.name} first</p>
+                ) : (
+                  canEdit && (
+                    <button className={styles.primary} onClick={() => open(kit.id)} disabled={busy}>
+                      Open this kit
+                    </button>
+                  )
                 )}
               </div>
             ))}
