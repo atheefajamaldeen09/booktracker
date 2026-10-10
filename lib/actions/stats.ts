@@ -27,9 +27,17 @@ function emptyStats() {
     years: [] as number[],
     booksPerYear: [] as { year: string; books: number }[],
     booksPerMonth: {} as Record<number, { month: string; books: number }[]>,
+    // Books you only remember the year of, per year
+    booksNoMonth: {} as Record<number, number>,
     genres: [] as { name: string; books: number }[],
     authors: [] as { name: string; books: number; avgRating: number | null }[],
-    streak: { current: 0, longest: 0, activeDays: [] as { date: string; pages: number }[] },
+    streak: {
+      current: 0,
+      longest: 0,
+      // bookId: the book you read the most pages of that day (it colours the square)
+      activeDays: [] as { date: string; pages: number; bookId: number | null }[],
+      books: [] as { id: number; title: string; cover: string | null }[],
+    },
     pagesOverTime: [] as { month: string; pages: number }[],
     shelves: SHELVES.map((s) => ({ shelf: s.id, label: s.label, books: 0 })),
   };
@@ -60,13 +68,18 @@ export async function getReadingStats(): Promise<ReadingStats> {
     }));
 
     // ── Books per year / month ──
+    // (a book you only remember the year of counts for the year, not a month)
     const perYear = new Map<number, number[]>();
+    const noMonth = new Map<number, number>();
     finished.forEach((b) => {
       const d = new Date(b.dateCompleted!);
       const year = d.getFullYear();
       if (!perYear.has(year)) perYear.set(year, new Array(12).fill(0));
-      perYear.get(year)![d.getMonth()]++;
+      if (b.dateCompletedPrecision === "year") noMonth.set(year, (noMonth.get(year) ?? 0) + 1);
+      else perYear.get(year)![d.getMonth()]++;
     });
+    const booksInYear = (year: number) =>
+      perYear.get(year)!.reduce((sum, n) => sum + n, 0) + (noMonth.get(year) ?? 0);
     if (!perYear.has(currentYear)) perYear.set(currentYear, new Array(12).fill(0));
 
     // Fill gaps so a year with nothing read still shows as an empty bar
@@ -77,16 +90,17 @@ export async function getReadingStats(): Promise<ReadingStats> {
     stats.years = Array.from(perYear.keys()).sort((a, b) => b - a);
     stats.booksPerYear = [...stats.years].reverse().map((year) => ({
       year: String(year),
-      books: perYear.get(year)!.reduce((sum, n) => sum + n, 0),
+      books: booksInYear(year),
     }));
     stats.years.forEach((year) => {
       stats.booksPerMonth[year] = perYear.get(year)!.map((books, i) => ({ month: MONTHS[i], books }));
+      stats.booksNoMonth[year] = noMonth.get(year) ?? 0;
     });
 
     // ── Ratings ──
     const rated = readBooks.filter((b) => b.rating !== null && b.rating > 0);
     stats.totals.read = readBooks.length;
-    stats.totals.readThisYear = perYear.get(currentYear)!.reduce((sum, n) => sum + n, 0);
+    stats.totals.readThisYear = booksInYear(currentYear);
     stats.totals.ratedCount = rated.length;
     stats.totals.avgRating = rated.length
       ? Math.round((rated.reduce((sum, b) => sum + b.rating!, 0) / rated.length) * 10) / 10
@@ -125,25 +139,43 @@ export async function getReadingStats(): Promise<ReadingStats> {
       .slice(0, 6);
 
     // ── Pages read (sessions, plus whatever was left when a book was finished) ──
+    // A book finished on an unknown day stays off the calendar and streaks, and
+    // one finished in an unknown month stays off the monthly chart too.
     const pagesByDay = new Map<string, number>();
     const pagesByMonth = new Map<string, number>();
     const sessionPagesByBook = new Map<number, number>();
-    const addPages = (date: Date, pages: number) => {
-      pagesByDay.set(dayKey(date), (pagesByDay.get(dayKey(date)) ?? 0) + pages);
+    // Pages per book on each day
+    const bookPagesByDay = new Map<string, Map<number, number>>();
+    let pagesTotal = 0;
+    const addPages = (date: Date, pages: number, bookId: number | null, precision: string | null = "day") => {
+      pagesTotal += pages;
+      if (precision === "year") return;
       pagesByMonth.set(monthKey(date), (pagesByMonth.get(monthKey(date)) ?? 0) + pages);
+      if (precision === "month") return;
+      const key = dayKey(date);
+      pagesByDay.set(key, (pagesByDay.get(key) ?? 0) + pages);
+      if (bookId !== null && pages > 0) {
+        const perBook = bookPagesByDay.get(key) ?? new Map<number, number>();
+        perBook.set(bookId, (perBook.get(bookId) ?? 0) + pages);
+        bookPagesByDay.set(key, perBook);
+      }
     };
 
     sessions.forEach((s) => {
       if (!s.date) return;
-      addPages(new Date(s.date), s.pagesRead);
+      addPages(new Date(s.date), s.pagesRead, s.bookId);
       if (s.bookId) sessionPagesByBook.set(s.bookId, (sessionPagesByBook.get(s.bookId) ?? 0) + s.pagesRead);
     });
     finished.forEach((b) => {
       const remaining = Math.max(0, (b.pageCount ?? 0) - (sessionPagesByBook.get(b.id) ?? 0));
-      addPages(new Date(b.dateCompleted!), remaining);
+      addPages(new Date(b.dateCompleted!), remaining, b.id, b.dateCompletedPrecision);
     });
+    // Books you don't remember finishing still count toward pages read
+    readBooks
+      .filter((b) => !b.dateCompleted)
+      .forEach((b) => (pagesTotal += Math.max(0, (b.pageCount ?? 0) - (sessionPagesByBook.get(b.id) ?? 0))));
 
-    stats.totals.pagesRead = Array.from(pagesByMonth.values()).reduce((sum, n) => sum + n, 0);
+    stats.totals.pagesRead = pagesTotal;
 
     // Last 12 months, oldest first
     stats.pagesOverTime = Array.from({ length: 12 }, (_, i) => {
@@ -179,13 +211,20 @@ export async function getReadingStats(): Promise<ReadingStats> {
 
     // From the Sunday 52 weeks back up to today, so columns line up as weeks
     const calendarDays = (HEATMAP_WEEKS - 1) * 7 + today.getUTCDay() + 1;
+    const activeDayList = Array.from({ length: calendarDays }, (_, i) => {
+      const key = dayKey(new Date(today.getTime() - (calendarDays - 1 - i) * DAY));
+      const perBook = bookPagesByDay.get(key);
+      const bookId = perBook ? [...perBook].reduce((a, b) => (b[1] > a[1] ? b : a))[0] : null;
+      return { date: key, pages: pagesByDay.get(key) ?? 0, bookId };
+    });
+    const calendarBookIds = new Set(activeDayList.map((d) => d.bookId).filter((id) => id !== null));
     stats.streak = {
       current,
       longest,
-      activeDays: Array.from({ length: calendarDays }, (_, i) => {
-        const key = dayKey(new Date(today.getTime() - (calendarDays - 1 - i) * DAY));
-        return { date: key, pages: pagesByDay.get(key) ?? 0 };
-      }),
+      activeDays: activeDayList,
+      books: allBooks
+        .filter((b) => calendarBookIds.has(b.id))
+        .map((b) => ({ id: b.id, title: b.title, cover: b.cover })),
     };
 
     return stats;

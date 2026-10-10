@@ -20,6 +20,8 @@ import { getQuotes } from "@/lib/actions/quotes";
 import MoodPicker from "@/components/MoodPicker";
 import BookQuotes from "@/components/BookQuotes";
 import FavoriteButton from "@/components/FavoriteButton";
+import FinishDateEditor from "@/components/FinishDateEditor";
+import DnfNote from "@/components/DnfNote";
 
 export default async function BookDetailPage({
   params,
@@ -172,6 +174,13 @@ export default async function BookDetailPage({
                 🔖 ISBN: {book.isbn}
               </p>
             )}
+            {book.shelf === "read" && (
+              <FinishDateEditor
+                bookId={book.id}
+                dateCompleted={book.dateCompleted}
+                precision={book.dateCompletedPrecision}
+              />
+            )}
             {book.rating && book.rating > 0 && (
               <p style={{ color: "var(--star)", fontSize: "13px" }}>
                 {"★".repeat(Math.floor(book.rating))}
@@ -215,6 +224,10 @@ export default async function BookDetailPage({
             ))}
           </div>
         </div>
+      )}
+
+      {book.shelf === "dnf" && (
+        <DnfNote bookId={book.id} page={book.dnfPage} reason={book.dnfReason} pageCount={book.pageCount} />
       )}
 
       <MoodPicker bookId={book.id} initial={book.moods ?? []} />
@@ -362,6 +375,8 @@ export default async function BookDetailPage({
             id: book.id,
             shelf: book.shelf,
             title: book.title,
+            currentPage: book.currentPage,
+            pageCount: book.pageCount,
           }}
         />
       </div>

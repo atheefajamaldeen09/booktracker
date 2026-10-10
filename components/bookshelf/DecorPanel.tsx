@@ -22,10 +22,13 @@ const NAMES: Record<DecorationType, string> = {
 // Pick which ornaments may appear on the shelf, plus the lights and ivy
 export default function DecorPanel({
   settings,
+  hasNooks,
   onChange,
   onClose,
 }: {
   settings: ShelfDecorSettings;
+  // You've finished at least one book nook
+  hasNooks: boolean;
   onChange: (next: ShelfDecorSettings) => void;
   onClose: () => void;
 }) {
@@ -114,6 +117,12 @@ export default function DecorPanel({
           <span style={{ fontSize: "30px", lineHeight: "52px" }}>🍃</span>
           Shelf vines
         </button>
+        {hasNooks && (
+          <button type="button" aria-pressed={settings.nooks} onClick={() => onChange({ ...settings, nooks: !settings.nooks })} style={chip(settings.nooks)}>
+            <span style={{ fontSize: "30px", lineHeight: "52px" }}>🏮</span>
+            Book nooks
+          </button>
+        )}
       </div>
     </div>
   );

@@ -18,6 +18,8 @@ import {
   ShelfVines,
   type DecorationType,
 } from "./Decorations";
+import NookArt from "@/components/nook/NookArt";
+import type { NookId } from "@/lib/nooks";
 import { useSpineColors, fallbackColor, hashString } from "./spineColors";
 import styles from "./Bookshelf.module.css";
 
@@ -26,7 +28,7 @@ type Sort = "shelf" | "author" | "colour" | "mine";
 
 type Item =
   | { kind: "book"; key: string; book: ShelfBook; layout: BookLayout; width: number }
-  | { kind: "deco"; key: string; type: DecorationType; seed: number; width: number; margin: number; height: number; push?: boolean };
+  | { kind: "deco"; key: string; type: DecorationType; seed: number; width: number; margin: number; height: number; push?: boolean; nook?: NookId };
 
 type Row = {
   key: string;
@@ -80,9 +82,12 @@ const decoWidth = (type: DecorationType, H: number) => Math.round((DECORATION_SI
 // Tall ornaments fill the empty height of a half-empty shelf
 const TALL: DecorationType[] = ["plant", "roses", "lantern", "globe"];
 const SLIM_TALL: DecorationType[] = ["roses", "lantern"];
+// A finished book nook stands about as tall as the books; slimmer on a phone
+const NOOK_SIZE = { w: 150, h: 240 };
+const PHONE_NOOK_SIZE = { w: 110, h: 176 };
 const pick = (list: DecorationType[], r: number, seed: number) => list[(seed + r * 3) % list.length];
 
-export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor: ShelfDecorSettings }) {
+export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[]; decor: ShelfDecorSettings; nooks: NookId[] }) {
   // Everything here depends on the browser (width, cover colors)
   const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
@@ -180,6 +185,10 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
     const tallPool = (roomy ? TALL : SLIM_TALL).filter((t) => allowed.includes(t));
     const hasDecor = pool.length > 0;
     const decoFor = (r: number, seed: number) => pick(pool, r, seed);
+    // Finished book nooks take the ornament's place on every other shelf,
+    // newest first, so the latest one is on the shelf you see when you arrive
+    const shownNooks = decorSettings.nooks ? [...nooks].reverse() : [];
+    const nookSize = roomy ? NOOK_SIZE : PHONE_NOOK_SIZE;
 
     const chunks: ShelfBook[][] = [];
     for (let i = 0; i < visibleBooks.length; i += perShelf) {
@@ -216,18 +225,22 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
       // Every other shelf gets vines draping over its front edge
       const vines = decorSettings.vines && r % 2 === 0 ? (r % 4 === 0 ? "right" : "left") : null;
       const decos: Extract<Item, { kind: "deco" }>[] = [];
-      const addDeco = (type: DecorationType, key: string) => {
+      const addDeco = (type: DecorationType, key: string, nook?: NookId) => {
+        const size = nook ? nookSize : DECORATION_SIZE[type];
         decos.push({
           kind: "deco",
           key,
           type,
+          nook,
           seed: seed + decos.length,
-          width: decoWidth(type, H) + margin,
+          width: Math.round((size.w * H) / DECO_REF) + margin,
           margin,
-          height: Math.round((DECORATION_SIZE[type].h * H) / DECO_REF),
+          height: Math.round((size.h * H) / DECO_REF),
         });
       };
-      if (hasDecor) addDeco(decoFor(r, seed), `deco-${r}`);
+      const nook = r % 2 === 0 ? shownNooks[r / 2] : undefined;
+      if (nook) addDeco("frame", `nook-${r}`, nook);
+      else if (hasDecor) addDeco(decoFor(r, seed), `deco-${r}`);
 
       const decoSpace = decos.reduce((sum, d) => sum + d.width, 0);
       const shapes = chunk.map(bookShape);
@@ -258,7 +271,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
           const type = k === 1 && tallPool.length > 0 ? pick(tallPool, r, seed) : hasDecor ? decoFor(r + k * 2, seed + k) : null;
           if (!type) continue;
           const w = decoWidth(type, H) + margin;
-          if (available - used < w + 40 || decos.some((d) => d.type === type)) continue;
+          if (available - used < w + 40 || decos.some((d) => !d.nook && d.type === type)) continue;
           addDeco(type, `deco-${r}-${k}`);
           used += w;
         }
@@ -308,7 +321,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
 
     // Less empty space above the books on a phone
     return { rows, layouts, bayHeight: H + (roomy ? HEADROOM : 44) };
-  }, [visibleBooks, width, maxHeight, decorSettings, phone]);
+  }, [visibleBooks, width, maxHeight, decorSettings, phone, nooks]);
 
   const shelfCount = shelf?.rows.length ?? 1;
   const current = Math.min(shelfIndex, shelfCount - 1);
@@ -548,7 +561,9 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
         </div>
       </div>
 
-      {showDecor && <DecorPanel settings={decorSettings} onChange={changeDecor} onClose={() => setShowDecor(false)} />}
+      {showDecor && (
+        <DecorPanel settings={decorSettings} hasNooks={nooks.length > 0} onChange={changeDecor} onClose={() => setShowDecor(false)} />
+      )}
 
       {arranging && (
         <div
@@ -646,7 +661,7 @@ export default function Bookshelf({ books, decor }: { books: ShelfBook[]; decor:
                             marginRight: item.push ? "auto" : item.margin / 2,
                           }}
                         >
-                          <Decoration type={item.type} seed={item.seed} />
+                          {item.nook ? <NookArt nook={item.nook} /> : <Decoration type={item.type} seed={item.seed} />}
                         </div>
                       )
                     )}

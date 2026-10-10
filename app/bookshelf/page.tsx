@@ -1,12 +1,13 @@
 import { connection } from "next/server";
 import { getShelfBooks, getShelfDecor } from "@/lib/actions/bookshelf";
+import { getFinishedNooks } from "@/lib/actions/nooks";
 import PageHeader from "@/components/PageHeader";
 import Bookshelf from "@/components/bookshelf/Bookshelf";
 
 export default async function BookshelfPage() {
   // Always read fresh data so newly added or finished books appear right away
   await connection();
-  const [books, decor] = await Promise.all([getShelfBooks(), getShelfDecor()]);
+  const [books, decor, nooks] = await Promise.all([getShelfBooks(), getShelfDecor(), getFinishedNooks()]);
   const read = books.filter((b) => b.shelf === "read").length;
 
   return (
@@ -20,7 +21,7 @@ export default async function BookshelfPage() {
             : `${books.length} ${books.length === 1 ? "book" : "books"} on the shelf · ${read} read`
         }
       />
-      <Bookshelf books={books} decor={decor} />
+      <Bookshelf books={books} decor={decor} nooks={nooks} />
     </div>
   );
 }

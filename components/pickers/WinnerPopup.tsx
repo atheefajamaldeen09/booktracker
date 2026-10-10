@@ -7,6 +7,7 @@ import Button from "@/components/Button";
 import { startReading } from "@/lib/actions/books";
 import { useState } from "react";
 import { useCanEdit } from "@/components/Viewer";
+import ThemeText from "@/components/ThemeText";
 
 type Book = {
   id: number;
@@ -105,7 +106,7 @@ export default function WinnerPopup({ book, onClose, onRespin }: Props) {
               textShadow: "0 2px 8px rgb(var(--primary-rgb) / 0.3)",
             }}
           >
-            ☕ Your next read ☕
+            <ThemeText id="winnerTitle" />
           </p>
           <p
             style={{
@@ -114,7 +115,7 @@ export default function WinnerPopup({ book, onClose, onRespin }: Props) {
               margin: 0,
             }}
           >
-            Fresh from the pot — fate has chosen!
+            <ThemeText id="winnerSubtitle" />
           </p>
         </div>
 

@@ -7,6 +7,9 @@ import { getRole } from "@/lib/auth/server";
 // Owner only: guests can browse, but not take a copy of everything.
 
 const date = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
+// "2023", "2023-03" or "2023-03-14", as precisely as you remember finishing
+const finishDate = (d: Date | null, precision: string | null) =>
+  date(d).slice(0, precision === "year" ? 4 : precision === "month" ? 7 : 10);
 
 // Quote a value for CSV when it holds a comma, quote or line break
 function cell(value: unknown) {
@@ -37,7 +40,7 @@ async function csv() {
       b.title, b.author, b.shelf, b.rating, b.review, b.pageCount, b.currentPage,
       (b.genres ?? []).join("; "), bookTagNames.join("; "),
       link ? seriesName.get(link.seriesId!) ?? "" : "", link?.positionInSeries ?? "",
-      b.isbn, b.publicationYear, date(b.dateAdded), date(b.dateStarted), date(b.dateCompleted),
+      b.isbn, b.publicationYear, date(b.dateAdded), date(b.dateStarted), finishDate(b.dateCompleted, b.dateCompletedPrecision),
       b.dnfPage, b.dnfReason,
     ];
   });

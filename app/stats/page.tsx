@@ -13,6 +13,7 @@ import {
   StreakCard,
   ReadingTimeCard,
 } from "@/components/StatsCharts";
+import ThemeText from "@/components/ThemeText";
 
 const grid: React.CSSProperties = {
   display: "grid",
@@ -32,7 +33,7 @@ export default async function StatsPage() {
       <PageHeader
         eyebrow="Your reading, visualized"
         title="My Stats"
-        subtitle="Every page, every month, every favourite — brewed into charts."
+        subtitle={<ThemeText id="statsSubtitle" />}
       />
 
       {totalBooks === 0 ? (
@@ -50,7 +51,7 @@ export default async function StatsPage() {
             Nothing to chart yet
           </p>
           <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: "0 0 18px 0" }}>
-            Add a few books and your stats will start brewing.
+            <ThemeText id="statsEmpty" />
           </p>
           <Link
             data-owner-only
@@ -121,7 +122,13 @@ export default async function StatsPage() {
           </div>
 
           <div style={{ marginTop: "20px" }}>
-            <BooksPerMonthChart years={stats.years} data={stats.booksPerMonth} />
+            <BooksPerMonthChart years={stats.years} data={stats.booksPerMonth} noMonth={stats.booksNoMonth} />
+            <p data-owner-only style={{ color: "var(--text-muted)", fontSize: "13px", margin: "10px 2px 0 2px" }}>
+              Older reads counted in the wrong year?{" "}
+              <Link href="/finish-dates" style={{ color: "var(--primary)", fontWeight: 600 }}>
+                Set when you finished them →
+              </Link>
+            </p>
           </div>
 
           <div style={grid}>

@@ -14,10 +14,14 @@ import {
   Heart,
   BookMarked,
   Shuffle,
+  Award,
+  Grid3x3,
+  Store,
   Menu,
   X,
 } from "lucide-react";
 import { ThemeDots } from "./ThemePicker";
+import ThemeText from "@/components/ThemeText";
 
 const mainNavItems = [
   { href: "/", label: "Home", icon: Home },
@@ -28,6 +32,9 @@ const mainNavItems = [
   { href: "/random-picker", label: "Pick Next Read", icon: Shuffle },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/stats", label: "Stats", icon: BarChart2 },
+  { href: "/achievements", label: "Sticker Book", icon: Award },
+  { href: "/bingo", label: "Reading Bingo", icon: Grid3x3 },
+  { href: "/nook", label: "Book Nooks", icon: Store },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -83,7 +90,7 @@ function Logo() {
           BookTracker
         </span>
         <span style={{ color: "var(--text-faint)", fontSize: "11px", marginTop: "2px" }}>
-          brewed for readers
+          <ThemeText id="tagline" />
         </span>
       </span>
     </Link>

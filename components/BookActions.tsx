@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { moveBookToShelf, deleteBook } from "@/lib/actions/books";
+import { moveBookToShelf, deleteBook, markDNF } from "@/lib/actions/books";
+import DnfFields, { parsePage } from "@/components/DnfFields";
 
 type Props = {
   book: {
     id: number;
     shelf: string;
     title: string;
+    currentPage?: number | null;
+    pageCount?: number | null;
   };
 };
 
@@ -18,6 +21,18 @@ export default function BookActions({ book }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Moving to Did Not Finish asks where you stopped and why first
+  const [dnfOpen, setDnfOpen] = useState(false);
+  const [dnfPage, setDnfPage] = useState(book.currentPage ? String(book.currentPage) : "");
+  const [dnfReason, setDnfReason] = useState("");
+
+  const handleDnf = async () => {
+    setLoading(true);
+    await markDNF(book.id, parsePage(dnfPage), dnfReason);
+    setDnfOpen(false);
+    router.refresh();
+    setLoading(false);
+  };
 
   const handleMove = async (shelf: Shelf) => {
     setLoading(true);
@@ -69,7 +84,7 @@ export default function BookActions({ book }: Props) {
           {shelfOptions.map((option) => (
             <button
               key={option.shelf}
-              onClick={() => handleMove(option.shelf)}
+              onClick={() => (option.shelf === "dnf" ? setDnfOpen(true) : handleMove(option.shelf))}
               disabled={loading}
               style={{
                 padding: "12px 16px",
@@ -97,6 +112,65 @@ export default function BookActions({ book }: Props) {
             </button>
           ))}
         </div>
+
+        {dnfOpen && (
+          <div
+            style={{
+              marginTop: "12px",
+              padding: "16px",
+              backgroundColor: "var(--danger-bg)",
+              border: "1px solid var(--danger-border)",
+              borderRadius: "14px",
+            }}
+          >
+            <p style={{ color: "var(--text)", fontSize: "15px", fontWeight: 600, margin: "0 0 4px 0" }}>
+              Not for you? That&apos;s okay.
+            </p>
+            <p style={{ color: "var(--text-muted)", fontSize: "13px", margin: "0 0 14px 0" }}>
+              Life&apos;s too short for books that don&apos;t grab you. Add a note for future you, if you like.
+            </p>
+            <DnfFields
+              page={dnfPage}
+              reason={dnfReason}
+              pageCount={book.pageCount}
+              onPageChange={setDnfPage}
+              onReasonChange={setDnfReason}
+            />
+            <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+              <button
+                onClick={handleDnf}
+                disabled={loading}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  backgroundColor: "var(--danger)",
+                  border: "none",
+                  borderRadius: "10px",
+                  color: "var(--on-danger)",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: loading ? "not-allowed" : "pointer",
+                }}
+              >
+                {loading ? "Saving..." : "Move to Did Not Finish"}
+              </button>
+              <button
+                onClick={() => setDnfOpen(false)}
+                style={{
+                  padding: "10px 16px",
+                  backgroundColor: "var(--raised)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "10px",
+                  color: "var(--text-muted)",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Divider */}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSpineColors, fallbackColor } from "@/components/bookshelf/spineColors";
 import {
   ResponsiveContainer,
   BarChart,
@@ -121,18 +122,24 @@ function EmptyChart({ message }: { message: string }) {
 export function BooksPerMonthChart({
   years,
   data,
+  noMonth,
 }: {
   years: number[];
   data: Record<number, { month: string; books: number }[]>;
+  // Books finished that year in a month you don't remember
+  noMonth: Record<number, number>;
 }) {
   const [year, setYear] = useState(years[0]);
   const months = data[year] ?? [];
-  const total = months.reduce((sum, m) => sum + m.books, 0);
+  const unplaced = noMonth[year] ?? 0;
+  const total = months.reduce((sum, m) => sum + m.books, 0) + unplaced;
 
   return (
     <ChartCard
       title="Books per month"
-      subtitle={`${total} ${total === 1 ? "book" : "books"} finished in ${year}`}
+      subtitle={`${total} ${total === 1 ? "book" : "books"} finished in ${year}${
+        unplaced ? ` · ${unplaced} in an unknown month` : ""
+      }`}
       action={
         years.length > 1 && (
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
@@ -425,16 +432,24 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 const CELL = 11;
 const GAP = 3;
 
-// A year of reading as a calendar: one column per week, one square per day,
-// darker the more pages you read. It opens scrolled to the most recent weeks.
+const CALENDAR_MODE_KEY = "reading-calendar-mode";
+
+type CalendarDay = { date: string; pages: number; bookId: number | null };
+
+// A year of reading as a calendar: one column per week, one square per day.
+// Each square takes the colour of the book you read most that day (or, in the
+// "Pages" look, gets darker the more pages you read). It opens scrolled to the
+// most recent weeks.
 export function StreakCard({
   current,
   longest,
   activeDays,
+  books,
 }: {
   current: number;
   longest: number;
-  activeDays: { date: string; pages: number }[];
+  activeDays: CalendarDay[];
+  books: { id: number; title: string; cover: string | null }[];
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -442,7 +457,31 @@ export function StreakCard({
     if (el) el.scrollLeft = el.scrollWidth;
   }, []);
 
-  const weeks: { date: string; pages: number }[][] = [];
+  const [mode, setMode] = useState<"covers" | "pages">("covers");
+  useEffect(() => {
+    try {
+      // The remembered look can only be read once we're in the browser
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (localStorage.getItem(CALENDAR_MODE_KEY) === "pages") setMode("pages");
+    } catch {}
+  }, []);
+  const changeMode = (next: "covers" | "pages") => {
+    setMode(next);
+    try {
+      localStorage.setItem(CALENDAR_MODE_KEY, next);
+    } catch {}
+  };
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const bookById = new Map(books.map((b) => [b.id, b]));
+  const spineColors = useSpineColors(books.map((b) => b.cover));
+  const colorOf = (bookId: number | null) => {
+    const book = bookId !== null ? bookById.get(bookId) : undefined;
+    if (!book) return null;
+    return ((book.cover && spineColors[book.cover]) || fallbackColor(book.title)).spine;
+  };
+
+  const weeks: CalendarDay[][] = [];
   for (let i = 0; i < activeDays.length; i += 7) weeks.push(activeDays.slice(i, i + 7));
   const maxPages = Math.max(1, ...activeDays.map((d) => d.pages));
   const daysRead = activeDays.filter((d) => d.pages > 0).length;
@@ -461,8 +500,23 @@ export function StreakCard({
     "rgb(var(--primary-rgb) / 0.75)",
     "var(--primary)",
   ];
+  const cellColor = (day: CalendarDay) =>
+    (mode === "covers" && day.pages > 0 && colorOf(day.bookId)) || shade[level(day.pages)];
   const label = (date: string) =>
     new Date(date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  const describe = (day: CalendarDay) => {
+    if (day.pages <= 0) return `${label(day.date)} — no reading`;
+    const book = day.bookId !== null ? bookById.get(day.bookId) : undefined;
+    return `${label(day.date)} — ${day.pages} ${day.pages === 1 ? "page" : "pages"}${book ? ` of ${book.title}` : ""}`;
+  };
+  const selectedDay = selected ? activeDays.find((d) => d.date === selected) : undefined;
+
+  // The books behind the most recent squares, newest first
+  const recentBooks: number[] = [];
+  for (let i = activeDays.length - 1; i >= 0 && recentBooks.length < 6; i--) {
+    const id = activeDays[i].bookId;
+    if (id !== null && activeDays[i].pages > 0 && !recentBooks.includes(id) && bookById.has(id)) recentBooks.push(id);
+  }
 
   // A month name above the first week that starts in that month
   const monthLabels = weeks.map((week, w) => {
@@ -490,8 +544,43 @@ export function StreakCard({
     </div>
   );
 
+  const modeButton = (id: "covers" | "pages", text: string) => {
+    const active = mode === id;
+    return (
+      <button
+        onClick={() => changeMode(id)}
+        aria-pressed={active}
+        style={{
+          padding: "5px 11px",
+          borderRadius: "9999px",
+          border: `1px solid ${active ? "var(--primary)" : "var(--border)"}`,
+          backgroundColor: active ? "var(--primary)" : "transparent",
+          color: active ? "var(--on-primary)" : "var(--text-muted)",
+          fontSize: "12px",
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        {text}
+      </button>
+    );
+  };
+
   return (
-    <ChartCard title="Reading calendar" subtitle="Every day you logged pages or finished a book, over the last year">
+    <ChartCard
+      title="Reading calendar"
+      subtitle={
+        mode === "covers"
+          ? "Every day you read, coloured like the book you read most that day"
+          : "Every day you logged pages or finished a book, over the last year"
+      }
+      action={
+        <div style={{ display: "flex", gap: "4px" }}>
+          {modeButton("covers", "Book colours")}
+          {modeButton("pages", "Pages")}
+        </div>
+      }
+    >
       <div style={{ display: "flex", gap: "22px", marginBottom: "18px", flexWrap: "wrap" }}>
         {figure(current, current === 1 ? "day in a row" : "days in a row", true)}
         {figure(longest, "longest streak")}
@@ -530,12 +619,16 @@ export function StreakCard({
                 {week.map((day) => (
                   <div
                     key={day.date}
-                    title={`${label(day.date)} — ${day.pages > 0 ? `${day.pages} pages` : "no reading"}`}
+                    title={describe(day)}
+                    onClick={() => setSelected(day.date === selected ? null : day.date)}
                     style={{
                       width: `${CELL}px`,
                       height: `${CELL}px`,
                       borderRadius: "3px",
-                      backgroundColor: shade[level(day.pages)],
+                      backgroundColor: cellColor(day),
+                      cursor: "pointer",
+                      outline: day.date === selected ? "2px solid var(--text)" : "none",
+                      outlineOffset: "1px",
                     }}
                   />
                 ))}
@@ -544,23 +637,62 @@ export function StreakCard({
           </div>
         </div>
       </div>
-      <div
+
+      <p
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          gap: "4px",
-          marginTop: "10px",
-          color: "var(--text-faint)",
-          fontSize: "11px",
+          color: selectedDay ? "var(--text)" : "var(--text-faint)",
+          fontSize: "12px",
+          margin: "10px 0 0 0",
+          minHeight: "16px",
         }}
       >
-        Less
-        {shade.map((c) => (
-          <span key={c} style={{ width: "10px", height: "10px", borderRadius: "2px", backgroundColor: c }} />
-        ))}
-        More
-      </div>
+        {selectedDay ? describe(selectedDay) : "Tap a square to see what you read that day."}
+      </p>
+
+      {mode === "covers" ? (
+        recentBooks.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: "10px" }}>
+            {recentBooks.map((id) => (
+              <span
+                key={id}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  maxWidth: "180px",
+                  color: "var(--text-muted)",
+                  fontSize: "11px",
+                }}
+              >
+                <span
+                  style={{ width: "10px", height: "10px", borderRadius: "2px", flexShrink: 0, backgroundColor: colorOf(id)! }}
+                />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {bookById.get(id)!.title}
+                </span>
+              </span>
+            ))}
+          </div>
+        )
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: "4px",
+            marginTop: "10px",
+            color: "var(--text-faint)",
+            fontSize: "11px",
+          }}
+        >
+          Less
+          {shade.map((c) => (
+            <span key={c} style={{ width: "10px", height: "10px", borderRadius: "2px", backgroundColor: c }} />
+          ))}
+          More
+        </div>
+      )}
     </ChartCard>
   );
 }

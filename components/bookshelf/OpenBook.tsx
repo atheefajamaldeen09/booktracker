@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import type { ShelfBook } from "@/lib/actions/bookshelf";
+import { formatFinish } from "@/lib/finishDate";
 import type { SpineColor } from "./spineColors";
 import styles from "./OpenBook.module.css";
 
@@ -136,7 +137,7 @@ export default function OpenBook({ book, color, origin, shelfThickness, onClosed
       ? Math.min(100, Math.round(((book.currentPage ?? 0) / book.pageCount) * 100))
       : null;
   const genres = Array.from(new Set(book.genres ?? [])).slice(0, 3);
-  const finished = formatDate(book.dateCompleted);
+  const finished = formatFinish(book.dateCompleted, book.dateCompletedPrecision);
   const started = formatDate(book.dateStarted);
   const added = formatDate(book.dateAdded);
 

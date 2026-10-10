@@ -364,7 +364,9 @@
 
 /* Reusable bits shared across pages */
 .page-enter {
-  animation: pageEnter 0.45s ease-out both;
+  /* backwards, not both: once it's done nothing is left on the wrapper, since a
+     leftover transform would trap fixed popups inside the page */
+  animation: pageEnter 0.45s ease-out backwards;
 }
 
 /* Guests browse a read-only library: editing controls are hidden.
@@ -460,6 +462,18 @@ body:has(.auth-screen) #main-content {
 
 .auth-link:hover {
   color: var(--primary);
+}
+
+/* Theme wording (components/ThemeText): only the current theme's line shows */
+.theme-text > [data-theme-line] {
+  display: none;
+}
+:root[data-theme="cafe"] .theme-text > [data-theme-line="cafe"],
+:root[data-theme="enchanted"] .theme-text > [data-theme-line="enchanted"],
+:root[data-theme="ocean"] .theme-text > [data-theme-line="ocean"],
+:root[data-theme="botanical"] .theme-text > [data-theme-line="botanical"],
+:root[data-theme="sugar"] .theme-text > [data-theme-line="sugar"] {
+  display: inline;
 }
 
 /* Home hero motif follows the theme; only the coffee cup steams */

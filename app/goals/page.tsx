@@ -4,6 +4,7 @@ import { getGoalsOverview } from "@/lib/actions/goals";
 import GoalCard from "@/components/GoalCard";
 import PageHeader from "@/components/PageHeader";
 import BookCover from "@/components/BookCover";
+import ThemeText from "@/components/ThemeText";
 
 export default async function GoalsPage() {
   // Always read fresh data from the database instead of a build-time snapshot
@@ -23,7 +24,7 @@ export default async function GoalsPage() {
       <PageHeader
         eyebrow="Annual targets"
         title="Reading Goals"
-        subtitle="Set a yearly target and watch your cup fill up as you finish books."
+        subtitle={<ThemeText id="goalsSubtitle" />}
       />
 
       <GoalCard
@@ -37,6 +38,12 @@ export default async function GoalsPage() {
       {/* Finished this year */}
       <section style={{ marginTop: "40px" }}>
         <h2 className="section-title">Finished in {currentYear}</h2>
+        <p data-owner-only style={{ color: "var(--text-muted)", fontSize: "13px", margin: "-6px 0 16px 0" }}>
+          Read some of these before {currentYear}?{" "}
+          <Link href="/finish-dates" style={{ color: "var(--primary)", fontWeight: 600 }}>
+            Fix their finish dates →
+          </Link>
+        </p>
         {currentYearBooks.length === 0 ? (
           <div
             style={{

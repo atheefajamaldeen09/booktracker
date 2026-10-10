@@ -1,0 +1,347 @@
+/* The bingo card: a sheet of dotted paper, like a page from the sticker book.
+   Paper and ink stay paper and ink in every theme. */
+.wrap {
+  --paper: #f7f0e2;
+  --paper-shade: #ece2cf;
+  --ink: #3b2a22;
+  --ink-soft: rgba(59, 42, 34, 0.62);
+  --ink-faint: rgba(59, 42, 34, 0.3);
+  --hand: var(--font-hand), "Segoe Print", "Bradley Hand", cursive;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.paper {
+  position: relative;
+  padding: 34px 22px 22px;
+  border-radius: 8px;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--ink-faint) 0.9px, transparent 1.2px);
+  background-size: 20px 20px;
+  background-position: 10px 10px;
+  box-shadow: var(--shadow-lg);
+  rotate: -0.4deg;
+}
+
+.tape {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 150px;
+  height: 26px;
+  transform: translateX(-50%) rotate(-2deg);
+  background-color: var(--tape);
+  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.32) 0 5px, transparent 5px 10px);
+  opacity: 0.9;
+}
+
+.title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--hand);
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1;
+}
+.sub {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.cheer {
+  margin: 10px 0 0;
+  text-align: center;
+  font-family: var(--hand);
+  font-size: 24px;
+  font-weight: 700;
+  color: #b5564a;
+}
+
+.letters {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 16px;
+  text-align: center;
+  font-family: var(--hand);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.square {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px;
+  border: 1.5px solid var(--ink);
+  border-radius: 9px 12px 10px 13px;
+  background: #fffaf0;
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+.square:disabled {
+  cursor: default;
+}
+.square:nth-child(odd) {
+  background: #fdf3e3;
+}
+.free {
+  background: #f9e2b8 !important;
+  cursor: default;
+}
+.won {
+  background: #f6d7cf !important;
+  box-shadow: inset 0 0 0 2px #c8674f;
+}
+.ready {
+  border-style: dashed;
+}
+
+.emoji {
+  font-size: clamp(16px, 4.6vw, 26px);
+  line-height: 1;
+}
+.prompt {
+  font-family: var(--hand);
+  font-size: clamp(11px, 2.9vw, 17px);
+  font-weight: 600;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.readyDot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8fa58a;
+  border: 1.5px solid var(--ink);
+}
+
+/* An ink stamp pressed over the square */
+.stamp {
+  position: absolute;
+  inset: 7%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px;
+  border: 2.5px double currentColor;
+  border-radius: 50%;
+  background: rgba(255, 250, 240, 0.96);
+  pointer-events: none;
+}
+.stampWord {
+  font-size: clamp(11px, 3vw, 17px);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+.stampBook {
+  max-width: 92%;
+  font-size: clamp(7px, 1.7vw, 10px);
+  font-weight: 600;
+  line-height: 1.1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hint {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.error {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: #a33c2e;
+}
+
+.reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.primary {
+  margin-top: 0;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.paper .primary {
+  margin-top: 18px;
+  background: #c8674f;
+  color: #fffaf0;
+}
+.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.plain {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Choosing the book for a square */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+.sheet {
+  width: min(520px, 100%);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+}
+@media (min-width: 640px) {
+  .backdrop {
+    align-items: center;
+  }
+  .sheet {
+    border-radius: 20px;
+  }
+}
+.sheetHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sheetTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+}
+.sheetSub {
+  margin: 3px 0 0;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+.sheetEmpty {
+  margin: 8px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.close {
+  display: flex;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--text);
+  cursor: pointer;
+}
+.bookList {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.group {
+  margin: 8px 0 2px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.bookRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.bookRow:hover {
+  border-color: var(--primary);
+}
+.bookTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+.bookAuthor {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.bookNote {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+@media (max-width: 480px) {
+  .paper {
+    padding: 30px 10px 16px;
+  }
+  .grid,
+  .letters {
+    gap: 4px;
+  }
+  .title {
+    font-size: 38px;
+  }
+}

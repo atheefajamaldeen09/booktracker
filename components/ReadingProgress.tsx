@@ -9,6 +9,8 @@ import {
 } from "@/lib/actions/books";
 import ProgressBar from "@/components/ProgressBar";
 import ReadingTimer from "@/components/ReadingTimer";
+import FinishDateSelect from "@/components/FinishDateSelect";
+import { todayPick, type FinishPick } from "@/lib/finishDate";
 
 type Session = {
   id: number;
@@ -38,6 +40,8 @@ export default function ReadingProgress({ book, sessions }: Props) {
   const [showDNFForm, setShowDNFForm] = useState(false);
   const [dnfReason, setDnfReason] = useState("");
   const [showComplete, setShowComplete] = useState(false);
+  // Only set when you finished on a day other than today
+  const [finishedOn, setFinishedOn] = useState<FinishPick | null>(null);
   const [showSessions, setShowSessions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -80,7 +84,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
 
   const handleComplete = async () => {
     setLoading(true);
-    const result = await completeBook(book.id, book.pageCount);
+    const result = await completeBook(book.id, book.pageCount, finishedOn ?? undefined);
     if (result.success) {
       router.push(
         result.goalReached ? `/book/${book.id}?goalReached=1` : `/book/${book.id}`
@@ -337,6 +341,27 @@ export default function ReadingProgress({ book, sessions }: Props) {
             This will move the book to your Read shelf. You can then rate and
             review it.
           </p>
+          {finishedOn ? (
+            <div style={{ marginBottom: "16px" }}>
+              <FinishDateSelect value={finishedOn} onChange={setFinishedOn} />
+            </div>
+          ) : (
+            <button
+              onClick={() => setFinishedOn(todayPick())}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                marginBottom: "16px",
+                color: "var(--primary)",
+                fontSize: "13px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Finished on a different day?
+            </button>
+          )}
           <div style={{ display: "flex", gap: "10px" }}>
             <button
               onClick={handleComplete}

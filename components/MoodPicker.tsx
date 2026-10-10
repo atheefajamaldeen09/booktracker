@@ -5,12 +5,15 @@ import { MOODS } from "@/lib/moods";
 import { updateBookMoods } from "@/lib/actions/books";
 import { useCanEdit } from "@/components/Viewer";
 
+const COMMON_MOODS = 12;
+
 // Tap moods on and off; they save straight away. Guests only see the chosen ones.
 export default function MoodPicker({ bookId, initial }: { bookId: number; initial: string[] }) {
   const isGuest = !useCanEdit();
   const [moods, setMoods] = useState(initial);
   const [, startTransition] = useTransition();
   const [error, setError] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const toggle = (id: string) => {
     const next = moods.includes(id) ? moods.filter((m) => m !== id) : [...moods, id];
@@ -25,7 +28,12 @@ export default function MoodPicker({ bookId, initial }: { bookId: number; initia
     });
   };
 
-  const shown = isGuest ? MOODS.filter((m) => moods.includes(m.id)) : MOODS;
+  // The first dozen plus any you've picked, until you ask for the rest
+  const shown = isGuest
+    ? MOODS.filter((m) => moods.includes(m.id))
+    : showAll
+    ? MOODS
+    : MOODS.filter((m, i) => i < COMMON_MOODS || moods.includes(m.id));
   if (shown.length === 0) return null;
 
   return (
@@ -72,6 +80,24 @@ export default function MoodPicker({ bookId, initial }: { bookId: number; initia
             </button>
           );
         })}
+        {!isGuest && MOODS.length > shown.length && (
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "999px",
+              border: "1px dashed var(--border)",
+              backgroundColor: "transparent",
+              color: "var(--primary)",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            + {MOODS.length - shown.length} more moods
+          </button>
+        )}
       </div>
       {error && <p style={{ color: "var(--danger)", fontSize: "13px", margin: "8px 0 0" }}>Couldn&apos;t save that — try again.</p>}
     </section>

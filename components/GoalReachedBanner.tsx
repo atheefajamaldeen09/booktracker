@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Celebration from "@/components/Celebration";
+import ThemeText from "@/components/ThemeText";
 
 type Props = {
   year: number;
@@ -32,7 +33,7 @@ export default function GoalReachedBanner({ year, target }: Props) {
             You reached your {year} reading goal!
           </p>
           <p style={{ color: "var(--text-muted)", margin: "2px 0 0 0", fontSize: "13px" }}>
-            {target} books finished. That calls for a celebratory latte.
+            {target} books finished. <ThemeText id="goalBanner" />
           </p>
         </div>
         <Link

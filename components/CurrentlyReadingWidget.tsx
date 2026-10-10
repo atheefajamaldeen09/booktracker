@@ -51,7 +51,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
           borderRadius: "18px",
           padding: "28px 24px",
           textAlign: "center",
-          height: "calc(100% - 40px)",
+          flex: 1,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -92,7 +92,7 @@ export default function CurrentlyReadingWidget({ books }: Props) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "12px" }}>
       {books.map((book) => {
         const progress = book.pageCount
           ? Math.round(((book.currentPage || 0) / book.pageCount) * 100)
@@ -108,6 +108,11 @@ export default function CurrentlyReadingWidget({ books }: Props) {
               borderRadius: "18px",
               padding: "18px",
               boxShadow: "var(--shadow-sm)",
+              // Grow with the goal card beside it; the content stays centred
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
             }}
           >
             <Link

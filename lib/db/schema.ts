@@ -23,6 +23,8 @@ export const books = pgTable("books", {
   dateAdded: timestamp("date_added").defaultNow(),
   dateStarted: timestamp("date_started"),
   dateCompleted: timestamp("date_completed"),
+  // How much of dateCompleted you remember: day, month or year (null = day)
+  dateCompletedPrecision: text("date_completed_precision"),
   currentPage: integer("current_page").default(0),
   rating: real("rating"),
   review: text("review"),

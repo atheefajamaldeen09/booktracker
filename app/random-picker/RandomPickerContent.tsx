@@ -11,6 +11,7 @@ import {
 import SpinningWheel from "@/components/pickers/SpinningWheel";
 import SlotMachine from "@/components/pickers/SlotMachine";
 import CardFlip from "@/components/pickers/CardFlip";
+import TbrJar from "@/components/pickers/TbrJar";
 import FilterPanel from "@/components/pickers/FilterPanel";
 import WinnerPopup from "@/components/pickers/WinnerPopup";
 import PageHeader from "@/components/PageHeader";
@@ -30,16 +31,17 @@ type Book = {
   } | null;
 };
 
-type PickerMode = "wheel" | "slots" | "cards";
+type PickerMode = "wheel" | "slots" | "cards" | "jar";
 
 const modes: { id: PickerMode; icon: string; label: string }[] = [
   { id: "wheel", icon: "🎡", label: "Wheel" },
   { id: "slots", icon: "🎰", label: "Slots" },
   { id: "cards", icon: "🃏", label: "Cards" },
+  { id: "jar", icon: "🫙", label: "Jar" },
 ];
 
 function parseMode(value: string | null): PickerMode {
-  return value === "slots" || value === "cards" ? value : "wheel";
+  return value === "slots" || value === "cards" || value === "jar" ? value : "wheel";
 }
 
 export default function RandomPickerContent() {
@@ -224,6 +226,8 @@ export default function RandomPickerContent() {
         role="tablist"
         style={{
           display: "inline-flex",
+          flexWrap: "wrap",
+          maxWidth: "100%",
           gap: "4px",
           padding: "4px",
           marginBottom: "32px",
@@ -312,6 +316,15 @@ export default function RandomPickerContent() {
             {mode === "cards" && (
               <CardFlip
                 // New deck whenever the eligible books change (e.g. filters)
+                key={books.map((b) => b.id).join(",")}
+                books={books}
+                onSelect={setSelectedBook}
+                spinSignal={spinSignal}
+              />
+            )}
+            {mode === "jar" && (
+              <TbrJar
+                // A fresh pile of slips whenever the eligible books change
                 key={books.map((b) => b.id).join(",")}
                 books={books}
                 onSelect={setSelectedBook}

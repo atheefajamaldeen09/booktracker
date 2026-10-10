@@ -7,6 +7,7 @@ import { Pencil, Trash2, PartyPopper } from "lucide-react";
 import ProgressRing from "@/components/ProgressRing";
 import Celebration from "@/components/Celebration";
 import { setGoal, deleteGoal } from "@/lib/actions/goals";
+import ThemeText from "@/components/ThemeText";
 
 type Props = {
   year: number;
@@ -272,9 +273,13 @@ export default function GoalCard({ year, target, booksRead }: Props) {
                     Goal reached! 🎉
                   </h2>
                   <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: "0 0 16px 0" }}>
-                    {booksRead === target
-                      ? `You read all ${target} books you planned. Time for a celebratory latte ☕`
-                      : `You smashed it — ${booksRead - target} more than you planned!`}
+                    {booksRead === target ? (
+                      <>
+                        You read all {target} books you planned. <ThemeText id="goalTreat" />
+                      </>
+                    ) : (
+                      `You smashed it — ${booksRead - target} more than you planned!`
+                    )}
                   </p>
                 </>
               ) : (
@@ -284,11 +289,13 @@ export default function GoalCard({ year, target, booksRead }: Props) {
                   </h2>
                   {isCurrentYear && (
                     <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: "0 0 16px 0" }}>
-                      {pace!.diff > 0
-                        ? `☕ You're ${pace!.diff} ${pace!.diff === 1 ? "book" : "books"} ahead of schedule.`
-                        : pace!.diff < 0
-                        ? `You're ${-pace!.diff} ${pace!.diff === -1 ? "book" : "books"} behind schedule — about ${pace!.perMonth.toFixed(1)} a month will get you there.`
-                        : "Right on schedule — keep brewing!"}
+                      {pace!.diff > 0 ? (
+                        <ThemeText id="ahead" n={pace!.diff} />
+                      ) : pace!.diff < 0 ? (
+                        `You're ${-pace!.diff} ${pace!.diff === -1 ? "book" : "books"} behind schedule — about ${pace!.perMonth.toFixed(1)} a month will get you there.`
+                      ) : (
+                        <ThemeText id="onSchedule" />
+                      )}
                     </p>
                   )}
                 </>

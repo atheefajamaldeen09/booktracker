@@ -15,6 +15,7 @@ import RecentBooksCarousel from "@/components/RecentBooksCarousel";
 import PickerCard from "@/components/PickerCard";
 import DashboardGoal from "@/components/DashboardGoal";
 import Link from "next/link";
+import ThemeText from "@/components/ThemeText";
 
 export default async function HomePage() {
   // Always read fresh data from the database instead of a build-time snapshot
@@ -97,7 +98,7 @@ export default async function HomePage() {
             margin: "0 0 10px 0",
           }}
         >
-          Your reading café
+          <ThemeText id="heroEyebrow" />
         </p>
         <h1
           style={{
@@ -108,14 +109,14 @@ export default async function HomePage() {
             maxWidth: "70%",
           }}
         >
-          Welcome back, grab a cup &amp; a chapter.
+          <ThemeText id="heroTitle" />
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "15px", margin: "0 0 22px 0", maxWidth: "60%" }}>
           {stats.currentlyReading > 0
             ? `You have ${stats.currentlyReading} ${stats.currentlyReading === 1 ? "book" : "books"} on the go and ${stats.tbr} waiting on your TBR.`
             : stats.tbr > 0
             ? `${stats.tbr} ${stats.tbr === 1 ? "book is" : "books are"} waiting on your TBR — time to start one?`
-            : "Add your first book to start brewing your library."}
+            : <ThemeText id="heroEmpty" />}
         </p>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <Link
@@ -206,9 +207,12 @@ export default async function HomePage() {
               marginBottom: "36px",
             }}
           >
-            <div style={{ gridColumn: "span 2", minWidth: 0 }} className="dash-reading">
+            {/* Both columns stretch, so the two cards always end at the same height */}
+            <div style={{ gridColumn: "span 2", minWidth: 0, display: "flex", flexDirection: "column" }} className="dash-reading">
               <h2 className="section-title">📖 Currently Reading</h2>
-              <CurrentlyReadingWidget books={currentlyReading} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <CurrentlyReadingWidget books={currentlyReading} />
+              </div>
             </div>
             <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
               <h2 className="section-title">🎯 This Year</h2>
@@ -315,6 +319,12 @@ export default async function HomePage() {
                   icon="🃏"
                   title="Card Draw"
                   description="Shuffle and pick"
+                />
+                <PickerCard
+                  href="/random-picker?mode=jar"
+                  icon="🫙"
+                  title="TBR Jar"
+                  description="Shake out a slip"
                 />
               </div>
             </section>

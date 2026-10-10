@@ -4,6 +4,7 @@ import { requireOwner, requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books, series, bookSeries, tags, bookTags, readingSessions, goals, quotes } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { pickToDate, type FinishPick } from "@/lib/finishDate";
 
 type AddBookInput = {
   title: string;
@@ -19,11 +20,25 @@ type AddBookInput = {
   seriesName?: string | null;
   seriesPosition?: number | null;
   seriesTotalBooks?: number | null;
+  // When you finished it, for books added straight to the Read shelf
+  finished?: FinishPick;
+  // Where you stopped and why, for books added as Did Not Finish
+  dnfPage?: number | null;
+  dnfReason?: string | null;
 };
+
+// A finish date you picked, or right now when you didn't pick one
+function finishFields(pick?: FinishPick) {
+  if (!pick) return { dateCompleted: new Date(), dateCompletedPrecision: "day" };
+  const parsed = pickToDate(pick);
+  if (!parsed) throw new Error("Invalid finish date");
+  return { dateCompleted: parsed.date, dateCompletedPrecision: parsed.precision };
+}
 
 export async function addBook(input: AddBookInput) {
   await requireOwner();
   try {
+    const finish = input.shelf === "read" ? finishFields(input.finished) : null;
     const [newBook] = await db
       .insert(books)
       .values({
@@ -35,7 +50,10 @@ export async function addBook(input: AddBookInput) {
         publicationYear: input.publicationYear ?? null,
         isbn: input.isbn ?? null,
         shelf: input.shelf,
-        dateCompleted: input.shelf === "read" ? new Date() : null,
+        dateCompleted: finish?.dateCompleted ?? null,
+        dateCompletedPrecision: finish?.dateCompletedPrecision ?? null,
+        dnfPage: input.shelf === "dnf" ? input.dnfPage ?? null : null,
+        dnfReason: input.shelf === "dnf" ? input.dnfReason?.trim() || null : null,
       })
       .returning();
 
@@ -118,7 +136,7 @@ export async function moveBookToShelf(
       .update(books)
       .set({
         shelf: newShelf,
-        dateCompleted: newShelf === "read" ? new Date() : undefined,
+        ...(newShelf === "read" ? finishFields() : {}),
         dateStarted: newShelf === "reading" ? new Date() : undefined,
         currentPage: newShelf === "reading" ? 0 : undefined,
       })
@@ -186,6 +204,41 @@ export async function updateBook(
   } catch (error) {
     console.error("Error updating book:", error);
     return { success: false, error: "Failed to update book" };
+  }
+}
+
+// Every book on the Read shelf, for dating old reads in one go
+export async function getFinishDateList() {
+  await requireOwner();
+  try {
+    const rows = await db
+      .select({
+        id: books.id,
+        title: books.title,
+        author: books.author,
+        cover: books.cover,
+        dateCompleted: books.dateCompleted,
+        dateCompletedPrecision: books.dateCompletedPrecision,
+      })
+      .from(books)
+      .where(eq(books.shelf, "read"))
+      .orderBy(books.title);
+    return rows.map((b) => ({ ...b, dateCompleted: b.dateCompleted?.toISOString() ?? null }));
+  } catch (error) {
+    console.error("Error fetching read books:", error);
+    return [];
+  }
+}
+
+// Change when you finished a book — a year alone is fine for old reads
+export async function setFinishDate(bookId: number, finished: FinishPick) {
+  await requireOwner();
+  try {
+    await db.update(books).set(finishFields(finished)).where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error setting finish date:", error);
+    return { success: false, error: "Failed to save the finish date" };
   }
 }
 
@@ -435,7 +488,9 @@ export async function updateReadingProgress(
 
 export async function completeBook(
   bookId: number,
-  pageCount: number | null
+  pageCount: number | null,
+  // Leave out to finish it today
+  finished?: FinishPick
 ) {
   await requireOwner();
   try {
@@ -443,7 +498,7 @@ export async function completeBook(
       .update(books)
       .set({
         shelf: "read",
-        dateCompleted: new Date(),
+        ...finishFields(finished),
         currentPage: pageCount || 0,
       })
       .where(eq(books.id, bookId));
@@ -472,7 +527,8 @@ export async function completeBook(
 
 export async function markDNF(
   bookId: number,
-  currentPage: number,
+  // Where you stopped, if you know
+  currentPage: number | null,
   reason?: string
 ) {
   await requireOwner();
@@ -482,7 +538,7 @@ export async function markDNF(
       .set({
         shelf: "dnf",
         dnfPage: currentPage,
-        dnfReason: reason || null,
+        dnfReason: reason?.trim() || null,
       })
       .where(eq(books.id, bookId));
     return { success: true };

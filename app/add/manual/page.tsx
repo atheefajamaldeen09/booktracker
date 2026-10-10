@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Upload, X } from "lucide-react";
 import { addBook, getAllSeries } from "@/lib/actions/books";
+import FinishDateSelect from "@/components/FinishDateSelect";
+import DnfFields, { parsePage } from "@/components/DnfFields";
+import { todayPick, type FinishPick } from "@/lib/finishDate";
 import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
 import SeriesSelector from "@/components/SeriesSelector";
@@ -24,7 +27,10 @@ export default function ManualEntryPage() {
   const [seriesName, setSeriesName] = useState("");
   const [seriesPosition, setSeriesPosition] = useState("");
   const [seriesTotalBooks, setSeriesTotalBooks] = useState("");
-  const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read">("tbr");
+  const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read" | "dnf">("tbr");
+  const [finished, setFinished] = useState<FinishPick>(todayPick);
+  const [dnfPage, setDnfPage] = useState("");
+  const [dnfReason, setDnfReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -93,6 +99,9 @@ export default function ManualEntryPage() {
         publicationYear: publicationYear ? parseInt(publicationYear) : null,
         isbn: isbn || null,
         shelf,
+        finished: shelf === "read" ? finished : undefined,
+        dnfPage: shelf === "dnf" ? parsePage(dnfPage) : null,
+        dnfReason: shelf === "dnf" ? dnfReason : null,
         seriesName: isSeries && seriesName ? seriesName.trim() : null,
         seriesPosition:
           isSeries && seriesPosition ? parseFloat(seriesPosition) : null,
@@ -157,6 +166,8 @@ export default function ManualEntryPage() {
             ? "TBR"
             : shelf === "read"
             ? "Read shelf"
+            : shelf === "dnf"
+            ? "Did Not Finish shelf"
             : "Wishlist"}
         </p>
         <div
@@ -410,10 +421,11 @@ export default function ManualEntryPage() {
             { value: "tbr", label: "📚 TBR", desc: "I own it, haven't read it" },
             { value: "read", label: "✅ Already Read", desc: "I own it and have read it" },
             { value: "wishlist", label: "💛 Wishlist", desc: "I want this book" },
+            { value: "dnf", label: "🚫 Did Not Finish", desc: "I started it, but it wasn't for me" },
           ].map((option) => (
             <div
               key={option.value}
-              onClick={() => setShelf(option.value as "tbr" | "wishlist" | "read")}
+              onClick={() => setShelf(option.value as "tbr" | "wishlist" | "read" | "dnf")}
               style={{
                 flex: 1,
                 minWidth: "140px",
@@ -444,6 +456,25 @@ export default function ManualEntryPage() {
         </div>
       </div>
 
+      {shelf === "read" && (
+        <div style={{ marginBottom: "28px" }}>
+          <label style={labelStyle}>When did you finish it?</label>
+          <FinishDateSelect value={finished} onChange={setFinished} />
+        </div>
+      )}
+
+      {shelf === "dnf" && (
+        <div style={{ marginBottom: "28px" }}>
+          <DnfFields
+            page={dnfPage}
+            reason={dnfReason}
+            pageCount={pageCount ? parseInt(pageCount) : null}
+            onPageChange={setDnfPage}
+            onReasonChange={setDnfReason}
+          />
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div
@@ -473,6 +504,8 @@ export default function ManualEntryPage() {
           ? "Add to TBR"
           : shelf === "read"
           ? "Add to Read Shelf"
+          : shelf === "dnf"
+          ? "Add to Did Not Finish"
           : "Add to Wishlist"}
       </Button>
     </div>

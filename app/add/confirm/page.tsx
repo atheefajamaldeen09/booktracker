@@ -8,6 +8,9 @@ import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import SeriesSelector from "@/components/SeriesSelector";
 import { addBook, getAllSeries } from "@/lib/actions/books";
+import FinishDateSelect from "@/components/FinishDateSelect";
+import DnfFields, { parsePage } from "@/components/DnfFields";
+import { todayPick, type FinishPick } from "@/lib/finishDate";
 
 function ConfirmBookContent() {
   const searchParams = useSearchParams();
@@ -51,7 +54,10 @@ function ConfirmBookContent() {
     initialData.seriesPosition?.toString() || ""
   );
   const [seriesTotalBooks, setSeriesTotalBooks] = useState("");
-  const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read">("tbr");
+  const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read" | "dnf">("tbr");
+  const [finished, setFinished] = useState<FinishPick>(todayPick);
+  const [dnfPage, setDnfPage] = useState("");
+  const [dnfReason, setDnfReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existingSeries, setExistingSeries] = useState<
@@ -119,6 +125,9 @@ function ConfirmBookContent() {
         publicationYear: publicationYear ? parseInt(publicationYear) : null,
         isbn: isbn || null,
         shelf,
+        finished: shelf === "read" ? finished : undefined,
+        dnfPage: shelf === "dnf" ? parsePage(dnfPage) : null,
+        dnfReason: shelf === "dnf" ? dnfReason : null,
         seriesName: isSeries && seriesName ? seriesName.trim() : null,
         seriesPosition:
           isSeries && seriesPosition ? parseFloat(seriesPosition) : null,
@@ -189,6 +198,8 @@ function ConfirmBookContent() {
             ? "TBR"
             : shelf === "read"
             ? "Read shelf"
+            : shelf === "dnf"
+            ? "Did Not Finish shelf"
             : "Wishlist"}
         </p>
         <div
@@ -468,11 +479,16 @@ function ConfirmBookContent() {
               label: "💛 Wishlist",
               desc: "I want this book",
             },
+            {
+              value: "dnf",
+              label: "🚫 Did Not Finish",
+              desc: "I started it, but it wasn't for me",
+            },
           ].map((option) => (
             <div
               key={option.value}
               onClick={() =>
-                setShelf(option.value as "tbr" | "wishlist" | "read")
+                setShelf(option.value as "tbr" | "wishlist" | "read" | "dnf")
               }
               style={{
                 flex: 1,
@@ -507,6 +523,25 @@ function ConfirmBookContent() {
         </div>
       </div>
 
+      {shelf === "read" && (
+        <div style={{ marginBottom: "28px" }}>
+          <label style={labelStyle}>When did you finish it?</label>
+          <FinishDateSelect value={finished} onChange={setFinished} />
+        </div>
+      )}
+
+      {shelf === "dnf" && (
+        <div style={{ marginBottom: "28px" }}>
+          <DnfFields
+            page={dnfPage}
+            reason={dnfReason}
+            pageCount={pageCount ? parseInt(pageCount) : null}
+            onPageChange={setDnfPage}
+            onReasonChange={setDnfReason}
+          />
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div
@@ -536,6 +571,8 @@ function ConfirmBookContent() {
           ? "Add to TBR"
           : shelf === "read"
           ? "Add to Read Shelf"
+          : shelf === "dnf"
+          ? "Add to Did Not Finish"
           : "Add to Wishlist"}
       </Button>
     </div>

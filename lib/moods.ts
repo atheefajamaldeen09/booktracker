@@ -12,6 +12,21 @@ export const MOODS = [
   { id: "tense", label: "Tense", emoji: "😰" },
   { id: "dark", label: "Dark", emoji: "🌑" },
   { id: "whimsical", label: "Whimsical", emoji: "✨" },
+  { id: "whodunit", label: "Whodunit", emoji: "🕵️" },
+  { id: "thrilling", label: "Thrilling", emoji: "🔪" },
+  { id: "twisty", label: "Twisty", emoji: "🌀" },
+  { id: "spooky", label: "Spooky", emoji: "👻" },
+  { id: "gritty", label: "Gritty", emoji: "🪨" },
+  { id: "heartbreaking", label: "Heartbreaking", emoji: "💔" },
+  { id: "wholesome", label: "Wholesome", emoji: "🧸" },
+  { id: "spicy", label: "Spicy", emoji: "🌶️" },
+  { id: "slow-burn", label: "Slow burn", emoji: "🕯️" },
+  { id: "epic", label: "Epic", emoji: "⚔️" },
+  { id: "magical", label: "Magical", emoji: "🪄" },
+  { id: "thought-provoking", label: "Thought-provoking", emoji: "🧠" },
+  { id: "inspiring", label: "Inspiring", emoji: "🌟" },
+  { id: "nostalgic", label: "Nostalgic", emoji: "📻" },
+  { id: "bittersweet", label: "Bittersweet", emoji: "🍂" },
 ] as const;
 
 export type MoodId = (typeof MOODS)[number]["id"];

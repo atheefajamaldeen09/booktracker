@@ -21,6 +21,7 @@ export type ShelfBook = {
   dateAdded: string | null;
   dateStarted: string | null;
   dateCompleted: string | null;
+  dateCompletedPrecision: string | null;
   shelfOrder: number | null;
   favorite: boolean;
 };
@@ -46,6 +47,7 @@ export async function getShelfBooks(): Promise<ShelfBook[]> {
         dateAdded: books.dateAdded,
         dateStarted: books.dateStarted,
         dateCompleted: books.dateCompleted,
+        dateCompletedPrecision: books.dateCompletedPrecision,
         shelfOrder: books.shelfOrder,
         favorite: books.favorite,
       })
@@ -92,9 +94,9 @@ export async function saveShelfOrder(bookIds: number[]) {
   }
 }
 
-export type ShelfDecorSettings = { hidden: string[]; lights: boolean; ivy: boolean; vines: boolean };
+export type ShelfDecorSettings = { hidden: string[]; lights: boolean; ivy: boolean; vines: boolean; nooks: boolean };
 const DECOR_KEY = "shelf-decorations";
-const DEFAULT_DECOR: ShelfDecorSettings = { hidden: [], lights: true, ivy: true, vines: true };
+const DEFAULT_DECOR: ShelfDecorSettings = { hidden: [], lights: true, ivy: true, vines: true, nooks: true };
 
 // Which ornaments appear on the shelf; everyone visiting sees the same choice
 export async function getShelfDecor(): Promise<ShelfDecorSettings> {
@@ -115,6 +117,7 @@ export async function saveShelfDecor(settings: ShelfDecorSettings) {
     lights: Boolean(settings.lights),
     ivy: Boolean(settings.ivy),
     vines: Boolean(settings.vines),
+    nooks: Boolean(settings.nooks),
   });
   try {
     await db
