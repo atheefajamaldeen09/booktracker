@@ -6,6 +6,7 @@ import { ChevronLeft, Upload, X } from "lucide-react";
 import { addBook, getAllSeries } from "@/lib/actions/books";
 import FinishDateSelect from "@/components/FinishDateSelect";
 import StarRating from "@/components/StarRating";
+import GenrePicker from "@/components/GenrePicker";
 import DnfFields, { parsePage } from "@/components/DnfFields";
 import { todayPick, type FinishPick } from "@/lib/finishDate";
 import BookCover from "@/components/BookCover";
@@ -20,7 +21,7 @@ export default function ManualEntryPage() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [cover, setCover] = useState<string | null>(null);
-  const [genres, setGenres] = useState("");
+  const [genres, setGenres] = useState<string[]>([]);
   const [pageCount, setPageCount] = useState("");
   const [publicationYear, setPublicationYear] = useState("");
   const [isbn, setIsbn] = useState("");
@@ -93,10 +94,7 @@ export default function ManualEntryPage() {
         title: title.trim(),
         author: author.trim(),
         cover: cover || null,
-        genres: genres
-          .split(",")
-          .map((g) => g.trim())
-          .filter(Boolean),
+        genres,
         pageCount: pageCount ? parseInt(pageCount) : null,
         publicationYear: publicationYear ? parseInt(publicationYear) : null,
         isbn: isbn || null,
@@ -392,13 +390,8 @@ export default function ManualEntryPage() {
 
       {/* Genres */}
       <div style={{ marginBottom: "20px" }}>
-        <label style={labelStyle}>Genres (comma separated)</label>
-        <input
-          style={inputStyle}
-          value={genres}
-          onChange={(e) => setGenres(e.target.value)}
-          placeholder="e.g. Fantasy, Romance, Adventure"
-        />
+        <label style={labelStyle}>Genres</label>
+        <GenrePicker value={genres} onChange={setGenres} />
       </div>
 
       {/* Series Section */}

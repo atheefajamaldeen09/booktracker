@@ -10,6 +10,8 @@ import SeriesSelector from "@/components/SeriesSelector";
 import { addBook, getAllSeries } from "@/lib/actions/books";
 import FinishDateSelect from "@/components/FinishDateSelect";
 import StarRating from "@/components/StarRating";
+import GenrePicker from "@/components/GenrePicker";
+import { tidyGenre } from "@/lib/genres";
 import DnfFields, { parsePage } from "@/components/DnfFields";
 import { todayPick, type FinishPick } from "@/lib/finishDate";
 
@@ -40,7 +42,7 @@ function ConfirmBookContent() {
   const [title, setTitle] = useState(initialData.title);
   const [author, setAuthor] = useState(initialData.author);
   const [cover, setCover] = useState<string | null>(initialData.cover);
-  const [genres, setGenres] = useState(initialData.genres.join(", "));
+  const [genres, setGenres] = useState(() => Array.from(new Set(initialData.genres.map(tidyGenre).filter(Boolean))));
   const [showSuccess, setShowSuccess] = useState(false);
   const [pageCount, setPageCount] = useState(
     initialData.pageCount?.toString() || ""
@@ -119,10 +121,7 @@ function ConfirmBookContent() {
         title: title.trim(),
         author: author.trim(),
         cover: cover || null,
-        genres: genres
-          .split(",")
-          .map((g) => g.trim())
-          .filter(Boolean),
+        genres,
         pageCount: pageCount ? parseInt(pageCount) : null,
         publicationYear: publicationYear ? parseInt(publicationYear) : null,
         isbn: isbn || null,
@@ -438,13 +437,8 @@ function ConfirmBookContent() {
 
       {/* Genres */}
       <div style={{ marginBottom: "20px" }}>
-        <label style={labelStyle}>Genres (comma separated)</label>
-        <input
-          style={inputStyle}
-          value={genres}
-          onChange={(e) => setGenres(e.target.value)}
-          placeholder="e.g. Fantasy, Romance, Adventure"
-        />
+        <label style={labelStyle}>Genres</label>
+        <GenrePicker value={genres} onChange={setGenres} />
       </div>
 
       {/* Series Section */}

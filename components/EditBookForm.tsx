@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Upload, X, ChevronDown, ChevronUp } from "lucide-react";
 import BookCover from "@/components/BookCover";
 import { updateBook } from "@/lib/actions/books";
+import GenrePicker from "@/components/GenrePicker";
 
 type Props = {
   book: {
@@ -30,7 +31,7 @@ export default function EditBookForm({ book }: Props) {
   const [title, setTitle] = useState(book.title);
   const [author, setAuthor] = useState(book.author || "");
   const [cover, setCover] = useState<string | null>(book.cover);
-  const [genres, setGenres] = useState(book.genres?.join(", ") || "");
+  const [genres, setGenres] = useState(() => Array.from(new Set(book.genres ?? [])));
   const [pageCount, setPageCount] = useState(
     book.pageCount?.toString() || ""
   );
@@ -84,10 +85,7 @@ export default function EditBookForm({ book }: Props) {
         title: title.trim(),
         author: author.trim(),
         cover,
-        genres: genres
-          .split(",")
-          .map((g) => g.trim())
-          .filter(Boolean),
+        genres,
         pageCount: pageCount ? parseInt(pageCount) : null,
         publicationYear: publicationYear ? parseInt(publicationYear) : null,
         isbn: isbn || null,
@@ -307,13 +305,8 @@ export default function EditBookForm({ book }: Props) {
 
           {/* Genres */}
           <div style={{ marginBottom: "16px" }}>
-            <label style={labelStyle}>Genres (comma separated)</label>
-            <input
-              style={inputStyle}
-              value={genres}
-              onChange={(e) => setGenres(e.target.value)}
-              placeholder="e.g. Fantasy, Romance"
-            />
+            <label style={labelStyle}>Genres</label>
+            <GenrePicker value={genres} onChange={setGenres} background="var(--bg)" />
           </div>
 
           {/* Error */}
