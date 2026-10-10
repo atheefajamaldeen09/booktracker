@@ -9,8 +9,11 @@ import { toyshop } from "./scenes/toyshop";
 import { bakery } from "./scenes/bakery";
 import { station } from "./scenes/station";
 import { clocktower } from "./scenes/clocktower";
+import { study } from "./scenes/study";
+import { garden } from "./scenes/garden";
+import { pond } from "./scenes/pond";
 
-const SCENES: Record<NookId, Scene> = { sakura, wizard, bookshop, greenhouse, toyshop, bakery, station, clocktower };
+const SCENES: Record<NookId, Scene> = { sakura, wizard, bookshop, greenhouse, toyshop, bakery, station, clocktower, study, garden, pond };
 
 // A book nook in its wooden case. `placed` is how many pieces are in (in
 // building order); the rest show as faint outlines of what's still to come.
