@@ -4,7 +4,10 @@ import {
   getCurrentlyReading,
   getRecentlyAdded,
   getRecentlyCompleted,
+  getLooseEnds,
 } from "@/lib/actions/books";
+import { getRole } from "@/lib/auth/server";
+import LooseEnds from "@/components/LooseEnds";
 import { getGoalProgress } from "@/lib/actions/goals";
 import { getReadingStats } from "@/lib/actions/stats";
 import { getSeriesReminders } from "@/lib/actions/reminders";
@@ -28,6 +31,7 @@ export default async function HomePage() {
     goal,
     readingStats,
     reminders,
+    looseEnds,
   ] = await Promise.all([
     getDashboardStats(),
     getCurrentlyReading(),
@@ -36,6 +40,8 @@ export default async function HomePage() {
     getGoalProgress(),
     getReadingStats(),
     getSeriesReminders(),
+    // Only the owner can fill these in
+    getRole().then((role) => (role === "owner" ? getLooseEnds() : [])),
   ]);
   const { streak } = readingStats;
 
@@ -221,6 +227,13 @@ export default async function HomePage() {
               </div>
             </div>
           </section>
+
+          {looseEnds.length > 0 && (
+            <section style={{ marginBottom: "36px" }}>
+              <h2 className="section-title">🎀 A Few Loose Ends</h2>
+              <LooseEnds books={looseEnds} />
+            </section>
+          )}
 
           {/* Quick stats */}
           <section style={{ marginBottom: "36px" }}>

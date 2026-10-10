@@ -3,7 +3,7 @@
 import { requireOwner, requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books, series, bookSeries, tags, bookTags, readingSessions, goals, quotes } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, or, desc, isNull } from "drizzle-orm";
 import { pickToDate, type FinishPick } from "@/lib/finishDate";
 
 type AddBookInput = {
@@ -22,6 +22,8 @@ type AddBookInput = {
   seriesTotalBooks?: number | null;
   // When you finished it, for books added straight to the Read shelf
   finished?: FinishPick;
+  // Your rating, if you gave one while adding it to the Read shelf
+  rating?: number | null;
   // Where you stopped and why, for books added as Did Not Finish
   dnfPage?: number | null;
   dnfReason?: string | null;
@@ -33,6 +35,13 @@ function finishFields(pick?: FinishPick) {
   const parsed = pickToDate(pick);
   if (!parsed) throw new Error("Invalid finish date");
   return { dateCompleted: parsed.date, dateCompletedPrecision: parsed.precision };
+}
+
+// Ratings go in half stars from 0.5 to 5; anything else means no rating
+function cleanRating(rating?: number | null) {
+  if (!rating || !Number.isFinite(rating)) return null;
+  const halves = Math.round(rating * 2) / 2;
+  return halves >= 0.5 && halves <= 5 ? halves : null;
 }
 
 export async function addBook(input: AddBookInput) {
@@ -52,6 +61,7 @@ export async function addBook(input: AddBookInput) {
         shelf: input.shelf,
         dateCompleted: finish?.dateCompleted ?? null,
         dateCompletedPrecision: finish?.dateCompletedPrecision ?? null,
+        rating: input.shelf === "read" ? cleanRating(input.rating) : null,
         dnfPage: input.shelf === "dnf" ? input.dnfPage ?? null : null,
         dnfReason: input.shelf === "dnf" ? input.dnfReason?.trim() || null : null,
       })
@@ -226,6 +236,31 @@ export async function getFinishDateList() {
     return rows.map((b) => ({ ...b, dateCompleted: b.dateCompleted?.toISOString() ?? null }));
   } catch (error) {
     console.error("Error fetching read books:", error);
+    return [];
+  }
+}
+
+// Read books still missing a rating or a finish date, newest first,
+// for the "loose ends" card on the home page
+export async function getLooseEnds() {
+  await requireOwner();
+  try {
+    const rows = await db
+      .select({
+        id: books.id,
+        title: books.title,
+        author: books.author,
+        cover: books.cover,
+        rating: books.rating,
+        dateCompleted: books.dateCompleted,
+        dateCompletedPrecision: books.dateCompletedPrecision,
+      })
+      .from(books)
+      .where(and(eq(books.shelf, "read"), or(isNull(books.rating), isNull(books.dateCompleted))))
+      .orderBy(desc(books.dateAdded));
+    return rows.map((b) => ({ ...b, dateCompleted: b.dateCompleted?.toISOString() ?? null }));
+  } catch (error) {
+    console.error("Error fetching loose ends:", error);
     return [];
   }
 }
@@ -490,7 +525,9 @@ export async function completeBook(
   bookId: number,
   pageCount: number | null,
   // Leave out to finish it today
-  finished?: FinishPick
+  finished?: FinishPick,
+  // Leave out to rate it later
+  rating?: number | null
 ) {
   await requireOwner();
   try {
@@ -499,6 +536,7 @@ export async function completeBook(
       .set({
         shelf: "read",
         ...finishFields(finished),
+        ...(cleanRating(rating) ? { rating: cleanRating(rating) } : {}),
         currentPage: pageCount || 0,
       })
       .where(eq(books.id, bookId));
@@ -607,7 +645,7 @@ export async function updateRating(bookId: number, rating: number) {
   try {
     await db
       .update(books)
-      .set({ rating: rating > 0 ? rating : null })
+      .set({ rating: cleanRating(rating) })
       .where(eq(books.id, bookId));
     return { success: true };
   } catch (error) {

@@ -10,6 +10,7 @@ import {
 import ProgressBar from "@/components/ProgressBar";
 import ReadingTimer from "@/components/ReadingTimer";
 import FinishDateSelect from "@/components/FinishDateSelect";
+import StarRating from "@/components/StarRating";
 import { todayPick, type FinishPick } from "@/lib/finishDate";
 
 type Session = {
@@ -42,6 +43,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
   const [showComplete, setShowComplete] = useState(false);
   // Only set when you finished on a day other than today
   const [finishedOn, setFinishedOn] = useState<FinishPick | null>(null);
+  const [finishRating, setFinishRating] = useState(0);
   const [showSessions, setShowSessions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export default function ReadingProgress({ book, sessions }: Props) {
 
   const handleComplete = async () => {
     setLoading(true);
-    const result = await completeBook(book.id, book.pageCount, finishedOn ?? undefined);
+    const result = await completeBook(book.id, book.pageCount, finishedOn ?? undefined, finishRating);
     if (result.success) {
       router.push(
         result.goalReached ? `/book/${book.id}?goalReached=1` : `/book/${book.id}`
@@ -338,9 +340,15 @@ export default function ReadingProgress({ book, sessions }: Props) {
               marginBottom: "16px",
             }}
           >
-            This will move the book to your Read shelf. You can then rate and
-            review it.
+            This will move the book to your Read shelf. Rate it now, or leave
+            the stars empty and do it later.
           </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+            <StarRating rating={finishRating} onRatingChange={setFinishRating} size="lg" />
+            {finishRating > 0 && (
+              <span style={{ color: "var(--text)", fontSize: "16px" }}>{finishRating} / 5</span>
+            )}
+          </div>
           {finishedOn ? (
             <div style={{ marginBottom: "16px" }}>
               <FinishDateSelect value={finishedOn} onChange={setFinishedOn} />

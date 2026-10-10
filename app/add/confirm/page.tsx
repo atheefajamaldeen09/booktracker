@@ -9,6 +9,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import SeriesSelector from "@/components/SeriesSelector";
 import { addBook, getAllSeries } from "@/lib/actions/books";
 import FinishDateSelect from "@/components/FinishDateSelect";
+import StarRating from "@/components/StarRating";
 import DnfFields, { parsePage } from "@/components/DnfFields";
 import { todayPick, type FinishPick } from "@/lib/finishDate";
 
@@ -56,6 +57,7 @@ function ConfirmBookContent() {
   const [seriesTotalBooks, setSeriesTotalBooks] = useState("");
   const [shelf, setShelf] = useState<"tbr" | "wishlist" | "read" | "dnf">("tbr");
   const [finished, setFinished] = useState<FinishPick>(todayPick);
+  const [rating, setRating] = useState(0);
   const [dnfPage, setDnfPage] = useState("");
   const [dnfReason, setDnfReason] = useState("");
   const [saving, setSaving] = useState(false);
@@ -126,6 +128,7 @@ function ConfirmBookContent() {
         isbn: isbn || null,
         shelf,
         finished: shelf === "read" ? finished : undefined,
+        rating: shelf === "read" ? rating : null,
         dnfPage: shelf === "dnf" ? parsePage(dnfPage) : null,
         dnfReason: shelf === "dnf" ? dnfReason : null,
         seriesName: isSeries && seriesName ? seriesName.trim() : null,
@@ -527,6 +530,34 @@ function ConfirmBookContent() {
         <div style={{ marginBottom: "28px" }}>
           <label style={labelStyle}>When did you finish it?</label>
           <FinishDateSelect value={finished} onChange={setFinished} />
+
+          <label style={{ ...labelStyle, marginTop: "20px" }}>What would you rate it?</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <StarRating rating={rating} onRatingChange={setRating} size="lg" />
+            {rating > 0 ? (
+              <>
+                <span style={{ color: "var(--text)", fontSize: "16px" }}>{rating} / 5</span>
+                <button
+                  type="button"
+                  onClick={() => setRating(0)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    color: "var(--text-muted)",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Clear
+                </button>
+              </>
+            ) : (
+              <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>
+                Tap the left half of a star for a half. You can skip this and rate it later.
+              </span>
+            )}
+          </div>
         </div>
       )}
 
