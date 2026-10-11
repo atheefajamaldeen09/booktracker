@@ -22,6 +22,7 @@ import BookQuotes from "@/components/BookQuotes";
 import FavoriteButton from "@/components/FavoriteButton";
 import FinishDateEditor from "@/components/FinishDateEditor";
 import DnfNote from "@/components/DnfNote";
+import BookSeriesEditor from "@/components/BookSeriesEditor";
 
 export default async function BookDetailPage({
   params,
@@ -233,55 +234,7 @@ export default async function BookDetailPage({
       <MoodPicker bookId={book.id} initial={book.moods ?? []} />
 
       {/* Series Info */}
-      {bookSeriesInfo && (
-        <div style={{ marginBottom: "28px" }}>
-          <p
-            style={{
-              color: "var(--text-muted)",
-              fontSize: "12px",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              marginBottom: "10px",
-            }}
-          >
-            Series
-          </p>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              backgroundColor: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: "12px",
-              padding: "12px 16px",
-            }}
-          >
-            <span style={{ fontSize: "20px" }}>📚</span>
-            <div>
-              <p
-                style={{
-                  color: "var(--text)",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  margin: 0,
-                }}
-              >
-                {bookSeriesInfo.seriesName}
-              </p>
-              <p
-                style={{
-                  color: "var(--text-muted)",
-                  fontSize: "12px",
-                  margin: "2px 0 0 0",
-                }}
-              >
-                Book {bookSeriesInfo.position} in the series
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <BookSeriesEditor bookId={book.id} bookTitle={book.title} current={bookSeriesInfo} />
 
       {/* Tags */}
       <TagManager

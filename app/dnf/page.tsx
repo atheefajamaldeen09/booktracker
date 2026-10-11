@@ -3,6 +3,7 @@ import { getBooksByShelf } from "@/lib/actions/books";
 import BookCard from "@/components/BookCard";
 import EmptyState from "@/components/EmptyState";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 export default async function DNFPage() {
   // Always read fresh data from the database instead of a build-time snapshot
@@ -11,49 +12,28 @@ export default async function DNFPage() {
 
   return (
     <div style={{ maxWidth: "900px" }}>
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "28px",
-          flexWrap: "wrap",
-          gap: "12px",
-        }}
-      >
-        <div>
-          <h1
+      <PageHeader
+        eyebrow="Set aside"
+        title="Did Not Finish"
+        subtitle={`${books.length} ${books.length === 1 ? "book" : "books"} you did not finish`}
+        action={
+          <Link
+            data-owner-only
+            href="/add"
             style={{
-              color: "var(--primary)",
-              fontSize: "26px",
-              fontWeight: "bold",
-              marginBottom: "4px",
+              padding: "10px 20px",
+              backgroundColor: "var(--primary)",
+              color: "var(--on-primary)",
+              borderRadius: "12px",
+              fontWeight: "600",
+              fontSize: "14px",
+              textDecoration: "none",
             }}
           >
-            🚫 Did Not Finish
-          </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
-            {books.length} {books.length === 1 ? "book" : "books"} you did not
-            finish
-          </p>
-        </div>
-        <Link
-          data-owner-only
-          href="/add"
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "var(--primary)",
-            color: "var(--on-primary)",
-            borderRadius: "12px",
-            fontWeight: "600",
-            fontSize: "14px",
-            textDecoration: "none",
-          }}
-        >
-          + Add Book
-        </Link>
-      </div>
+            + Add Book
+          </Link>
+        }
+      />
 
       {/* Empty State */}
       {books.length === 0 && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { Copy, Check, RefreshCw, Lock } from "lucide-react";
 import { lock, resetGuestLink } from "@/lib/actions/auth";
 
@@ -20,6 +21,7 @@ const buttonStyle: React.CSSProperties = {
 
 export default function ShareCard({ link }: { link: string }) {
   const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [resetting, startReset] = useTransition();
 
   const copy = async () => {
@@ -33,7 +35,7 @@ export default function ShareCard({ link }: { link: string }) {
   };
 
   const reset = () => {
-    if (!confirm("Reset the guest link? Anyone using the current link will lose access.")) return;
+    setConfirming(false);
     startReset(() => resetGuestLink());
   };
 
@@ -78,7 +80,7 @@ export default function ShareCard({ link }: { link: string }) {
           {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? "Copied!" : "Copy link"}
         </button>
-        <button onClick={reset} disabled={resetting} style={buttonStyle}>
+        <button onClick={() => setConfirming(true)} disabled={resetting} style={buttonStyle}>
           <RefreshCw size={14} />
           {resetting ? "Resetting…" : "Reset link"}
         </button>
@@ -88,6 +90,15 @@ export default function ShareCard({ link }: { link: string }) {
           </button>
         </form>
       </div>
+      <ConfirmDialog
+        open={confirming}
+        title="Reset the guest link?"
+        message="Anyone using the current link will lose access. You'll get a new link to share."
+        confirmLabel="Reset link"
+        danger
+        onConfirm={reset}
+        onCancel={() => setConfirming(false)}
+      />
     </div>
   );
 }

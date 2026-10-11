@@ -262,6 +262,45 @@
   visibility: hidden;
 }
 
+/* ─────────────── books lying in a pile ─────────────── */
+.pile {
+  position: relative;
+  flex: none;
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  transform-style: preserve-3d;
+}
+
+/* The slot a lying book takes up: as wide as the book is tall */
+.lying {
+  position: relative;
+  flex: none;
+  margin-bottom: 1px;
+}
+
+/* The book itself keeps its upright shape and is turned a quarter to the
+   left, so its top points left and the title reads the right way up */
+.lying > .book {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  transform-origin: 0 0;
+  transform: translateY(var(--t)) rotate(-90deg);
+  /* The shadow turns with the book, so aim it back down and to the right */
+  filter: drop-shadow(-3px 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+@media (hover: hover) {
+  /* Slides out of the pile a little instead of lifting */
+  .lying > .book:hover {
+    transform: translate(-12px, var(--t)) rotate(-90deg);
+  }
+}
+
 .book:focus-visible .spine {
   outline: 2px solid var(--primary);
   outline-offset: 2px;

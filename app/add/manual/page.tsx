@@ -12,6 +12,7 @@ import { todayPick, type FinishPick } from "@/lib/finishDate";
 import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
 import SeriesSelector from "@/components/SeriesSelector";
+import { seriesFormProblem, type SeriesSummary } from "@/lib/series";
 
 
 export default function ManualEntryPage() {
@@ -37,9 +38,11 @@ export default function ManualEntryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [existingSeries, setExistingSeries] = useState<
-    { id: number; name: string; totalBooks: number | null }[]
-  >([]);
+  const [existingSeries, setExistingSeries] = useState<SeriesSummary[]>([]);
+  // A taken book number or a series that's already complete blocks saving
+  const seriesError = isSeries
+    ? seriesFormProblem(existingSeries, seriesName, seriesPosition, seriesTotalBooks)
+    : null;
 
   useEffect(() => {
     getAllSeries().then((result) => {
@@ -105,7 +108,7 @@ export default function ManualEntryPage() {
         dnfReason: shelf === "dnf" ? dnfReason : null,
         seriesName: isSeries && seriesName ? seriesName.trim() : null,
         seriesPosition:
-          isSeries && seriesPosition ? parseFloat(seriesPosition) : null,
+          isSeries && seriesPosition ? Number(seriesPosition) : null,
         seriesTotalBooks:
           isSeries && seriesTotalBooks ? parseInt(seriesTotalBooks) : null,
       });
@@ -113,7 +116,7 @@ export default function ManualEntryPage() {
       if (result.success) {
         setShowSuccess(true);
       } else {
-        setError("Failed to save book. Please try again.");
+        setError(result.error && result.error !== "Failed to add book" ? result.error : "Failed to save book. Please try again.");
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -520,7 +523,7 @@ export default function ManualEntryPage() {
       <Button
         fullWidth
         onClick={handleSave}
-        disabled={saving || !title.trim() || !author.trim()}
+        disabled={saving || !title.trim() || !author.trim() || !!seriesError}
       >
         {saving
           ? "Adding Book..."

@@ -12,6 +12,8 @@ type Props = {
   color: SpineColor;
   // Where the book sat on the shelf, so it can fly out from (and back to) there
   origin: DOMRect | null;
+  // It was lying in a pile, so it starts (and ends) on its side
+  lying?: boolean;
   shelfThickness: number;
   onClosed: () => void;
 };
@@ -30,7 +32,7 @@ const EMPTY_NOTE = {
 const formatDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : null;
 
-export default function OpenBook({ book, color, origin, shelfThickness, onClosed }: Props) {
+export default function OpenBook({ book, color, origin, lying = false, shelfThickness, onClosed }: Props) {
   const [size] = useState(() => {
     const width = Math.floor(Math.min(330, (window.innerWidth - 24) / 2, (window.innerHeight - 140) / 1.45));
     return { W: width, H: Math.round(width * 1.45) };
@@ -54,8 +56,8 @@ export default function OpenBook({ book, color, origin, shelfThickness, onClosed
     const dx = origin ? origin.left + origin.width / 2 - window.innerWidth / 2 : 0;
     const dy = origin ? origin.top + origin.height / 2 - window.innerHeight / 2 : 60;
     const s = origin ? origin.height / H : 0.5;
-    const pose = (x: number, y: number, turn: number, scale: number, tilt = 0) =>
-      `translate3d(${x}px, ${y}px, 0) rotateX(${tilt}deg) rotateY(${turn}deg) scale(${scale})`;
+    const pose = (x: number, y: number, turn: number, scale: number, tilt = 0, roll = 0) =>
+      `translate3d(${x}px, ${y}px, 0) rotateZ(${roll}deg) rotateX(${tilt}deg) rotateY(${turn}deg) scale(${scale})`;
 
     const timing = { duration: DURATION, fill: "both" as const };
     const anims = [
@@ -66,7 +68,8 @@ export default function OpenBook({ book, color, origin, shelfThickness, onClosed
       // Fly out spine-first, turn to show the cover, then slide over as it opens
       bookEl.animate(
         [
-          { transform: pose(dx + (T * s) / 2, dy, 90, s), easing: EASE },
+          // A lying book's spine is centred where it lay; an upright one hinges on its edge
+          { transform: lying ? pose(dx, dy - (T * s) / 2, 90, s, 0, -90) : pose(dx + (T * s) / 2, dy, 90, s), easing: EASE },
           { transform: pose(-W / 2, 0, 0, 1), offset: 0.3 },
           { transform: pose(-W / 2, 0, 0, 1), offset: 0.36, easing: FLIP_EASE },
           { transform: pose(0, 0, 0, 1, 4), offset: 0.62 },
@@ -101,7 +104,7 @@ export default function OpenBook({ book, color, origin, shelfThickness, onClosed
     anims[1].finished.then(() => closeRef.current?.focus({ preventScroll: true })).catch(() => {});
 
     return () => anims.forEach((a) => a.cancel());
-  }, [origin, W, H, T]);
+  }, [origin, lying, W, H, T]);
 
   const close = useCallback(() => {
     if (closing.current) return;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { MOODS } from "@/lib/moods";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import BookCard from "@/components/BookCard";
@@ -65,16 +66,43 @@ const finishedTime = (book: { shelf: string; dateCompleted: Date | null }) =>
   book.shelf === "read" && book.dateCompleted ? new Date(book.dateCompleted).getTime() : null;
 
 export default function LibraryView({ books, initialShelf = "all" }: Props) {
-  const [search, setSearch] = useState("");
+  // Search, filters and sort start from the page address, so coming back
+  // from a book (or opening a bookmark) shows the same list as before
+  const params = useSearchParams();
+  const fromUrl = (key: string, fallback = "all") => params.get(key) ?? fallback;
+  const [search, setSearch] = useState(() => fromUrl("q", ""));
   const [selectedShelf, setSelectedShelf] = useState(initialShelf);
-  const [selectedGenre, setSelectedGenre] = useState("all");
-  const [selectedRating, setSelectedRating] = useState("all");
-  const [selectedYear, setSelectedYear] = useState("all");
-  const [sortBy, setSortBy] = useState<SortOption>("date_added_desc");
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedTag, setSelectedTag] = useState("all");
-  const [selectedSeries, setSelectedSeries] = useState("all");
-  const [selectedMood, setSelectedMood] = useState("all");
+  const [selectedGenre, setSelectedGenre] = useState(() => fromUrl("genre"));
+  const [selectedRating, setSelectedRating] = useState(() => fromUrl("rating"));
+  const [selectedYear, setSelectedYear] = useState(() => fromUrl("year"));
+  const [sortBy, setSortBy] = useState<SortOption>(() => fromUrl("sort", "date_added_desc") as SortOption);
+  const [selectedTag, setSelectedTag] = useState(() => fromUrl("tag"));
+  const [selectedSeries, setSelectedSeries] = useState(() => fromUrl("series"));
+  const [selectedMood, setSelectedMood] = useState(() => fromUrl("mood"));
+  // Open the filter panel when a filter inside it is already on
+  const [showFilters, setShowFilters] = useState(() =>
+    ["genre", "rating", "year", "tag", "series", "mood", "sort"].some((key) => params.has(key))
+  );
+
+  // Keep the address in step, leaving out anything still on its default
+  useEffect(() => {
+    const next = new URLSearchParams();
+    const put = (key: string, value: string, fallback = "all") => {
+      if (value !== fallback) next.set(key, value);
+    };
+    put("q", search.trim(), "");
+    put("shelf", selectedShelf);
+    put("genre", selectedGenre);
+    put("rating", selectedRating);
+    put("year", selectedYear);
+    put("tag", selectedTag);
+    put("series", selectedSeries);
+    put("mood", selectedMood);
+    put("sort", sortBy, "date_added_desc");
+    const query = next.toString();
+    const url = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+    if (url !== window.location.pathname + window.location.search) window.history.replaceState(null, "", url);
+  }, [search, selectedShelf, selectedGenre, selectedRating, selectedYear, selectedTag, selectedSeries, selectedMood, sortBy]);
 
   // Moods used on at least one book
   const usedMoods = useMemo(() => {

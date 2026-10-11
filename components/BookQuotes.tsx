@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { addQuote, deleteQuote } from "@/lib/actions/quotes";
@@ -16,6 +17,8 @@ export default function BookQuotes({ bookId, quotes }: { bookId: number; quotes:
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The quote waiting on "are you sure?"
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   const save = async () => {
     setSaving(true);
@@ -33,9 +36,12 @@ export default function BookQuotes({ bookId, quotes }: { bookId: number; quotes:
     router.refresh();
   };
 
-  const remove = async (id: number) => {
-    if (!window.confirm("Delete this quote?")) return;
-    await deleteQuote(id, bookId);
+  const remove = async () => {
+    if (deleting === null) return;
+    setSaving(true);
+    await deleteQuote(deleting, bookId);
+    setSaving(false);
+    setDeleting(null);
     router.refresh();
   };
 
@@ -205,7 +211,7 @@ export default function BookQuotes({ bookId, quotes }: { bookId: number; quotes:
               <button
                 type="button"
                 data-owner-only
-                onClick={() => remove(q.id)}
+                onClick={() => setDeleting(q.id)}
                 aria-label="Delete quote"
                 style={{
                   position: "absolute",
@@ -224,6 +230,16 @@ export default function BookQuotes({ bookId, quotes }: { bookId: number; quotes:
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={deleting !== null}
+        title="Delete this quote?"
+        message="It will be removed from this book for good."
+        confirmLabel="Delete"
+        danger
+        busy={saving}
+        onConfirm={remove}
+        onCancel={() => setDeleting(null)}
+      />
     </section>
   );
 }

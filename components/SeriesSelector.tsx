@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { findSeries, isMainBook, seriesFormProblem, type SeriesSummary as Series } from "@/lib/series";
 
-type Series = {
-  id: number;
-  name: string;
-  totalBooks: number | null;
-};
+// Past this many, the book numbers are listed as text instead of buttons
+const MAX_NUMBER_CHIPS = 40;
 
 type Props = {
   isSeries: boolean;
@@ -14,6 +12,8 @@ type Props = {
   seriesPosition: string;
   seriesTotalBooks: string;
   existingSeries: Series[];
+  // Leave out the "Part of a series?" switch, when the form is only about the series
+  hideToggle?: boolean;
   onIsSeriesChange: (value: boolean) => void;
   onSeriesNameChange: (value: string) => void;
   onSeriesPositionChange: (value: string) => void;
@@ -26,6 +26,7 @@ export default function SeriesSelector({
   seriesPosition,
   seriesTotalBooks,
   existingSeries,
+  hideToggle = false,
   onIsSeriesChange,
   onSeriesNameChange,
   onSeriesPositionChange,
@@ -63,6 +64,14 @@ export default function SeriesSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // The series you're adding to, once the name matches one you already have
+  const match = findSeries(existingSeries, seriesName);
+  const taken = match?.takenPositions ?? [];
+  const total = match?.totalBooks ?? null;
+  // Every numbered book is already here; only a novella (1.5) could still join
+  const complete = !!total && taken.filter(isMainBook).length >= total;
+  const problem = seriesFormProblem(existingSeries, seriesName, seriesPosition, seriesTotalBooks);
+
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "10px 14px",
@@ -95,7 +104,8 @@ export default function SeriesSelector({
     >
       {/* Series Toggle */}
       <div
-        style={{
+        hidden={hideToggle}
+        style={hideToggle ? undefined : {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -239,11 +249,13 @@ export default function SeriesSelector({
                           <span>📚</span>
                           <span>{s.name}</span>
                         </div>
-                        {s.totalBooks && (
-                          <span style={{ color: "var(--text-muted)", fontSize: "11px" }}>
-                            {s.totalBooks} books
-                          </span>
-                        )}
+                        <span style={{ color: "var(--text-muted)", fontSize: "11px", flexShrink: 0 }}>
+                          {s.totalBooks
+                            ? s.takenPositions.length >= s.totalBooks
+                              ? `all ${s.totalBooks} added`
+                              : `${s.takenPositions.length} of ${s.totalBooks}`
+                            : `${s.takenPositions.length} added`}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -251,9 +263,7 @@ export default function SeriesSelector({
 
                 {/* Create new option */}
                 {seriesName.trim() !== "" &&
-                  !existingSeries.find(
-                    (s) => s.name.toLowerCase() === seriesName.toLowerCase()
-                  ) && (
+                  !match && (
                     <button
                       onClick={() => {
                         setShowDropdown(false);
@@ -300,6 +310,55 @@ export default function SeriesSelector({
             )}
           </div>
 
+          {/* The numbers you already have: tap a free one to pick it */}
+          {match && (total ? total <= MAX_NUMBER_CHIPS : taken.length > 0) && (
+            <div>
+              <label style={labelStyle}>
+                {total ? `Your books in ${match.name}` : `You already have`}
+              </label>
+              {total ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {Array.from({ length: total }, (_, i) => i + 1).map((n) => {
+                    const have = taken.includes(n);
+                    const picked = !have && seriesPosition === String(n);
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        disabled={have || complete}
+                        onClick={() => onSeriesPositionChange(String(n))}
+                        aria-label={have ? `Book ${n}, already in your library` : `Book ${n}`}
+                        aria-pressed={picked}
+                        style={{
+                          minWidth: "34px",
+                          height: "34px",
+                          padding: "0 8px",
+                          borderRadius: "10px",
+                          border: picked
+                            ? "2px solid var(--primary)"
+                            : have
+                            ? "1px solid var(--success)"
+                            : "1px dashed var(--border)",
+                          backgroundColor: picked ? "var(--primary)" : have ? "var(--raised)" : "var(--bg)",
+                          color: picked ? "var(--on-primary)" : have ? "var(--success)" : "var(--text)",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          cursor: have || complete ? "default" : "pointer",
+                        }}
+                      >
+                        {have ? `✓ ${n}` : n}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p style={{ color: "var(--text)", fontSize: "13px", margin: 0 }}>
+                  Book {taken.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Book Number and Total Books in one row */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             <div>
@@ -309,29 +368,49 @@ export default function SeriesSelector({
                 type="number"
                 value={seriesPosition}
                 onChange={(e) => onSeriesPositionChange(e.target.value)}
-                placeholder="e.g. 1"
+                placeholder={complete ? "e.g. 1.5" : "e.g. 1"}
                 step="0.5"
-                min="0"
+                min="0.5"
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Total Books (Optional)</label>
+              <label style={labelStyle}>{total ? "Total Books" : "Total Books (Optional)"}</label>
               <input
-                style={inputStyle}
+                style={{ ...inputStyle, opacity: total ? 0.6 : 1 }}
                 type="number"
-                value={seriesTotalBooks}
+                value={total ?? seriesTotalBooks}
                 onChange={(e) => onSeriesTotalBooksChange(e.target.value)}
                 placeholder="e.g. 7"
                 min="1"
+                // Set already; change it from the series page
+                disabled={!!total}
               />
             </div>
           </div>
 
-          {/* Helper text */}
-          <p style={{ color: "var(--text-faint)", fontSize: "11px", margin: "0", lineHeight: "1.4" }}>
-            💡 Total books helps track series completion (e.g. &quot;Read 3 of 7 books&quot;). You can update it later.
-          </p>
+          {problem ? (
+            <p
+              role="alert"
+              style={{
+                backgroundColor: "var(--danger-bg)",
+                border: "1px solid var(--danger)",
+                borderRadius: "10px",
+                padding: "10px 12px",
+                color: "var(--text)",
+                fontSize: "13px",
+                margin: 0,
+                lineHeight: "1.4",
+              }}
+            >
+              {problem}
+              {complete && " A novella can still go in between, with a number like 1.5."}
+            </p>
+          ) : (
+            <p style={{ color: "var(--text-faint)", fontSize: "11px", margin: "0", lineHeight: "1.4" }}>
+              💡 Total books helps track series completion (e.g. &quot;Read 3 of 7 books&quot;). You can update it later. For a novella between two books, use a half number like 1.5.
+            </p>
+          )}
         </div>
       )}
     </div>

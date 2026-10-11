@@ -3,8 +3,9 @@
 import { requireOwner, requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books, series, bookSeries, tags, bookTags, readingSessions, goals, quotes } from "@/lib/db/schema";
-import { eq, and, or, desc, isNull } from "drizzle-orm";
+import { eq, and, or, desc, isNull, sql } from "drizzle-orm";
 import { pickToDate, type FinishPick } from "@/lib/finishDate";
+import { isMainBook, seriesProblem, totalProblem } from "@/lib/series";
 
 type AddBookInput = {
   title: string;
@@ -44,9 +45,70 @@ function cleanRating(rating?: number | null) {
   return halves >= 0.5 && halves <= 5 ? halves : null;
 }
 
+type SeriesPlan = { id: number | null; name: string; position: number; setTotal: number | null };
+
+// Check a book's spot in a series before anything is saved. Finds the series
+// by name (whatever the capitals) and applies the shared rules; ignoreBookId
+// leaves out the book's own current spot when it's being moved
+async function planSeriesSpot(
+  name: string,
+  position: number,
+  typedTotal: number | null | undefined,
+  ignoreBookId?: number
+): Promise<{ plan: SeriesPlan } | { error: string }> {
+  const [existing] = await db
+    .select()
+    .from(series)
+    .where(sql`lower(${series.name}) = ${name.toLowerCase()}`)
+    .limit(1);
+  const taken = existing
+    ? (
+        await db
+          .select({ bookId: bookSeries.bookId, position: bookSeries.positionInSeries })
+          .from(bookSeries)
+          .where(eq(bookSeries.seriesId, existing.id))
+      )
+        .filter((row) => row.bookId !== ignoreBookId)
+        .map((row) => row.position)
+    : [];
+  const label = existing?.name ?? name;
+  // The total you type only counts when the series doesn't have one yet
+  const setTotal = existing?.totalBooks ? null : typedTotal || null;
+  if (setTotal && totalProblem(setTotal, isMainBook(position) ? [...taken, position] : taken)) {
+    return { error: `The total can't be ${setTotal}: you'd have more books of ${label} than that.` };
+  }
+  const problem = seriesProblem(label, position, existing?.totalBooks ?? setTotal, taken);
+  if (problem) return { error: problem };
+  return { plan: { id: existing?.id ?? null, name, position, setTotal } };
+}
+
+// Create the series if it's new (or fill in its total) and return its id
+async function saveSeriesPlan(plan: SeriesPlan) {
+  if (plan.id === null) {
+    const [newSeries] = await db
+      .insert(series)
+      .values({ name: plan.name, totalBooks: plan.setTotal })
+      .returning();
+    return newSeries.id;
+  }
+  if (plan.setTotal) {
+    await db.update(series).set({ totalBooks: plan.setTotal }).where(eq(series.id, plan.id));
+  }
+  return plan.id;
+}
+
 export async function addBook(input: AddBookInput) {
   await requireOwner();
   try {
+    // Check the series spot first, so a book that can't join isn't saved at all
+    const seriesName = input.seriesName?.trim();
+    let seriesPlan: SeriesPlan | null = null;
+    if (seriesName && input.seriesPosition) {
+      const planned = await planSeriesSpot(seriesName, input.seriesPosition, input.seriesTotalBooks);
+      if ("error" in planned) return { success: false, error: planned.error };
+      seriesPlan = planned.plan;
+    }
+
     const finish = input.shelf === "read" ? finishFields(input.finished) : null;
     const [newBook] = await db
       .insert(books)
@@ -67,40 +129,11 @@ export async function addBook(input: AddBookInput) {
       })
       .returning();
 
-    if (input.seriesName && input.seriesPosition && newBook) {
-      const existingSeries = await db
-        .select()
-        .from(series)
-        .where(eq(series.name, input.seriesName))
-        .limit(1);
-
-      let seriesId: number;
-
-      if (existingSeries.length > 0) {
-        seriesId = existingSeries[0].id;
-        
-        // Update total books if provided and series doesn't have it yet
-        if (input.seriesTotalBooks && !existingSeries[0].totalBooks) {
-          await db
-            .update(series)
-            .set({ totalBooks: input.seriesTotalBooks })
-            .where(eq(series.id, seriesId));
-        }
-      } else {
-        const [newSeries] = await db
-          .insert(series)
-          .values({ 
-            name: input.seriesName,
-            totalBooks: input.seriesTotalBooks || null
-          })
-          .returning();
-        seriesId = newSeries.id;
-      }
-
+    if (seriesPlan && newBook) {
       await db.insert(bookSeries).values({
         bookId: newBook.id,
-        seriesId,
-        positionInSeries: input.seriesPosition,
+        seriesId: await saveSeriesPlan(seriesPlan),
+        positionInSeries: seriesPlan.position,
       });
     }
 
@@ -285,6 +318,7 @@ export async function getSeriesForBook(bookId: number) {
         seriesName: series.name,
         position: bookSeries.positionInSeries,
         seriesId: series.id,
+        totalBooks: series.totalBooks,
       })
       .from(bookSeries)
       .innerJoin(series, eq(bookSeries.seriesId, series.id))
@@ -615,11 +649,24 @@ export async function getCurrentlyReading() {
   }
 }
 
+// Every series with the book numbers you already have, for the add-book form
 export async function getAllSeries() {
   await requireViewer();
   try {
-    const allSeries = await db.select().from(series);
-    return { success: true, series: allSeries };
+    const [allSeries, links] = await Promise.all([
+      db.select().from(series),
+      db.select({ seriesId: bookSeries.seriesId, position: bookSeries.positionInSeries }).from(bookSeries),
+    ]);
+    return {
+      success: true,
+      series: allSeries.map((s) => ({
+        ...s,
+        takenPositions: links
+          .filter((link) => link.seriesId === s.id)
+          .map((link) => link.position)
+          .sort((a, b) => a - b),
+      })),
+    };
   } catch (error) {
     console.error("Error fetching series:", error);
     return { success: false, series: [] };
@@ -668,17 +715,82 @@ export async function updateReview(bookId: number, review: string) {
   }
 }
 
-export async function updateSeriesTotalBooks(seriesId: number, totalBooks: number) {
+// Rename a series and/or change how many books it has
+export async function updateSeries(seriesId: number, input: { name: string; totalBooks: number | null }) {
   await requireOwner();
   try {
-    await db
-      .update(series)
-      .set({ totalBooks })
-      .where(eq(series.id, seriesId));
+    const name = input.name.trim();
+    if (!name) return { success: false, error: "The series needs a name." };
+    const [clash] = await db
+      .select({ id: series.id })
+      .from(series)
+      .where(and(sql`lower(${series.name}) = ${name.toLowerCase()}`, sql`${series.id} <> ${seriesId}`))
+      .limit(1);
+    if (clash) return { success: false, error: `You already have a series called ${name}.` };
+
+    if (input.totalBooks !== null) {
+      // The total can't drop below the books already in the series
+      const positions = (
+        await db
+          .select({ position: bookSeries.positionInSeries })
+          .from(bookSeries)
+          .where(eq(bookSeries.seriesId, seriesId))
+      ).map((row) => row.position);
+      const problem = totalProblem(input.totalBooks, positions);
+      if (problem) return { success: false, error: problem };
+    }
+
+    await db.update(series).set({ name, totalBooks: input.totalBooks }).where(eq(series.id, seriesId));
     return { success: true };
   } catch (error) {
-    console.error("Error updating series total books:", error);
+    console.error("Error updating series:", error);
     return { success: false, error: "Failed to update series" };
+  }
+}
+
+// Remove a series. Its books stay in your library, just not grouped any more
+export async function deleteSeries(seriesId: number) {
+  await requireOwner();
+  try {
+    await db.delete(series).where(eq(series.id, seriesId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting series:", error);
+    return { success: false, error: "Failed to delete series" };
+  }
+}
+
+// Put a book into a series, move it to another one, or change its number
+export async function setBookSeries(
+  bookId: number,
+  input: { seriesName: string; position: number; totalBooks?: number | null }
+) {
+  await requireOwner();
+  try {
+    const name = input.seriesName.trim();
+    if (!name) return { success: false, error: "Type the name of the series." };
+    const planned = await planSeriesSpot(name, input.position, input.totalBooks, bookId);
+    if ("error" in planned) return { success: false, error: planned.error };
+
+    const seriesId = await saveSeriesPlan(planned.plan);
+    await db.delete(bookSeries).where(eq(bookSeries.bookId, bookId));
+    await db.insert(bookSeries).values({ bookId, seriesId, positionInSeries: planned.plan.position });
+    return { success: true };
+  } catch (error) {
+    console.error("Error setting book series:", error);
+    return { success: false, error: "Failed to save the series" };
+  }
+}
+
+// Take a book out of its series; the book itself stays
+export async function removeBookFromSeries(bookId: number) {
+  await requireOwner();
+  try {
+    await db.delete(bookSeries).where(eq(bookSeries.bookId, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing book from series:", error);
+    return { success: false, error: "Failed to remove the book from its series" };
   }
 }
 
@@ -721,31 +833,43 @@ export async function getSeriesById(seriesId: number) {
 export async function getAllSeriesWithStats() {
   await requireViewer();
   try {
-    const allSeries = await db.select().from(series);
+    const [allSeries, rows] = await Promise.all([
+      db.select().from(series).orderBy(series.name),
+      db
+        .select({
+          seriesId: bookSeries.seriesId,
+          id: books.id,
+          title: books.title,
+          cover: books.cover,
+          shelf: books.shelf,
+          position: bookSeries.positionInSeries,
+        })
+        .from(bookSeries)
+        .innerJoin(books, eq(bookSeries.bookId, books.id))
+        .orderBy(bookSeries.positionInSeries),
+    ]);
 
-    const seriesWithStats = await Promise.all(
-      allSeries.map(async (s) => {
-        const booksInSeries = await db
-          .select({
-            id: books.id,
-            shelf: books.shelf,
-          })
-          .from(bookSeries)
-          .innerJoin(books, eq(bookSeries.bookId, books.id))
-          .where(eq(bookSeries.seriesId, s.id));
+    const seriesWithStats = allSeries.map((s) => {
+      const booksInSeries = rows.filter((row) => row.seriesId === s.id);
+      // Only count books you actually own (not wishlist). When the series
+      // length is known, novellas (1.5 and the like) don't count towards it
+      const ownedBooks = booksInSeries.filter(
+        (b) => b.shelf !== "wishlist" && (!s.totalBooks || isMainBook(b.position))
+      );
 
-        // Only count books you actually own (not wishlist)
-        const ownedBooks = booksInSeries.filter((b) => b.shelf !== "wishlist");
-        const totalOwned = ownedBooks.length;
-        const totalRead = ownedBooks.filter((b) => b.shelf === "read").length;
-
-        return {
-          ...s,
-          totalOwned,
-          totalRead,
-        };
-      })
-    );
+      return {
+        ...s,
+        totalOwned: ownedBooks.length,
+        totalRead: ownedBooks.filter((b) => b.shelf === "read").length,
+        books: booksInSeries.map((b) => ({
+          id: b.id,
+          title: b.title,
+          cover: b.cover,
+          shelf: b.shelf,
+          position: b.position,
+        })),
+      };
+    });
 
     return { success: true, series: seriesWithStats };
   } catch (error) {

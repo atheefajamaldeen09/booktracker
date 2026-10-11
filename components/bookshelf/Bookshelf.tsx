@@ -26,9 +26,36 @@ import styles from "./Bookshelf.module.css";
 type Filter = "all" | "read" | "reading" | "tbr" | "fav";
 type Sort = "shelf" | "author" | "colour" | "mine";
 
-type Item =
-  | { kind: "book"; key: string; book: ShelfBook; layout: BookLayout; width: number }
-  | { kind: "deco"; key: string; type: DecorationType; seed: number; width: number; margin: number; height: number; push?: boolean; nook?: NookId };
+type BookItem = { kind: "book"; key: string; book: ShelfBook; layout: BookLayout; width: number };
+type DecoItem = { kind: "deco"; key: string; type: DecorationType; seed: number; width: number; margin: number; height: number; push?: boolean; nook?: NookId };
+// A few books lying flat on top of each other, first one on top, with an
+// ornament sitting on the pile. shift nudges each one sideways so the pile
+// looks stacked by hand
+type PileItem = {
+  kind: "pile";
+  key: string;
+  books: (BookItem & { shift: number })[];
+  length: number;
+  margin: number;
+  push: boolean;
+  top: { type: DecorationType; seed: number; width: number; height: number; shift: number } | null;
+};
+type Item = BookItem | DecoItem | PileItem;
+
+// Where the ornament goes on a full shelf, shelf after shelf, so no two
+// neighbours are laid out alike. On a "pile" shelf some of the books lie in
+// a stack with the ornament on top
+type Spot = "between" | "left" | "right" | "pileLeft" | "pileMid" | "pileRight";
+const SPOTS: Spot[] = ["between", "pileRight", "left", "pileMid", "right", "pileLeft"];
+// What a pile shelf does instead when a pile won't fit
+const NO_PILE: Record<Spot, "between" | "left" | "right"> = {
+  between: "between",
+  left: "left",
+  right: "right",
+  pileLeft: "left",
+  pileMid: "between",
+  pileRight: "right",
+};
 
 type Row = {
   key: string;
@@ -85,7 +112,39 @@ const SLIM_TALL: DecorationType[] = ["roses", "lantern"];
 // A finished book nook stands about as tall as the books; slimmer on a phone
 const NOOK_SIZE = { w: 150, h: 240 };
 const PHONE_NOOK_SIZE = { w: 110, h: 176 };
-const pick = (list: DecorationType[], r: number, seed: number) => list[(seed + r * 3) % list.length];
+const PILE_GAP = 1; // a hair of shadow between books lying in a pile
+const thicknessFor = (weight: number, unit: number) => Math.max(12, Math.floor(weight * unit));
+
+// Hands out ornaments like cards from a shuffled deck: every kind gets a turn
+// before any comes round again, and the last few dealt are never dealt again
+// straight away, so shelves next to each other never match
+function ornamentDeck(pool: DecorationType[]) {
+  const queue: DecorationType[] = [];
+  const recent: DecorationType[] = [];
+  const memory = Math.min(3, pool.length - 1);
+  let round = 0;
+  return (fits: (type: DecorationType) => boolean = () => true, avoid: DecorationType[] = []) => {
+    if (pool.length === 0) return null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const i = queue.findIndex((t) => !recent.includes(t) && !avoid.includes(t) && fits(t));
+      if (i >= 0) {
+        const [type] = queue.splice(i, 1);
+        recent.push(type);
+        if (recent.length > memory) recent.shift();
+        return type;
+      }
+      // Out of cards that fit: shuffle in a fresh deck (the same way every time)
+      const fresh = [...pool];
+      for (let k = fresh.length - 1; k > 0; k--) {
+        const j = hashString(`deck-${round}-${k}`) % (k + 1);
+        [fresh[k], fresh[j]] = [fresh[j], fresh[k]];
+      }
+      queue.push(...fresh);
+      round++;
+    }
+    return null;
+  };
+}
 
 export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[]; decor: ShelfDecorSettings; nooks: NookId[] }) {
   // Everything here depends on the browser (width, cover colors)
@@ -95,7 +154,7 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
   // Your own order is the default once you've arranged the shelf
   const [sort, setSort] = useState<Sort>(() => (books.some((b) => b.shelfOrder !== null) ? "mine" : "shelf"));
   // The book lifted off the shelf, and where it was sitting when you clicked it
-  const [open, setOpen] = useState<{ id: number; origin: DOMRect | null } | null>(null);
+  const [open, setOpen] = useState<{ id: number; origin: DOMRect | null; lying: boolean } | null>(null);
   const [width, setWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(800);
   // Matches the phone breakpoint in Bookshelf.module.css
@@ -184,7 +243,8 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
     const pool = roomy ? allowed : slim.length > 0 ? slim : allowed;
     const tallPool = (roomy ? TALL : SLIM_TALL).filter((t) => allowed.includes(t));
     const hasDecor = pool.length > 0;
-    const decoFor = (r: number, seed: number) => pick(pool, r, seed);
+    const nextOrnament = ornamentDeck(allowed);
+    const standing = (type: DecorationType) => pool.includes(type);
     // Finished book nooks take the ornament's place on every other shelf,
     // newest first, so the latest one is on the shelf you see when you arrive
     const shownNooks = decorSettings.nooks ? [...nooks].reverse() : [];
@@ -208,6 +268,37 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
     const free = available - (hasDecor ? margin : 0) - perShelf * BOOK_GAP;
     const H = Math.round(Math.min(maxHeight, (ratio * free) / (perShelf * meanWeight + ratio * ornament)));
     const typicalUnit = (free - ornament * H) / (perShelf * meanWeight);
+    // Less empty space above the books on a phone
+    const bayHeight = H + (roomy ? HEADROOM : 44);
+
+    // Which books on a full shelf could lie in a pile: a run of them at one
+    // end or in the middle, as long as the books left standing stay close to
+    // their usual thickness. A lying book is as long as it is tall, so a
+    // desktop shelf has room for a pile of two to four, while on a phone
+    // nearly the whole shelf ends up in the pile
+    const planPile = (chunk: ShelfBook[], shapes: ReturnType<typeof bookShape>[], spot: Spot, seed: number) => {
+      const n = chunk.length;
+      const options: { start: number; count: number; unit: number; length: number; height: number; off: number }[] = [];
+      for (let count = 2; count <= n; count++) {
+        const start = spot === "pileLeft" ? 0 : spot === "pileRight" ? n - count : Math.floor((n - count) / 2);
+        const inPile = (i: number) => i >= start && i < start + count;
+        // A book you're reading stays upright, with its bookmark showing
+        if (chunk.some((b, i) => inPile(i) && b.shelf === "reading")) continue;
+        const length = Math.max(...shapes.filter((_, i) => inPile(i)).map((sh) => Math.round(H * sh.heightShare)));
+        const restWeight = shapes.reduce((sum, sh, i) => sum + (inPile(i) ? 0 : sh.weight), 0);
+        const room = available - length - margin - (n - count) * BOOK_GAP;
+        if (room < 0) continue;
+        const unit = restWeight > 0 ? room / restWeight : typicalUnit;
+        const off = Math.abs(unit / typicalUnit - 1);
+        if (unit < typicalUnit * 0.8 || unit > typicalUnit * 1.25) continue;
+        const height = shapes.reduce((sum, sh, i) => sum + (inPile(i) ? thicknessFor(sh.weight, unit) + PILE_GAP : 0), 0);
+        if (height > H * 0.92) continue;
+        options.push({ start, count, unit, length, height, off });
+      }
+      // One of the two best fits, so piles aren't all the same size
+      options.sort((x, y) => x.off - y.off);
+      return options.length > 0 ? options[seed % Math.min(2, options.length)] : null;
+    };
 
     const layouts = new Map<number, BookLayout>();
     const rows: Row[] = chunks.map((chunk, r) => {
@@ -224,7 +315,7 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
               : null;
       // Every other shelf gets vines draping over its front edge
       const vines = decorSettings.vines && r % 2 === 0 ? (r % 4 === 0 ? "right" : "left") : null;
-      const decos: Extract<Item, { kind: "deco" }>[] = [];
+      const decos: DecoItem[] = [];
       const addDeco = (type: DecorationType, key: string, nook?: NookId) => {
         const size = nook ? nookSize : DECORATION_SIZE[type];
         decos.push({
@@ -238,25 +329,36 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
           height: Math.round((size.h * H) / DECO_REF),
         });
       };
+      const full = chunk.length === perShelf;
+      const shapes = chunk.map(bookShape);
       const nook = r % 2 === 0 ? shownNooks[r / 2] : undefined;
+      // Books stand back up while you arrange them, so each has its own slot
+      const planned = SPOTS[r % SPOTS.length];
+      const pile =
+        full && !nook && !arranging && planned.startsWith("pile") ? planPile(chunk, shapes, planned, seed) : null;
+      const spot = NO_PILE[planned];
+      // On a pile shelf the ornament sits on the pile, not on the board
       if (nook) addDeco("frame", `nook-${r}`, nook);
-      else if (hasDecor) addDeco(decoFor(r, seed), `deco-${r}`);
+      else if (hasDecor && !pile) {
+        const type = nextOrnament(standing);
+        if (type) addDeco(type, `deco-${r}`);
+      }
 
       const decoSpace = decos.reduce((sum, d) => sum + d.width, 0);
-      const shapes = chunk.map(bookShape);
-      const totalWeight = shapes.reduce((sum, s) => sum + s.weight, 0);
+      const totalWeight = shapes.reduce((sum, sh) => sum + sh.weight, 0);
       const space = available - decoSpace - chunk.length * BOOK_GAP;
       // A full shelf is packed edge to edge; a short one keeps the usual sizes
-      const unit =
-        chunk.length === perShelf
+      const unit = pile
+        ? pile.unit
+        : full
           ? space / totalWeight
           : Math.min(typicalUnit, space / Math.max(totalWeight, 1));
 
-      const bookItems = chunk.map((book, i): Extract<Item, { kind: "book" }> => {
+      const bookItems = chunk.map((book, i): BookItem => {
         const shape = shapes[i];
         const height = Math.round(H * shape.heightShare);
         const layout: BookLayout = {
-          thickness: Math.max(12, Math.floor(shape.weight * unit)),
+          thickness: thicknessFor(shape.weight, unit),
           height,
           depth: Math.round(height * 0.62),
         };
@@ -264,16 +366,18 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
         return { kind: "book", key: `book-${book.id}`, book, layout, width: layout.thickness + BOOK_GAP };
       });
 
-      if (chunk.length < perShelf) {
+      if (!full) {
         let used = bookItems.reduce((sum, b) => sum + b.width, 0) + decoSpace;
         // Fill the gap on a short shelf with a few more ornaments
         for (let k = 1; k <= 3; k++) {
-          const type = k === 1 && tallPool.length > 0 ? pick(tallPool, r, seed) : hasDecor ? decoFor(r + k * 2, seed + k) : null;
+          const here = decos.flatMap((d) => (d.nook ? [] : [d.type]));
+          const fitsGap = (t: DecorationType) => available - used >= decoWidth(t, H) + margin + 40;
+          const type =
+            (k === 1 ? nextOrnament((t) => tallPool.includes(t) && fitsGap(t), here) : null) ??
+            nextOrnament((t) => standing(t) && fitsGap(t), here);
           if (!type) continue;
-          const w = decoWidth(type, H) + margin;
-          if (available - used < w + 40 || decos.some((d) => !d.nook && d.type === type)) continue;
           addDeco(type, `deco-${r}-${k}`);
-          used += w;
+          used += decoWidth(type, H) + margin;
         }
         // Spread the ornaments evenly through the free space. One only stands
         // between the books when that leaves at least 3 books on each side
@@ -290,12 +394,53 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
         return { key: `shelf-${r}`, items, extra, ivySide: "left", vines };
       }
 
-      // On a full shelf the ornament follows a set pattern so neighbouring
-      // shelves never look alike: between the books on the first shelf and
-      // every other one after it, and at the right or left end in between.
-      // Ivy hangs on the other side. Between books it keeps at least 3 on
-      // each side (3 to 7 of 10, or 3 to 4 of 7 on a phone)
-      const spot = (["between", "right", "between", "left"] as const)[r % 4];
+      if (pile) {
+        const lying = bookItems.slice(pile.start, pile.start + pile.count);
+        const books = lying.map((item) => ({
+          ...item,
+          // Shorter books sit somewhere along the longest one
+          shift: Math.round((pile.length - item.layout.height) * (0.15 + (hashString(`lie-${item.book.id}`) % 70) / 100)),
+        }));
+        // An ornament for the top of the pile, shrunk a little if it has to
+        // be to stay under the shelf above (and the fairy lights)
+        const headroom = bayHeight - pile.height - (extra === "lights" ? 36 : 12);
+        const natural = (t: DecorationType) => ({
+          w: (DECORATION_SIZE[t].w * H) / DECO_REF,
+          h: (DECORATION_SIZE[t].h * H) / DECO_REF,
+        });
+        const scaleFor = (t: DecorationType) =>
+          Math.min(1, headroom / natural(t).h, (books[0].layout.height * 0.9) / natural(t).w);
+        const topType = nextOrnament((t) => scaleFor(t) >= 0.55);
+        const topWidth = topType ? Math.round(natural(topType).w * scaleFor(topType)) : 0;
+        const pileItem: PileItem = {
+          kind: "pile",
+          key: `pile-${r}`,
+          books,
+          length: pile.length,
+          margin,
+          push: pile.count === chunk.length,
+          top: topType
+            ? {
+                type: topType,
+                seed,
+                width: topWidth,
+                height: Math.round(natural(topType).h * scaleFor(topType)),
+                shift: books[0].shift + Math.round((books[0].layout.height - topWidth) / 2),
+              }
+            : null,
+        };
+        return {
+          key: `shelf-${r}`,
+          items: [...bookItems.slice(0, pile.start), pileItem, ...bookItems.slice(pile.start + pile.count)],
+          extra,
+          ivySide: pile.start + pile.count / 2 < perShelf / 2 ? "right" : "left",
+          vines,
+        };
+      }
+
+      // The ornament stands between the books (keeping at least 3 on each
+      // side: 3 to 7 of 10, or 3 to 4 of 7 on a phone) or at one end of the
+      // shelf. Ivy hangs on the other side
       if (spot === "between") {
         const side = perShelf >= 7 ? 3 : 2;
         const choices = perShelf - 2 * side + 1;
@@ -319,9 +464,8 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
       };
     });
 
-    // Less empty space above the books on a phone
-    return { rows, layouts, bayHeight: H + (roomy ? HEADROOM : 44) };
-  }, [visibleBooks, width, maxHeight, decorSettings, phone, nooks]);
+    return { rows, layouts, bayHeight };
+  }, [visibleBooks, width, maxHeight, decorSettings, phone, nooks, arranging]);
 
   const shelfCount = shelf?.rows.length ?? 1;
   const current = Math.min(shelfIndex, shelfCount - 1);
@@ -629,15 +773,16 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
                   {row.extra === "lights" && <FairyLights seed={r * 5} />}
                   {row.extra === "ivy" && <HangingIvy side={row.ivySide} height={Math.round(shelf.bayHeight * 0.45)} />}
                   <div className={styles.row} style={{ height: shelf.bayHeight }}>
-                    {row.items.map((item) =>
-                      item.kind === "book" ? (
+                    {row.items.map((item) => {
+                      const renderBook = (item: BookItem, lying = false) => (
                         <Book3D
                           key={item.key}
                           book={item.book}
                           layout={item.layout}
                           color={colorFor(item.book)}
                           lifted={open?.id === item.book.id}
-                          onSelect={(id, origin) => setOpen({ id, origin })}
+                          lying={lying}
+                          onSelect={(id, origin) => setOpen({ id, origin, lying })}
                           arrange={
                             arranging && r === current
                               ? {
@@ -649,7 +794,45 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
                               : undefined
                           }
                         />
-                      ) : (
+                      );
+                      if (item.kind === "book") return renderBook(item);
+                      if (item.kind === "pile") {
+                        return (
+                          <div
+                            key={item.key}
+                            className={styles.pile}
+                            style={{
+                              width: item.length,
+                              marginLeft: item.push ? "auto" : item.margin / 2,
+                              marginRight: item.push ? "auto" : item.margin / 2,
+                            }}
+                          >
+                            {item.top && (
+                              <div
+                                aria-hidden
+                                className={styles.deco}
+                                style={{ width: item.top.width, height: item.top.height, marginLeft: item.top.shift }}
+                              >
+                                <Decoration type={item.top.type} seed={item.top.seed} />
+                              </div>
+                            )}
+                            {item.books.map((lying) => (
+                              <div
+                                key={lying.key}
+                                className={styles.lying}
+                                style={{
+                                  width: lying.layout.height,
+                                  height: lying.layout.thickness,
+                                  marginLeft: lying.shift,
+                                }}
+                              >
+                                {renderBook(lying, true)}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return (
                         <div
                           key={item.key}
                           aria-hidden
@@ -663,8 +846,8 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
                         >
                           {item.nook ? <NookArt nook={item.nook} /> : <Decoration type={item.type} seed={item.seed} />}
                         </div>
-                      )
-                    )}
+                      );
+                    })}
                   </div>
                   <div className={styles.board}>
                     {row.vines && <ShelfVines width={width} side={row.vines} seed={r * 7 + 3} />}
@@ -721,6 +904,7 @@ export default function Bookshelf({ books, decor, nooks }: { books: ShelfBook[];
             book={openBook}
             color={colorFor(openBook)}
             origin={open!.origin}
+            lying={open!.lying}
             shelfThickness={shelf?.layouts.get(openBook.id)?.thickness ?? 24}
             onClosed={() => setOpen(null)}
           />,

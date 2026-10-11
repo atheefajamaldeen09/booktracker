@@ -78,7 +78,11 @@ export async function getAchievements(): Promise<AchievementStatus[]> {
     const finishedSeries = allSeries.filter((s) => {
       if (!s.totalBooks) return false;
       const positions = new Set(
-        links.filter((l) => l.seriesId === s.id && l.bookId !== null && readIds.has(l.bookId)).map((l) => l.positionInSeries)
+        links
+          .filter((l) => l.seriesId === s.id && l.bookId !== null && readIds.has(l.bookId))
+          .map((l) => l.positionInSeries)
+          // Novellas (1.5 and the like) don't count towards the series length
+          .filter(Number.isInteger)
       );
       return positions.size >= s.totalBooks;
     });

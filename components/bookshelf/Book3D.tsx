@@ -17,6 +17,8 @@ type Props = {
   color: SpineColor;
   // Hidden while its twin is open above the shelf
   lifted: boolean;
+  // Lying flat in a pile, turned a quarter so the title reads left to right
+  lying?: boolean;
   onSelect: (id: number, origin: DOMRect | null) => void;
   // Arrange mode: books are dragged instead of opened
   arrange?: {
@@ -30,7 +32,7 @@ type Props = {
 // A book made of four real faces (spine, front cover, back cover, page edges)
 // arranged in 3D with CSS transforms. On the shelf mostly the spine faces you;
 // selecting it hands its position to OpenBook, which flies it out and opens it.
-export default function Book3D({ book, layout, color, lifted, onSelect, arrange }: Props) {
+export default function Book3D({ book, layout, color, lifted, lying = false, onSelect, arrange }: Props) {
   const { thickness, height, depth } = layout;
   // .titleBox leaves 2px at each side and 12px at each end
   const sizes = useSpineFontSizes(book.title, book.author, thickness - 6, height - 30);
@@ -48,7 +50,15 @@ export default function Book3D({ book, layout, color, lifted, onSelect, arrange 
   const select = (e: MouseEvent | KeyboardEvent) => {
     if (arrange) return;
     const spine = (e.currentTarget as HTMLElement).querySelector("[data-spine]");
-    onSelect(book.id, spine ? spine.getBoundingClientRect() : null);
+    const box = spine ? spine.getBoundingClientRect() : null;
+    // OpenBook wants the spine as it would stand upright, around the same
+    // centre; it lays the book back down itself for the first frame
+    onSelect(
+      book.id,
+      box && lying
+        ? new DOMRect(box.left + box.width / 2 - thickness / 2, box.top + box.height / 2 - height / 2, thickness, height)
+        : box
+    );
   };
 
   return (
@@ -61,6 +71,7 @@ export default function Book3D({ book, layout, color, lifted, onSelect, arrange 
       className={[
         styles.book,
         lifted ? styles.lifted : "",
+        lying ? styles.flat : "",
         arrange ? styles.arrangeable : "",
         arrange?.dragging ? styles.dragging : "",
         arrange?.drop === "before" ? styles.dropBefore : "",
@@ -110,7 +121,7 @@ export default function Book3D({ book, layout, color, lifted, onSelect, arrange 
       </div>
 
       {/* Charm bookmark hooked over the top of books you're in the middle of */}
-      {book.shelf === "reading" && <CharmBookmark bookId={book.id} height={height} thickness={thickness} />}
+      {book.shelf === "reading" && !lying && <CharmBookmark bookId={book.id} height={height} thickness={thickness} />}
     </div>
   );
 }

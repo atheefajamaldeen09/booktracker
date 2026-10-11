@@ -54,7 +54,8 @@ export const bookSeries = pgTable("book_series", {
   seriesId: integer("series_id").references(() => series.id, {
     onDelete: "cascade",
   }),
-  positionInSeries: integer("position_in_series").notNull(),
+  // Whole numbers for the main books; halves like 1.5 for novellas in between
+  positionInSeries: real("position_in_series").notNull(),
 });
 
 // Reading sessions table — logs every time you update progress

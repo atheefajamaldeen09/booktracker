@@ -1,0 +1,876 @@
+/* Series pages: each series is a little shelf of its own, with a dot for
+   every book so the gaps are easy to spot */
+
+/* ─────────────── filter tabs ─────────────── */
+.tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background-color: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.tab span {
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+/* ─────────────── series cards ─────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 18px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* The mini shelf: covers standing on a wooden board */
+.nook {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  height: 108px;
+  padding: 0 16px;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 0%, var(--lamp), transparent 75%),
+    linear-gradient(180deg, var(--back-light), var(--back));
+}
+
+.board {
+  height: 9px;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 3px),
+    linear-gradient(180deg, var(--wood-light), var(--wood) 45%, var(--wood-dark));
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.35);
+}
+
+.nook img,
+.nook > div {
+  /* Covers sit a touch smaller than the usual small size */
+  width: 50px !important;
+  height: 75px !important;
+  border-radius: 4px 4px 2px 2px !important;
+}
+
+/* A book you don't have yet */
+.ghost {
+  flex: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 1.5px dashed rgba(255, 255, 255, 0.45);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-heading);
+  font-size: 18px;
+}
+
+.more {
+  align-self: center;
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Corner ribbon on a series you've finished or fully collected */
+.ribbon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background-color: var(--success);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.ribbon[data-kind="collected"] {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.cardMeta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cardMeta strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* ─────────────── one dot per book ─────────────── */
+.pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.pip {
+  flex: none;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--text-faint);
+}
+
+.pips[data-size="lg"] {
+  gap: 8px;
+}
+
+.pips[data-size="lg"] .pip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-faint);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* A novella's number (1.5) needs smaller type to fit the dot */
+.pips[data-size="lg"] .pip[data-half],
+.number[data-half] {
+  font-size: 11px;
+  letter-spacing: -0.02em;
+}
+
+.pip[data-state="read"] {
+  border: 1.5px solid var(--success);
+  background-color: var(--success);
+  color: #fff !important;
+}
+
+.pip[data-state="reading"] {
+  border: 1.5px solid var(--accent);
+  background-color: var(--accent);
+  color: #fff !important;
+}
+
+.pip[data-state="tbr"] {
+  border: 1.5px solid var(--primary);
+  background-color: rgb(var(--primary-rgb) / 0.22);
+  color: var(--text) !important;
+}
+
+.pip[data-state="dnf"] {
+  border: 1.5px solid var(--danger);
+  background-color: var(--danger-bg);
+  color: var(--text) !important;
+}
+
+.pip[data-state="wishlist"] {
+  border: 1.5px solid var(--star);
+  color: var(--text) !important;
+}
+
+/* Too many books for dots: a plain bar instead */
+.bar {
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: var(--bg);
+}
+
+.bar div {
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--success);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─────────────── series page header ─────────────── */
+.hero {
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--hero-from), var(--hero-to));
+  box-shadow: var(--shadow-sm);
+}
+
+.heroTop {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 24px 24px 20px;
+}
+
+/* The first few covers, fanned like a hand of cards */
+.fan {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  padding: 4px 6px 0 2px;
+}
+
+.fan > * {
+  border-radius: 6px;
+  outline: 2px solid var(--hero-to);
+}
+
+.fan > * + * {
+  margin-left: -52px;
+}
+
+.fan > :nth-child(1) {
+  z-index: 3;
+}
+
+.fan > :nth-child(2) {
+  z-index: 2;
+  transform: rotate(5deg) translateY(-3px);
+  transform-origin: 0 100%;
+}
+
+.fan > :nth-child(3) {
+  z-index: 1;
+  transform: rotate(10deg) translateY(-6px);
+  transform-origin: 0 100%;
+}
+
+.heroText {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0 0 16px;
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+/* Number over label, split by hairlines */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 18px;
+  border-left: 1px solid var(--border);
+}
+
+.stat:first-child {
+  padding-left: 0;
+  border-left: none;
+}
+
+.stat strong {
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat small {
+  color: var(--text-faint);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stat span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* Big round "how far along" badge */
+.percent {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, var(--surface) 80%, transparent 82% 100%),
+    conic-gradient(var(--success) calc(var(--p) * 1%), var(--border) 0);
+}
+
+.percent span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.percent small {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.heroFoot {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+/* "Series length: 7 books [Edit]" */
+.length {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.length strong {
+  color: var(--text);
+}
+
+.lengthFields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lengthInput {
+  width: 84px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.lengthInput:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.lengthButton,
+.lengthSave {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lengthButton:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.lengthSave {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.lengthSave:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Editing the series: name and length side by side, actions underneath */
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.editField .lengthInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--danger-border);
+  border-radius: 10px;
+  background-color: transparent;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background-color: var(--danger-bg);
+}
+
+.lengthError {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+/* ─────────────── up next ─────────────── */
+.next {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+  padding: 14px 16px;
+  border: 1px solid var(--primary);
+  border-radius: 16px;
+  background-color: rgb(var(--primary-rgb) / 0.1);
+}
+
+.nextGhost {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 72px;
+  border: 1.5px dashed var(--text-faint);
+  border-radius: 6px;
+  color: var(--text-faint);
+  font-family: var(--font-heading);
+  font-size: 20px;
+}
+
+.nextTitle {
+  margin: 0 0 2px;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nextText {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.nextAction {
+  flex: none;
+  padding: 9px 16px;
+  border-radius: 12px;
+  background-color: var(--primary);
+  color: var(--on-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nextAction:hover {
+  background-color: var(--primary-hover);
+}
+
+/* ─────────────── books in the series ─────────────── */
+.list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The thread the book numbers hang on */
+.list::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 17px;
+  border-left: 2px dotted var(--border);
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.number {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.number[data-state="read"] {
+  border-color: var(--success);
+  background-color: var(--success);
+  color: #fff;
+}
+
+.number[data-state="reading"] {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.number[data-state="tbr"] {
+  border-color: var(--primary);
+}
+
+.number[data-state="dnf"] {
+  border-color: var(--danger);
+}
+
+.number[data-state="wishlist"] {
+  border-color: var(--star);
+}
+
+.number[data-state="missing"] {
+  border-style: dashed;
+  border-color: var(--text-faint);
+  background-color: var(--bg);
+  color: var(--text-faint);
+  /* Wide enough for a range like 12–15 */
+  width: auto;
+  min-width: 36px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.bookRow {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background-color: var(--surface);
+  text-decoration: none;
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+@media (hover: hover) {
+  a.bookRow:hover {
+    transform: translateX(3px);
+    border-color: var(--primary);
+    background-color: var(--raised);
+  }
+}
+
+.bookRow[data-missing] {
+  border-style: dashed;
+  background-color: transparent;
+  padding: 10px 14px;
+}
+
+.bookKicker {
+  margin: 0 0 3px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bookTitle {
+  margin: 0 0 2px;
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.bookAuthor {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Status and rating, stacked at the right of the row */
+.bookSide {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.shelfChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rating {
+  color: var(--star);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.missingText {
+  flex: 1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.findLink {
+  flex: none;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: var(--surface);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.findLink:hover {
+  border-color: var(--primary);
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-faint);
+}
+
+@media (max-width: 600px) {
+  .heroTop {
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 18px 16px 16px;
+  }
+  /* Covers and the ring share the first line; the title gets its own */
+  .heroText {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .percent {
+    width: 72px;
+    height: 72px;
+    margin-left: auto;
+  }
+  .percent span {
+    font-size: 18px;
+  }
+  .fan > * {
+    width: 60px !important;
+    height: 90px !important;
+  }
+  .fan > * + * {
+    margin-left: -38px;
+  }
+  .stat {
+    padding: 0 12px;
+  }
+  .progress {
+    padding: 14px 16px 16px;
+  }
+  .heroFoot {
+    padding: 12px 16px;
+  }
+  .pips[data-size="lg"] .pip {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+  .next {
+    flex-wrap: wrap;
+  }
+  .nextAction {
+    flex-basis: 100%;
+    text-align: center;
+  }
+  /* Status drops under the title so long titles keep their room */
+  .bookRow {
+    flex-wrap: wrap;
+  }
+  .bookSide {
+    flex-direction: row;
+    align-items: center;
+    flex-basis: 100%;
+    padding-left: 62px;
+    margin-top: -4px;
+  }
+  .chevron {
+    display: none;
+  }
+}

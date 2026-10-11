@@ -2,213 +2,151 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateSeriesTotalBooks } from "@/lib/actions/books";
+import { Pencil, Trash2 } from "lucide-react";
+import { deleteSeries, updateSeries } from "@/lib/actions/books";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import styles from "./Series.module.css";
 
 type Props = {
   seriesId: number;
   seriesName: string;
   totalBooks: number | null;
+  bookCount: number;
 };
 
-export default function SeriesEditForm({
-  seriesId,
-  seriesName,
-  totalBooks,
-}: Props) {
+// "Series length: 7 books" with a small edit button, at the foot of the
+// series header. Editing opens the name and length, plus deleting the series
+export default function SeriesEditForm({ seriesId, seriesName, totalBooks, bookCount }: Props) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
-  const [newTotalBooks, setNewTotalBooks] = useState(
-    totalBooks?.toString() || ""
-  );
+  const [name, setName] = useState(seriesName);
+  const [newTotalBooks, setNewTotalBooks] = useState(totalBooks?.toString() || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const hasChanged = name.trim() !== seriesName || newTotalBooks !== (totalBooks?.toString() || "");
+  const canSave = !isSaving && hasChanged && name.trim() !== "";
 
   const handleSave = async () => {
-    if (!newTotalBooks || parseInt(newTotalBooks) < 1) {
-      return;
-    }
-
+    if (!canSave) return;
     setIsSaving(true);
-    setSuccess(false);
+    setError(null);
 
-    const result = await updateSeriesTotalBooks(
-      seriesId,
-      parseInt(newTotalBooks)
-    );
+    const result = await updateSeries(seriesId, {
+      name,
+      totalBooks: newTotalBooks ? Number(newTotalBooks) : null,
+    });
 
     if (result.success) {
-      setSuccess(true);
       setIsEditing(false);
-      setTimeout(() => setSuccess(false), 2000);
       router.refresh();
+    } else {
+      setError(result.error ?? "Failed to update series");
     }
-
     setIsSaving(false);
   };
 
-  const hasChanged = newTotalBooks !== (totalBooks?.toString() || "");
+  const cancel = () => {
+    setIsEditing(false);
+    setError(null);
+    setName(seriesName);
+    setNewTotalBooks(totalBooks?.toString() || "");
+  };
+
+  const handleDelete = async () => {
+    setIsSaving(true);
+    const result = await deleteSeries(seriesId);
+    if (result.success) {
+      router.push("/series");
+      router.refresh();
+      return;
+    }
+    setIsSaving(false);
+    setConfirmDelete(false);
+    setError(result.error ?? "Failed to delete series");
+  };
 
   if (!isEditing) {
     return (
-      <div
-        style={{
-          backgroundColor: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "14px",
-          padding: "16px",
-          marginBottom: "28px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <p
-              style={{
-                color: "var(--text-muted)",
-                fontSize: "12px",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: "4px",
-              }}
-            >
-              Total Books in Series
-            </p>
-            <p
-              style={{
-                color: "var(--text)",
-                fontSize: "16px",
-                fontWeight: "600",
-                margin: 0,
-              }}
-            >
-              {totalBooks ? `${totalBooks} books` : "Not set"}
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsEditing(true)}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "var(--raised)",
-              border: "1px solid var(--border)",
-              borderRadius: "10px",
-              color: "var(--text)",
-              fontSize: "13px",
-              fontWeight: "600",
-              cursor: "pointer",
-            }}
-          >
-            {totalBooks ? "Edit" : "Set Total"}
-          </button>
-        </div>
-
-        {success && (
-          <p
-            style={{
-              color: "var(--success)",
-              fontSize: "12px",
-              marginTop: "8px",
-              marginBottom: 0,
-            }}
-          >
-            ✓ Total books updated successfully!
-          </p>
-        )}
+      <div className={styles.length}>
+        <span>
+          Series length: <strong>{totalBooks ? `${totalBooks} ${totalBooks === 1 ? "book" : "books"}` : "not set"}</strong>
+        </span>
+        <button type="button" className={styles.lengthButton} onClick={() => setIsEditing(true)}>
+          <Pencil size={13} />
+          Edit series
+        </button>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: "14px",
-        padding: "16px",
-        marginBottom: "28px",
+    <form
+      className={styles.editForm}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSave();
       }}
     >
-      <label
-        style={{
-          color: "var(--text-muted)",
-          fontSize: "12px",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          display: "block",
-          marginBottom: "8px",
-        }}
-      >
-        How many books are in {seriesName}?
-      </label>
+      <div className={styles.editFields}>
+        <label className={styles.editField} style={{ flex: 1 }}>
+          <span>Series name</span>
+          <input
+            className={styles.lengthInput}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+          />
+        </label>
+        <label className={styles.editField}>
+          <span>Books in the series</span>
+          <input
+            className={styles.lengthInput}
+            type="number"
+            value={newTotalBooks}
+            onChange={(e) => setNewTotalBooks(e.target.value)}
+            placeholder="e.g. 7"
+            min="1"
+            step="1"
+          />
+        </label>
+      </div>
 
-      <input
-        type="number"
-        value={newTotalBooks}
-        onChange={(e) => setNewTotalBooks(e.target.value)}
-        placeholder="e.g. 7"
-        min="1"
-        style={{
-          width: "100%",
-          padding: "10px 14px",
-          backgroundColor: "var(--bg)",
-          border: "1px solid var(--border)",
-          borderRadius: "10px",
-          color: "var(--text)",
-          fontSize: "14px",
-          outline: "none",
-          boxSizing: "border-box",
-          marginBottom: "12px",
-        }}
-      />
+      {error && (
+        <p role="alert" className={styles.lengthError}>
+          {error}
+        </p>
+      )}
 
-      <div style={{ display: "flex", gap: "8px" }}>
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !hasChanged || !newTotalBooks}
-          style={{
-            flex: 1,
-            padding: "10px",
-            backgroundColor:
-              !hasChanged || !newTotalBooks ? "var(--raised)" : "var(--primary)",
-            border: "none",
-            borderRadius: "10px",
-            color: "var(--text)",
-            fontSize: "13px",
-            fontWeight: "600",
-            cursor:
-              !hasChanged || !newTotalBooks ? "not-allowed" : "pointer",
-            opacity: !hasChanged || !newTotalBooks ? 0.5 : 1,
-          }}
-        >
-          {isSaving ? "Saving..." : "Save"}
+      <div className={styles.editActions}>
+        <button type="button" className={styles.deleteButton} onClick={() => setConfirmDelete(true)} disabled={isSaving}>
+          <Trash2 size={13} />
+          Delete series
         </button>
-
-        <button
-          onClick={() => {
-            setIsEditing(false);
-            setNewTotalBooks(totalBooks?.toString() || "");
-          }}
-          disabled={isSaving}
-          style={{
-            flex: 1,
-            padding: "10px",
-            backgroundColor: "transparent",
-            border: "1px solid var(--border)",
-            borderRadius: "10px",
-            color: "var(--text-muted)",
-            fontSize: "13px",
-            fontWeight: "600",
-            cursor: "pointer",
-          }}
-        >
+        <span style={{ flex: 1 }} />
+        <button type="button" className={styles.lengthButton} onClick={cancel} disabled={isSaving}>
           Cancel
         </button>
+        <button type="submit" className={styles.lengthSave} disabled={!canSave}>
+          {isSaving ? "Saving..." : "Save"}
+        </button>
       </div>
-    </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={`Delete ${seriesName}?`}
+        message={
+          bookCount > 0
+            ? `Its ${bookCount === 1 ? "book stays" : `${bookCount} books stay`} in your library; they just won't be grouped as a series any more.`
+            : "This series has no books in it."
+        }
+        confirmLabel="Delete series"
+        danger
+        busy={isSaving}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
+    </form>
   );
 }

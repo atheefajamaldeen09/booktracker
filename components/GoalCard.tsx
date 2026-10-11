@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useCanEdit } from "@/components/Viewer";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, PartyPopper } from "lucide-react";
@@ -42,6 +43,7 @@ export default function GoalCard({ year, target, booksRead }: Props) {
   const [value, setValue] = useState(target ? String(target) : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const [replay, setReplay] = useState(0);
   const canEdit = useCanEdit();
   const [, startTransition] = useTransition();
@@ -66,10 +68,10 @@ export default function GoalCard({ year, target, booksRead }: Props) {
   };
 
   const remove = async () => {
-    if (!confirm(`Remove your ${year} reading goal?`)) return;
     setSaving(true);
     await deleteGoal(year);
     setSaving(false);
+    setConfirming(false);
     setValue("");
     setEditing(true);
     router.refresh();
@@ -331,7 +333,7 @@ export default function GoalCard({ year, target, booksRead }: Props) {
                     <PartyPopper size={14} /> Celebrate again
                   </button>
                 )}
-                <button data-owner-only onClick={remove} disabled={saving} className="goal-btn">
+                <button data-owner-only onClick={() => setConfirming(true)} disabled={saving} className="goal-btn">
                   <Trash2 size={14} /> Remove
                 </button>
               </div>
@@ -339,6 +341,17 @@ export default function GoalCard({ year, target, booksRead }: Props) {
           </div>
         )
       )}
+
+      <ConfirmDialog
+        open={confirming}
+        title={`Remove your ${year} reading goal?`}
+        message="The books you've read stay counted; only the target goes."
+        confirmLabel="Remove goal"
+        danger
+        busy={saving}
+        onConfirm={remove}
+        onCancel={() => setConfirming(false)}
+      />
 
       <style>{`
         .goal-btn {

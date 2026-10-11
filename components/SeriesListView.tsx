@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import BookCover from "@/components/BookCover";
+import SeriesPips from "@/components/SeriesPips";
+import { seriesSlots } from "@/lib/series";
+import styles from "./Series.module.css";
 
 type SeriesWithStats = {
   id: number;
@@ -9,14 +13,25 @@ type SeriesWithStats = {
   totalBooks: number | null;
   totalOwned: number;
   totalRead: number;
+  books: { id: number; title: string; cover: string | null; shelf: string; position: number }[];
 };
 
 type Props = {
   series: SeriesWithStats[];
 };
 
+type Filter = "all" | "going" | "new" | "done";
+
+// How many covers fit along a card's little shelf
+const COVERS_SHOWN = 4;
+
+// Finished means every book is read: all of the series when you know how
+// long it is, otherwise all the ones you have
+const isDone = (s: SeriesWithStats) => s.totalRead > 0 && s.totalRead >= (s.totalBooks ?? s.totalOwned);
+const isCollected = (s: SeriesWithStats) => !!s.totalBooks && s.totalOwned >= s.totalBooks;
+
 export default function SeriesListView({ series }: Props) {
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
 
   if (series.length === 0) {
     return (
@@ -69,157 +84,91 @@ export default function SeriesListView({ series }: Props) {
     );
   }
 
+  const groups: Record<Filter, SeriesWithStats[]> = {
+    all: series,
+    going: series.filter((s) => !isDone(s) && (s.totalRead > 0 || s.books.some((b) => b.shelf === "reading"))),
+    new: series.filter((s) => s.totalRead === 0 && !s.books.some((b) => b.shelf === "reading")),
+    done: series.filter(isDone),
+  };
+  const tabs: { id: Filter; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "going", label: "In progress" },
+    { id: "new", label: "Not started" },
+    { id: "done", label: "Finished" },
+  ];
+
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-        gap: "16px",
-      }}
-    >
-      {series.map((s) => {
-        const completionPercentage = s.totalBooks
-          ? Math.round((s.totalRead / s.totalBooks) * 100)
-          : s.totalOwned > 0
-          ? Math.round((s.totalRead / s.totalOwned) * 100)
-          : 0;
-
-        const isHovered = hoveredId === s.id;
-
-        return (
-          <Link
-            key={s.id}
-            href={`/series/${s.id}`}
-            style={{
-              display: "block",
-              backgroundColor: isHovered ? "var(--raised)" : "var(--surface)",
-              border: `1px solid ${isHovered ? "var(--primary)" : "var(--border)"}`,
-              borderRadius: "14px",
-              padding: "20px",
-              textDecoration: "none",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={() => setHoveredId(s.id)}
-            onMouseLeave={() => setHoveredId(null)}
+    <div>
+      <div role="tablist" className={styles.tabs}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            role="tab"
+            aria-selected={filter === tab.id}
+            className={styles.tab}
+            onClick={() => setFilter(tab.id)}
           >
-            <h3
-              style={{
-                color: "var(--text)",
-                fontSize: "16px",
-                fontWeight: "bold",
-                marginBottom: "12px",
-                lineHeight: "1.3",
-              }}
-            >
-              📚 {s.name}
-            </h3>
+            {tab.label}
+            <span>{groups[tab.id].length}</span>
+          </button>
+        ))}
+      </div>
 
-            {/* Stats */}
-            <div
-              style={{
-                display: "flex",
-                gap: "8px",
-                marginBottom: "12px",
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{
-                  backgroundColor: "var(--bg)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text-muted)",
-                  fontSize: "11px",
-                  padding: "4px 8px",
-                  borderRadius: "999px",
-                }}
-              >
-                {s.totalOwned} owned
-              </span>
+      {groups[filter].length === 0 && (
+        <p style={{ color: "var(--text-muted)", fontSize: "14px", padding: "24px 0" }}>
+          No series here yet.
+        </p>
+      )}
 
-              {s.totalBooks && (
-                <span
-                  style={{
-                    backgroundColor: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text-muted)",
-                    fontSize: "11px",
-                    padding: "4px 8px",
-                    borderRadius: "999px",
-                  }}
-                >
-                  {s.totalBooks} total
+      <div className={styles.grid}>
+        {groups[filter].map((s) => {
+          const slots = seriesSlots(s.books, s.totalBooks);
+          const shown = slots.slice(0, COVERS_SHOWN);
+          const hidden = slots.length - shown.length;
+          const of = s.totalBooks ?? s.totalOwned;
+
+          return (
+            <Link key={s.id} href={`/series/${s.id}`} className={styles.card}>
+              {isDone(s) ? (
+                <span className={styles.ribbon}>Finished</span>
+              ) : isCollected(s) ? (
+                <span className={styles.ribbon} data-kind="collected">
+                  All collected
                 </span>
-              )}
+              ) : null}
 
-              {s.totalRead > 0 && (
-                <span
-                  style={{
-                    backgroundColor: "var(--bg)",
-                    border: "1px solid var(--success)",
-                    color: "var(--success)",
-                    fontSize: "11px",
-                    padding: "4px 8px",
-                    borderRadius: "999px",
-                  }}
-                >
-                  ✓ {s.totalRead} read
-                </span>
-              )}
-            </div>
-
-            {/* Progress Bar */}
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "6px",
-                }}
-              >
-                <p
-                  style={{
-                    color: "var(--text-faint)",
-                    fontSize: "11px",
-                    margin: 0,
-                  }}
-                >
-                  Progress
-                </p>
-                <p
-                  style={{
-                    color: "var(--text-muted)",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    margin: 0,
-                  }}
-                >
-                  {completionPercentage}%
-                </p>
+              {/* The first few books, with gaps where one is missing */}
+              <div className={styles.nook} aria-hidden>
+                {shown.map((slot, i) =>
+                  slot.book ? (
+                    <BookCover key={i} cover={slot.book.cover} title={slot.book.title} size="sm" />
+                  ) : (
+                    <div key={i} className={styles.ghost}>
+                      {slot.position}
+                    </div>
+                  )
+                )}
+                {hidden > 0 && <span className={styles.more}>+{hidden}</span>}
               </div>
+              <div className={styles.board} />
 
-              <div
-                style={{
-                  width: "100%",
-                  height: "8px",
-                  backgroundColor: "var(--bg)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "999px",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    width: `${completionPercentage}%`,
-                    height: "100%",
-                    backgroundColor: "var(--success)",
-                    transition: "width 0.3s",
-                  }}
-                />
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>{s.name}</h3>
+                <p className={styles.cardMeta}>
+                  <strong>
+                    {s.totalRead} of {of}
+                  </strong>{" "}
+                  read
+                  {s.totalBooks
+                    ? ` · ${s.totalOwned} on your shelf`
+                    : " · series length not set"}
+                </p>
+                <SeriesPips books={s.books} totalBooks={s.totalBooks} />
               </div>
-            </div>
-          </Link>
-        );
-      })}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

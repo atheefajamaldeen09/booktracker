@@ -7,6 +7,7 @@ import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import SeriesSelector from "@/components/SeriesSelector";
+import { seriesFormProblem, type SeriesSummary } from "@/lib/series";
 import { addBook, getAllSeries } from "@/lib/actions/books";
 import FinishDateSelect from "@/components/FinishDateSelect";
 import StarRating from "@/components/StarRating";
@@ -64,9 +65,11 @@ function ConfirmBookContent() {
   const [dnfReason, setDnfReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [existingSeries, setExistingSeries] = useState<
-    { id: number; name: string; totalBooks: number | null }[]
-  >([]);
+  const [existingSeries, setExistingSeries] = useState<SeriesSummary[]>([]);
+  // A taken book number or a series that's already complete blocks saving
+  const seriesError = isSeries
+    ? seriesFormProblem(existingSeries, seriesName, seriesPosition, seriesTotalBooks)
+    : null;
 
   useEffect(() => {
     getAllSeries().then((result) => {
@@ -132,7 +135,7 @@ function ConfirmBookContent() {
         dnfReason: shelf === "dnf" ? dnfReason : null,
         seriesName: isSeries && seriesName ? seriesName.trim() : null,
         seriesPosition:
-          isSeries && seriesPosition ? parseFloat(seriesPosition) : null,
+          isSeries && seriesPosition ? Number(seriesPosition) : null,
         seriesTotalBooks:
           isSeries && seriesTotalBooks ? parseInt(seriesTotalBooks) : null,
       });
@@ -140,7 +143,7 @@ function ConfirmBookContent() {
       if (result.success) {
         setShowSuccess(true);
       } else {
-        setError("Failed to save book. Please try again.");
+        setError(result.error && result.error !== "Failed to add book" ? result.error : "Failed to save book. Please try again.");
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -588,7 +591,7 @@ function ConfirmBookContent() {
       <Button
         fullWidth
         onClick={handleSave}
-        disabled={saving || !title.trim() || !author.trim()}
+        disabled={saving || !title.trim() || !author.trim() || !!seriesError}
       >
         {saving
           ? "Adding Book..."
