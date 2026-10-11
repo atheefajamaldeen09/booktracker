@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { findSeries, isMainBook, seriesFormProblem, type SeriesSummary as Series } from "@/lib/series";
+import { findSeries, isComplete, isMainBook, seriesFormProblem, type SeriesSummary as Series } from "@/lib/series";
 
 // Past this many, the book numbers are listed as text instead of buttons
 const MAX_NUMBER_CHIPS = 40;
@@ -36,14 +36,16 @@ export default function SeriesSelector({
   const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filter series based on search input
+  // Filter series based on search input. Series you already have every book
+  // of are left out: there's nothing left to add to them
   useEffect(() => {
+    const open = existingSeries.filter((s) => !isComplete(s));
     if (seriesName.trim() === "") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFilteredSeries(existingSeries);
+      setFilteredSeries(open);
     } else {
       setFilteredSeries(
-        existingSeries.filter((s) =>
+        open.filter((s) =>
           s.name.toLowerCase().includes(seriesName.toLowerCase())
         )
       );
@@ -181,7 +183,7 @@ export default function SeriesSelector({
             />
 
             {/* Dropdown */}
-            {showDropdown && (
+            {showDropdown && (filteredSeries.length > 0 || !match) && (
               <div
                 style={{
                   position: "absolute",
@@ -251,9 +253,7 @@ export default function SeriesSelector({
                         </div>
                         <span style={{ color: "var(--text-muted)", fontSize: "11px", flexShrink: 0 }}>
                           {s.totalBooks
-                            ? s.takenPositions.length >= s.totalBooks
-                              ? `all ${s.totalBooks} added`
-                              : `${s.takenPositions.length} of ${s.totalBooks}`
+                            ? `${s.takenPositions.filter(isMainBook).length} of ${s.totalBooks}`
                             : `${s.takenPositions.length} added`}
                         </span>
                       </button>
@@ -303,7 +303,9 @@ export default function SeriesSelector({
                       margin: 0,
                     }}
                   >
-                    No existing series yet. Type to create one.
+                    {existingSeries.length > 0
+                      ? "Every series you have is complete. Type to start a new one."
+                      : "No existing series yet. Type to create one."}
                   </p>
                 )}
               </div>

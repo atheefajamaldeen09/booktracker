@@ -20,6 +20,10 @@ export function findSeries<T extends { name: string }>(list: T[], name: string) 
 // towards the series length
 export const isMainBook = (position: number) => Number.isInteger(position);
 
+// Every numbered book of the series is already in your library
+export const isComplete = (series: { totalBooks: number | null; takenPositions: number[] }) =>
+  !!series.totalBooks && series.takenPositions.filter(isMainBook).length >= series.totalBooks;
+
 // Why a book can't take this spot in a series, or null when it can: numbers
 // are whole or halves, never used twice, and never past the series total
 export function seriesProblem(name: string, position: number, totalBooks: number | null, taken: number[]) {
