@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { findSeries, isComplete, isMainBook, seriesFormProblem, type SeriesSummary as Series } from "@/lib/series";
+import { findSeries, isComplete, isMainBook, ownedCount, seriesFormProblem, type SeriesSummary as Series } from "@/lib/series";
 
 // Past this many, the book numbers are listed as text instead of buttons
 const MAX_NUMBER_CHIPS = 40;
@@ -37,7 +37,7 @@ export default function SeriesSelector({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Filter series based on search input. Series you already have every book
-  // of are left out: there's nothing left to add to them
+  // of are left out; ones with books still on the wishlist stay
   useEffect(() => {
     const open = existingSeries.filter((s) => !isComplete(s));
     if (seriesName.trim() === "") {
@@ -69,6 +69,7 @@ export default function SeriesSelector({
   // The series you're adding to, once the name matches one you already have
   const match = findSeries(existingSeries, seriesName);
   const taken = match?.takenPositions ?? [];
+  const wished = match?.wishlistPositions ?? [];
   const total = match?.totalBooks ?? null;
   // Every numbered book is already here; only a novella (1.5) could still join
   const complete = !!total && taken.filter(isMainBook).length >= total;
@@ -253,7 +254,7 @@ export default function SeriesSelector({
                         </div>
                         <span style={{ color: "var(--text-muted)", fontSize: "11px", flexShrink: 0 }}>
                           {s.totalBooks
-                            ? `${s.takenPositions.filter(isMainBook).length} of ${s.totalBooks}`
+                            ? `${ownedCount(s)} of ${s.totalBooks}`
                             : `${s.takenPositions.length} added`}
                         </span>
                       </button>
@@ -322,6 +323,7 @@ export default function SeriesSelector({
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {Array.from({ length: total }, (_, i) => i + 1).map((n) => {
                     const have = taken.includes(n);
+                    const wish = wished.includes(n);
                     const picked = !have && seriesPosition === String(n);
                     return (
                       <button
@@ -329,7 +331,8 @@ export default function SeriesSelector({
                         type="button"
                         disabled={have || complete}
                         onClick={() => onSeriesPositionChange(String(n))}
-                        aria-label={have ? `Book ${n}, already in your library` : `Book ${n}`}
+                        aria-label={wish ? `Book ${n}, on your wishlist` : have ? `Book ${n}, already in your library` : `Book ${n}`}
+                        title={wish ? "On your wishlist" : undefined}
                         aria-pressed={picked}
                         style={{
                           minWidth: "34px",
@@ -338,17 +341,19 @@ export default function SeriesSelector({
                           borderRadius: "10px",
                           border: picked
                             ? "2px solid var(--primary)"
+                            : wish
+                            ? "1px solid var(--border)"
                             : have
                             ? "1px solid var(--success)"
                             : "1px dashed var(--border)",
                           backgroundColor: picked ? "var(--primary)" : have ? "var(--raised)" : "var(--bg)",
-                          color: picked ? "var(--on-primary)" : have ? "var(--success)" : "var(--text)",
+                          color: picked ? "var(--on-primary)" : wish ? "var(--text-muted)" : have ? "var(--success)" : "var(--text)",
                           fontSize: "13px",
                           fontWeight: 600,
                           cursor: have || complete ? "default" : "pointer",
                         }}
                       >
-                        {have ? `✓ ${n}` : n}
+                        {wish ? `♡ ${n}` : have ? `✓ ${n}` : n}
                       </button>
                     );
                   })}
@@ -406,7 +411,7 @@ export default function SeriesSelector({
               }}
             >
               {problem}
-              {complete && " A novella can still go in between, with a number like 1.5."}
+              {complete && !wished.includes(Number(seriesPosition)) && " A novella can still go in between, with a number like 1.5."}
             </p>
           ) : (
             <p style={{ color: "var(--text-faint)", fontSize: "11px", margin: "0", lineHeight: "1.4" }}>

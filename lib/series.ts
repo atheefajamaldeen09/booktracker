@@ -7,6 +7,8 @@ export type SeriesSummary = {
   totalBooks: number | null;
   // Book numbers already in your library, lowest first
   takenPositions: number[];
+  // The ones among them that are only on your wishlist, not yet yours
+  wishlistPositions?: number[];
 };
 
 // Series names match whatever the capitals
@@ -20,9 +22,13 @@ export function findSeries<T extends { name: string }>(list: T[], name: string) 
 // towards the series length
 export const isMainBook = (position: number) => Number.isInteger(position);
 
-// Every numbered book of the series is already in your library
-export const isComplete = (series: { totalBooks: number | null; takenPositions: number[] }) =>
-  !!series.totalBooks && series.takenPositions.filter(isMainBook).length >= series.totalBooks;
+// The numbered books you actually have; wishlist ones don't count yet
+export const ownedCount = (series: { takenPositions: number[]; wishlistPositions?: number[] }) =>
+  series.takenPositions.filter((p) => isMainBook(p) && !series.wishlistPositions?.includes(p)).length;
+
+// You have every numbered book of the series
+export const isComplete = (series: { totalBooks: number | null; takenPositions: number[]; wishlistPositions?: number[] }) =>
+  !!series.totalBooks && ownedCount(series) >= series.totalBooks;
 
 // Why a book can't take this spot in a series, or null when it can: numbers
 // are whole or halves, never used twice, and never past the series total
@@ -72,9 +78,15 @@ export function seriesFormProblem(list: SeriesSummary[], name: string, position:
   const typedTotal = totalBooks ? parseInt(totalBooks) : null;
   const total = match?.totalBooks ?? typedTotal;
   const number = position ? Number(position) : null;
-  // A complete series only has room for in-between numbers
+  const wished = match?.wishlistPositions ?? [];
+  if (number !== null && wished.includes(number)) {
+    return `Book ${number} of ${label} is already on your wishlist. Once you have it, move it to a shelf from its own page instead of adding it again.`;
+  }
+  // With every number used, a series only has room for in-between numbers
   if (total && taken.filter(isMainBook).length >= total && (number === null || isMainBook(number))) {
-    return `You already have all ${total} books of ${label}.`;
+    return wished.some(isMainBook)
+      ? `Every book of ${label} is already in your library or on your wishlist.`
+      : `You already have all ${total} books of ${label}.`;
   }
   if (!match?.totalBooks && typedTotal) {
     const withThis = number !== null && isMainBook(number) ? [...taken, number] : taken;

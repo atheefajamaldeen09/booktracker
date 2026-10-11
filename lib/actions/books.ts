@@ -655,7 +655,10 @@ export async function getAllSeries() {
   try {
     const [allSeries, links] = await Promise.all([
       db.select().from(series),
-      db.select({ seriesId: bookSeries.seriesId, position: bookSeries.positionInSeries }).from(bookSeries),
+      db
+        .select({ seriesId: bookSeries.seriesId, position: bookSeries.positionInSeries, shelf: books.shelf })
+        .from(bookSeries)
+        .innerJoin(books, eq(books.id, bookSeries.bookId)),
     ]);
     return {
       success: true,
@@ -665,6 +668,9 @@ export async function getAllSeries() {
           .filter((link) => link.seriesId === s.id)
           .map((link) => link.position)
           .sort((a, b) => a - b),
+        wishlistPositions: links
+          .filter((link) => link.seriesId === s.id && link.shelf === "wishlist")
+          .map((link) => link.position),
       })),
     };
   } catch (error) {

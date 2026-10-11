@@ -61,7 +61,11 @@ export default function BookSeriesEditor({ bookId, bookTitle, current }: Props) 
       setAllSeries(
         result.series.map((s) =>
           current && s.id === current.seriesId
-            ? { ...s, takenPositions: s.takenPositions.filter((p) => p !== current.position) }
+            ? {
+                ...s,
+                takenPositions: s.takenPositions.filter((p) => p !== current.position),
+                wishlistPositions: s.wishlistPositions.filter((p) => p !== current.position),
+              }
             : s
         )
       );
