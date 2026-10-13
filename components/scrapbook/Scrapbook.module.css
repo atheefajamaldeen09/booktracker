@@ -1,0 +1,262 @@
+/* A book's page as a scrapbook spread: a paper sheet with the cover taped
+   on like a photo, washi labels and an inked library stamp.
+   Paper and ink stay paper and ink in every theme (like the sticker book). */
+.spread {
+  /* the theme's own background, for the holes punched through the paper */
+  --desk: var(--bg);
+  max-width: 720px;
+}
+
+.sheet {
+  --paper: #f7f0e2;
+  --ink: #3b2a22;
+  --ink-soft: rgba(59, 42, 34, 0.62);
+  --ink-faint: rgba(59, 42, 34, 0.3);
+  --hand: var(--font-hand), "Segoe Print", "Bradley Hand", cursive;
+
+  /* Everything placed on the sheet reads the theme tokens, so here they
+     become paper and ink; the accent is the theme's deeper shade. */
+  --text: #3b2a22;
+  --text-muted: #57443a;
+  --text-faint: #7a6657;
+  --surface: #fffaf0;
+  --raised: #efe5d0;
+  --bg: #fffdf7;
+  --bg-deep: #ece2cf;
+  --border: #dccdb0;
+  --border-soft: #e8dcc4;
+  --primary: var(--primary-deep);
+  /* the pastel accent is too pale to read on paper */
+  --accent: #2f6f8a;
+  --primary-hover: var(--primary-deep);
+  --on-primary: #fffaf0;
+  --star: #d99a2b;
+  --success: #4f8a45;
+  --success-bg: #e3eedb;
+  --success-border: #a9c79a;
+  --danger: #b5523f;
+  --danger-bg: #f6e1d9;
+  --danger-border: #e0b0a4;
+  --on-danger: #ffffff;
+  --shadow-sm: 0 1px 2px rgba(60, 50, 30, 0.08);
+  --shadow-md: 0 6px 18px rgba(60, 50, 30, 0.12);
+  color-scheme: light;
+
+  position: relative;
+  margin-bottom: 36px;
+  padding: 38px 30px 6px 54px;
+  border-radius: 4px 12px 12px 4px;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* plain paper, a touch darker towards the edges */
+  background-image: radial-gradient(ellipse at 50% 30%, transparent 55%, rgba(120, 90, 50, 0.1));
+  /* a couple more pages underneath */
+  box-shadow:
+    3px 3px 0 #ebe1cd,
+    6px 6px 0 #dfd3bb,
+    0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Ring-binder holes down the left edge */
+.sheet::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12px;
+  width: 20px;
+  background-image:
+    radial-gradient(circle at 10px 36px, var(--desk) 6px, rgba(59, 42, 34, 0.35) 6.5px, transparent 7.5px);
+  background-size: 20px 72px;
+  pointer-events: none;
+}
+
+/* ─────────────── washi tape ─────────────── */
+
+.tape {
+  position: absolute;
+  height: 24px;
+  background-color: var(--tape, #e9aa9c);
+  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.32) 0 5px, transparent 5px 10px);
+  opacity: 0.9;
+  clip-path: polygon(
+    0 8%, 3% 0, 6% 10%, 9% 0, 100% 0, 97% 12%, 100% 25%, 97% 38%, 100% 50%, 97% 62%, 100% 75%, 97% 88%,
+    100% 100%, 9% 100%, 6% 90%, 3% 100%, 0 92%, 3% 80%, 0 66%, 3% 50%, 0 34%, 3% 20%
+  );
+}
+
+/* ─────────────── cover photo and title ─────────────── */
+
+.header {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.polaroid {
+  position: relative;
+  flex-shrink: 0;
+  padding: 10px 10px 8px;
+  border-radius: 2px;
+  background: #fffdf8;
+  border: 1px solid rgba(59, 42, 34, 0.12);
+  box-shadow: 0 2px 3px rgba(60, 40, 20, 0.18), 0 10px 18px rgba(60, 40, 20, 0.22);
+  transform: rotate(-3deg);
+}
+.polaroid .tape {
+  top: -13px;
+  left: 50%;
+  width: 86px;
+  transform: translateX(-50%) rotate(-5deg);
+}
+/* The cover is a photo here: square corners, no shadow of its own */
+.polaroid img,
+.polaroid > div {
+  border-radius: 1px !important;
+  box-shadow: none !important;
+}
+.snapCaption {
+  width: 120px;
+  margin: 7px 0 0;
+  font-family: var(--hand);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.titleBlock {
+  flex: 1;
+  min-width: 0;
+  padding-top: 2px;
+}
+.title {
+  color: var(--ink);
+  font-size: 26px;
+  line-height: 1.2;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.author {
+  font-family: var(--hand);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--primary);
+  margin: 0 0 14px;
+}
+
+/* The shelf, as a stitched cloth label */
+.shelfTag {
+  display: inline-block;
+  padding: 3px 11px;
+  border: 1.5px dashed currentColor;
+  border-radius: 6px;
+  background: #fffaf0;
+  box-shadow: 0 0 0 3px #fffaf0, 0 1px 3px 3px rgba(60, 40, 20, 0.12);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 3px 3px 16px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.meta p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* An inked date stamp, like the back of a library book */
+.dateStamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 16px 0 0 4px;
+  padding: 5px 14px 4px;
+  border: 4px double currentColor;
+  border-radius: 8px;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.15;
+  transform: rotate(-5deg);
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  filter: url(#stamp-rough);
+}
+.dateStamp small {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+}
+.dateStamp strong {
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* ─────────────── sections on the page ─────────────── */
+
+.sectionLabel {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 10px;
+}
+
+/* Genres on strips of washi tape */
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-bottom: 28px;
+}
+.labels .tape {
+  position: static;
+  height: auto;
+  padding: 2px 16px 4px;
+  font-family: var(--hand);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.labels .tape:nth-child(odd) {
+  transform: rotate(-1.5deg);
+}
+.labels .tape:nth-child(even) {
+  transform: rotate(1.2deg);
+}
+
+.rule {
+  border-top: 1.5px dashed var(--border);
+  margin-bottom: 28px;
+}
+
+@media (max-width: 600px) {
+  .sheet {
+    padding: 30px 16px 4px;
+    border-radius: 6px;
+  }
+  .sheet::before {
+    display: none;
+  }
+  .header {
+    gap: 18px;
+  }
+  .title {
+    font-size: 21px;
+  }
+  .author {
+    font-size: 22px;
+  }
+  .polaroid {
+    padding: 7px 7px 6px;
+  }
+}

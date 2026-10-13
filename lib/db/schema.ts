@@ -32,6 +32,8 @@ export const books = pgTable("books", {
   dnfReason: text("dnf_reason"),
   // How the book feels, e.g. cosy, sad, fast-paced (used by the random picker)
   moods: text("moods").array(),
+  // Reaction stamps: how the book left you, e.g. sobbed, cackled (lib/reactions.ts)
+  reactions: text("reactions").array(),
   // Your own order on the visual bookshelf (null = automatic order)
   shelfOrder: integer("shelf_order"),
   // Books you've marked as favourites

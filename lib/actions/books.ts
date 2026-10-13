@@ -6,6 +6,7 @@ import { books, series, bookSeries, tags, bookTags, readingSessions, goals, quot
 import { eq, and, or, desc, isNull, sql } from "drizzle-orm";
 import { pickToDate, type FinishPick } from "@/lib/finishDate";
 import { isMainBook, seriesProblem, totalProblem } from "@/lib/series";
+import { isReaction } from "@/lib/reactions";
 
 type AddBookInput = {
   title: string;
@@ -690,6 +691,20 @@ export async function updateBookMoods(bookId: number, moods: string[]) {
   } catch (error) {
     console.error("Error updating moods:", error);
     return { success: false, error: "Failed to update moods" };
+  }
+}
+
+export async function updateBookReactions(bookId: number, reactions: string[]) {
+  await requireOwner();
+  try {
+    await db
+      .update(books)
+      .set({ reactions: Array.from(new Set(reactions.filter(isReaction))) })
+      .where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating reactions:", error);
+    return { success: false, error: "Failed to update reactions" };
   }
 }
 

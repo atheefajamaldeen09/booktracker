@@ -15,7 +15,7 @@ type Book = {
 type Props = {
   books: Book[];
   onSelect: (book: Book) => void;
-  // Changing this number triggers a fresh spin (used by the "Re-spin" button)
+  // Changing this number triggers a fresh spin (used by the popup's "again" button)
   spinSignal?: number;
 };
 
@@ -74,7 +74,7 @@ export default function CardFlip({ books, onSelect, spinSignal = 0 }: Props) {
 
   const displayBooks = deck;
 
-  // Re-spin requested from the winner popup
+  // Another go requested from the winner popup
   const spinRef = useRef(shuffle);
   useEffect(() => {
     spinRef.current = shuffle;

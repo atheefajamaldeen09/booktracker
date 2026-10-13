@@ -1,0 +1,167 @@
+/* Reaction stamps: inked prints on the page, and the box of wooden stamps
+   they come from. Sits on the scrapbook paper, so colours are paper and ink. */
+.wrap {
+  --hand: var(--font-hand), "Segoe Print", "Bradley Hand", cursive;
+  margin-bottom: 28px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.label {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+.label span {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-faint);
+}
+.toggle {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ─────────────── prints on the page ─────────────── */
+
+.prints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: flex-start;
+}
+.print {
+  width: 96px;
+  margin: 0;
+  text-align: center;
+}
+.impression {
+  --stamp-paper: #f7f0e2;
+  display: block;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto;
+  padding: 5px;
+  border: 2px solid currentColor;
+  border-radius: 7px;
+  opacity: 0.88;
+  /* uneven ink, like a real stamp pressed by hand (the filter is on the book page) */
+  filter: url(#stamp-rough);
+  mix-blend-mode: multiply;
+}
+.impression svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.caption {
+  font-family: var(--hand);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.05;
+  margin: 6px 0 0;
+  color: var(--text);
+}
+.none {
+  color: var(--text-faint);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* ─────────────── the stamp box ─────────────── */
+
+.box {
+  margin-top: 16px;
+  padding: 14px 12px 12px;
+  border-radius: 14px;
+  /* a wooden tray */
+  background-color: #c79a6b;
+  background-image:
+    repeating-linear-gradient(92deg, rgba(90, 50, 20, 0.1) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, #d3a878, #bb8b5c);
+  border: 1.5px solid #6e4326;
+  box-shadow: inset 0 3px 8px rgba(60, 30, 10, 0.35), 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+.boxTitle {
+  font-family: var(--hand);
+  font-size: 20px;
+  font-weight: 700;
+  color: #4a2c17;
+  text-align: center;
+  margin: 0 0 10px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 12px 8px;
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #3b2a22;
+}
+.block:disabled {
+  cursor: default;
+}
+/* The rubber face on its wooden block, seen from above */
+.face {
+  --stamp-paper: #fffdf6;
+  display: block;
+  width: 64px;
+  height: 64px;
+  padding: 3px;
+  border-radius: 6px;
+  background: #fffdf6;
+  border: 3px solid #8f4a2c;
+  border-bottom-width: 7px;
+  box-shadow: 0 3px 5px rgba(50, 25, 10, 0.4);
+}
+.face svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.block:not(:disabled):hover .face {
+  transform: translateY(-2px) rotate(-2deg);
+}
+/* Already stamped on this book: the block sits pressed down, inked */
+.block[aria-pressed="true"] .face {
+  border-bottom-width: 3px;
+  margin-top: 4px;
+  background: #fbe9d7;
+  --stamp-paper: #fbe9d7;
+  box-shadow: 0 1px 2px rgba(50, 25, 10, 0.4), 0 0 0 2px rgba(255, 250, 240, 0.85);
+}
+.blockLabel {
+  font-family: var(--hand);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: #4a2c17;
+  text-align: center;
+}
+.error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 8px 0 0;
+}

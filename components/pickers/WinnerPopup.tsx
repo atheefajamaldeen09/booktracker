@@ -26,11 +26,13 @@ type Book = {
 type Props = {
   book: Book;
   onClose: () => void;
-  // Spin again straight away (hidden when there's only one eligible book)
+  // Pick again straight away (hidden when there's only one eligible book)
   onRespin?: () => void;
+  // What picking again is called for this picker, e.g. "🔄 Re-spin"
+  respinLabel?: string;
 };
 
-export default function WinnerPopup({ book, onClose, onRespin }: Props) {
+export default function WinnerPopup({ book, onClose, onRespin, respinLabel = "🔄 Pick again" }: Props) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
   const canEdit = useCanEdit();
@@ -252,7 +254,7 @@ export default function WinnerPopup({ book, onClose, onRespin }: Props) {
               cursor: "pointer",
             }}
           >
-            {onRespin ? "🔄 Re-spin" : "Close"}
+            {onRespin ? respinLabel : "Close"}
           </button>
         </div>
       </div>

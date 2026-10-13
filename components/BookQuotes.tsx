@@ -8,6 +8,9 @@ import { addQuote, deleteQuote } from "@/lib/actions/quotes";
 
 type Quote = { id: number; text: string; page: number | null; note: string | null };
 
+// Pastel note paper the quotes are written on
+const NOTE_PAPERS = ["#fff6cf", "#fde4e1", "#e1eef6", "#e6f1dc"];
+
 // Favourite lines from a book, each with an optional page number and note
 export default function BookQuotes({ bookId, quotes }: { bookId: number; quotes: Quote[] }) {
   const router = useRouter();
@@ -175,27 +178,45 @@ export default function BookQuotes({ bookId, quotes }: { bookId: number; quotes:
           No quotes saved yet. Keep the lines that stay with you.
         </p>
       ) : (
-        <div style={{ display: "grid", gap: "10px" }}>
-          {quotes.map((q) => (
+        <div style={{ display: "grid", gap: "22px", paddingTop: "8px" }}>
+          {quotes.map((q, i) => (
             <figure
               key={q.id}
               style={{
                 position: "relative",
                 margin: 0,
-                padding: "16px 44px 14px 20px",
-                backgroundColor: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderLeft: "3px solid var(--primary)",
-                borderRadius: "12px",
+                padding: "22px 44px 14px 20px",
+                backgroundColor: NOTE_PAPERS[i % NOTE_PAPERS.length],
+                // ruled lines, like a page torn from a notebook
+                backgroundImage:
+                  "repeating-linear-gradient(180deg, transparent 0 29px, rgba(91,127,147,0.18) 29px 30px)",
+                borderRadius: "3px",
+                boxShadow: "0 1px 2px rgba(60,40,20,0.18), 0 6px 12px rgba(60,40,20,0.12)",
+                transform: `rotate(${i % 2 ? 0.6 : -0.7}deg)`,
               }}
             >
+              {/* a strip of tape holding the note down */}
+              <span
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  top: "-10px",
+                  left: i % 2 ? "auto" : "26px",
+                  right: i % 2 ? "40px" : "auto",
+                  width: "70px",
+                  height: "20px",
+                  transform: `rotate(${i % 2 ? 3 : -4}deg)`,
+                  backgroundColor: "rgb(var(--primary-rgb) / 0.5)",
+                  backgroundImage: "repeating-linear-gradient(-45deg, rgba(255,255,255,0.3) 0 4px, transparent 4px 8px)",
+                }}
+              />
               <blockquote
                 style={{
                   margin: 0,
                   color: "var(--text)",
-                  fontFamily: "var(--font-heading)",
-                  fontSize: "16px",
-                  lineHeight: 1.5,
+                  fontFamily: 'var(--font-hand), var(--font-heading)',
+                  fontSize: "23px",
+                  lineHeight: "30px",
                   whiteSpace: "pre-wrap",
                 }}
               >

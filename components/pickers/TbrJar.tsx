@@ -15,7 +15,7 @@ type Book = {
 type Props = {
   books: Book[];
   onSelect: (book: Book) => void;
-  // Changing this number triggers a fresh shake (used by the "Re-spin" button)
+  // Changing this number triggers a fresh shake (used by the popup's "again" button)
   spinSignal?: number;
 };
 
@@ -396,7 +396,7 @@ export default function TbrJar({ books, onSelect, spinSignal = 0 }: Props) {
     setBusy(false);
   };
 
-  // Re-spin requested from the winner popup
+  // Another go requested from the winner popup
   const shakeRef = useRef(shake);
   useEffect(() => {
     shakeRef.current = shake;

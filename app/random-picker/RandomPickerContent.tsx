@@ -12,6 +12,7 @@ import SpinningWheel from "@/components/pickers/SpinningWheel";
 import SlotMachine from "@/components/pickers/SlotMachine";
 import CardFlip from "@/components/pickers/CardFlip";
 import TbrJar from "@/components/pickers/TbrJar";
+import BlindDate from "@/components/pickers/BlindDate";
 import FilterPanel from "@/components/pickers/FilterPanel";
 import WinnerPopup from "@/components/pickers/WinnerPopup";
 import PageHeader from "@/components/PageHeader";
@@ -24,6 +25,7 @@ type Book = {
   cover: string | null;
   genres: string[] | null;
   pageCount: number | null;
+  moods?: string[] | null;
   series?: {
     seriesId: number;
     seriesName: string;
@@ -31,17 +33,27 @@ type Book = {
   } | null;
 };
 
-type PickerMode = "wheel" | "slots" | "cards" | "jar";
+type PickerMode = "wheel" | "slots" | "cards" | "jar" | "blind";
 
 const modes: { id: PickerMode; icon: string; label: string }[] = [
   { id: "wheel", icon: "🎡", label: "Wheel" },
   { id: "slots", icon: "🎰", label: "Slots" },
   { id: "cards", icon: "🃏", label: "Cards" },
   { id: "jar", icon: "🫙", label: "Jar" },
+  { id: "blind", icon: "💌", label: "Blind date" },
 ];
 
+// What "have another go" is called on the winner popup, per picker
+const respinLabels: Record<PickerMode, string> = {
+  wheel: "🔄 Re-spin",
+  slots: "🎰 Pull again",
+  cards: "🃏 Reshuffle",
+  jar: "🫙 Shake again",
+  blind: "💌 Another date",
+};
+
 function parseMode(value: string | null): PickerMode {
-  return value === "slots" || value === "cards" || value === "jar" ? value : "wheel";
+  return value === "slots" || value === "cards" || value === "jar" || value === "blind" ? value : "wheel";
 }
 
 export default function RandomPickerContent() {
@@ -331,6 +343,15 @@ export default function RandomPickerContent() {
                 spinSignal={spinSignal}
               />
             )}
+            {mode === "blind" && (
+              <BlindDate
+                // A freshly wrapped book whenever the eligible books change
+                key={books.map((b) => b.id).join(",")}
+                books={books}
+                onSelect={setSelectedBook}
+                spinSignal={spinSignal}
+              />
+            )}
           </>
         )}
       </div>
@@ -340,6 +361,7 @@ export default function RandomPickerContent() {
           book={selectedBook}
           onClose={() => setSelectedBook(null)}
           onRespin={books.length > 1 ? handleRespin : undefined}
+          respinLabel={respinLabels[mode]}
         />
       )}
     </div>
