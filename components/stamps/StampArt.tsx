@@ -139,6 +139,36 @@ function Note({ x, y }: { x: number; y: number }) {
   );
 }
 
+// A puffy cloud sitting on y, s wide
+const cloud = (x: number, y: number, s: number) =>
+  `M${x} ${y} q${-s * 0.18} ${-s * 0.42} ${s * 0.2} ${-s * 0.46} q${s * 0.08} ${-s * 0.4} ${s * 0.4} ${-s * 0.3} q${s * 0.3} ${-s * 0.06} ${s * 0.32} ${s * 0.3} q${s * 0.34} ${s * 0.06} ${s * 0.26} ${s * 0.46} Z`;
+
+const question = (x: number, y: number, s = 1) =>
+  `M${x} ${y + 2 * s} q0 ${-3.4 * s} ${3.4 * s} ${-3.4 * s} q${3.4 * s} 0 ${3.4 * s} ${3.2 * s} q0 ${2.4 * s} ${-3.4 * s} ${3.6 * s} v${2 * s}`;
+
+function Butterfly({ x, y, s = 1, r = 0 }: { x: number; y: number; s?: number; r?: number }) {
+  return (
+    <g transform={`rotate(${r} ${x} ${y})`}>
+      <Tone d={`M${x} ${y} C${x - 5 * s} ${y - 6 * s} ${x - 8 * s} ${y - 1 * s} ${x} ${y} Z M${x} ${y} C${x + 5 * s} ${y - 6 * s} ${x + 8 * s} ${y - 1 * s} ${x} ${y} Z`} w={1.1} />
+      <Tone d={`M${x} ${y} C${x - 5 * s} ${y + 1 * s} ${x - 4 * s} ${y + 5 * s} ${x} ${y} Z M${x} ${y} C${x + 5 * s} ${y + 1 * s} ${x + 4 * s} ${y + 5 * s} ${x} ${y} Z`} w={1.1} />
+      <path d={`M${x} ${y - 2.6 * s} L${x} ${y + 3 * s} M${x} ${y - 2.6 * s} l${-1.4 * s} ${-2 * s} M${x} ${y - 2.6 * s} l${1.4 * s} ${-2 * s}`} {...fine} strokeWidth={1} />
+    </g>
+  );
+}
+
+// A little round head for group shots, happy and blushing
+function Buddy({ x, y, r = 8.5 }: { x: number; y: number; r?: number }) {
+  return (
+    <>
+      <circle cx={x} cy={y} r={r} {...ink} strokeWidth={1.7} fill={PAPER} />
+      <path d={`M${x - 4.6} ${y - 0.6} q1.6 -2.2 3.2 0 M${x + 1.4} ${y - 0.6} q1.6 -2.2 3.2 0`} {...fine} strokeWidth={1.2} />
+      <path d={`M${x - 2} ${y + 3} q2 2 4 0`} {...fine} strokeWidth={1.2} />
+      <ellipse cx={x - 5} cy={y + 2.6} rx="1.8" ry="1.1" fill="currentColor" fillOpacity="0.25" />
+      <ellipse cx={x + 5} cy={y + 2.6} rx="1.8" ry="1.1" fill="currentColor" fillOpacity="0.25" />
+    </>
+  );
+}
+
 const ART: Record<ReactionId, ReactNode> = {
   sobbed: (
     <>
@@ -1235,6 +1265,385 @@ const ART: Record<ReactionId, ReactNode> = {
       <Tone d={heart(55, 11, 3.6)} />
       <path d={heart(8, 13, 2.2)} fill="currentColor" />
       <path d={heart(59, 24, 1.6)} fill="currentColor" />
+    </>
+  ),
+  cosy: (
+    <>
+      <Head />
+      <Tone d="M8.5 38 C6 18 18 6.5 32 6.5 C46 6.5 58 18 55.5 38 C53 24 44 15.5 32 15.5 C20 15.5 11 24 8.5 38 Z" w={1.7} />
+      <path d="M16 21 l3 2.4 M22 13.6 l1.6 3 M42 13.6 l-1.6 3 M48 21 l-3 2.4" {...fine} strokeWidth={1} />
+      <path d={shut(32)} {...ink} />
+      <Blush x={18} y={39} />
+      <Blush x={46} y={39} />
+      <path d={smile(42, 3.6, 2.6)} {...ink} />
+      <Tone d="M5 49 Q32 42 59 49 L61 63.5 L3 63.5 Z" w={1.7} />
+      <path d="M16 47 l-1.6 16 M24 45.6 l-0.6 17.4 M40 45.6 l0.6 17.4 M48 47 l1.6 16 M4 55.5 Q32 49 60 55.5" {...fine} strokeWidth={1} strokeDasharray="2.4 1.8" />
+      <path d={sparkle(5, 10, 2.6)} fill="currentColor" />
+      <path d={sparkle(59, 9, 2.6)} fill="currentColor" />
+    </>
+  ),
+
+  "happy-tears": (
+    <>
+      <Head />
+      <path d={happy(31)} {...ink} strokeWidth={2.2} />
+      <Tone d={drop(14.5, 33, 1.1)} />
+      <Tone d={drop(49.5, 33, 1.1)} />
+      <Tone d={drop(11, 45, 0.8)} />
+      <Tone d={drop(53, 45, 0.8)} />
+      <path d={grin(40)} {...ink} fill={PAPER} />
+      <path d="M26 43.5 Q32 45 38 43.5" {...fine} strokeWidth={1} />
+      <path d={sparkle(8, 13, 3)} fill="currentColor" />
+      <Tone d={heart(55, 11, 3.2)} />
+    </>
+  ),
+
+  "laughed-cried": (
+    <>
+      <Head />
+      <path d="M16.5 31 Q23 24 29.5 31" {...ink} strokeWidth={2.2} />
+      <path d="M35 22.5 L47 25" {...ink} />
+      <Shiny x={41} y={32} r={6} />
+      <Tone d={drop(45, 39, 1.2)} />
+      <path d="M21 42 Q26 50 31 45 Q34 42.5 38 46 Q40 48 43 45" {...ink} />
+      <path d="M5 22 l3 1.6 M5.5 28 l3.4 0 M6 34 l3 -1.4" {...fine} />
+      <path d={sparkle(9, 11, 2.8)} fill="currentColor" />
+      <Tone d={drop(55, 8, 0.8)} />
+    </>
+  ),
+
+  "soft-cry": (
+    <>
+      <Head />
+      <path d={worry(23)} {...ink} />
+      <Shiny x={23} y={32} r={5.6} />
+      <Shiny x={41} y={32} r={5.6} />
+      <Tone d={drop(20, 39, 1.3)} />
+      <path d="M27 47.5 q2.5 -3 5 0 q2.5 3 5 0" {...ink} strokeWidth={1.7} />
+      <Blush x={46} y={40} />
+      <path d={heart(55, 11, 2.6)} fill="currentColor" />
+      <path d={sparkle(8, 14, 2.4)} fill="currentColor" />
+    </>
+  ),
+
+  "happy-ending": (
+    <>
+      <circle cx="55" cy="9.5" r="4" {...ink} strokeWidth={1.5} fill="currentColor" fillOpacity="0.22" />
+      <path d="M55 1.5 v2 M62.5 9.5 h-2 M60.5 4 l-1.4 1.4 M60.5 15 l-1.4 -1.4 M49.5 4 l1.4 1.4" {...fine} />
+      <Head />
+      <path d="M17 30 Q23 35 29 30 M35 30 Q41 35 47 30" {...ink} />
+      <Blush x={18} y={38} />
+      <Blush x={46} y={38} />
+      <path d={smile(42, 6, 4.5)} {...ink} />
+      <Tone d="M12 51 L52 51 L50 60 L54 63 L10 63 L14 60 Z" w={1.5} />
+      <path d={heart(32, 57, 2.4)} fill="currentColor" />
+      <path d="M51 41 q4 -1 4.5 3.4 q-0.4 3.4 -4 3" {...fine} strokeDasharray="1.4 1.8" />
+      <path d={sparkle(7, 12, 2.8)} fill="currentColor" />
+    </>
+  ),
+
+  butterflies: (
+    <>
+      <Head />
+      <Shiny x={23} y={31} r={6} />
+      <Shiny x={41} y={31} r={6} />
+      <Blush x={17} y={40} />
+      <Blush x={47} y={40} />
+      <path d="M26 45 q3 3 6 0 q3 3 6 0" {...ink} />
+      <Butterfly x={53} y={11} s={1.5} r={18} />
+      <Butterfly x={9} y={13} s={1.2} r={-16} />
+      <Butterfly x={56} y={54} s={1.1} r={-10} />
+      <path d="M40 15 q4 -6 6.5 -2 M17 24 q-2 -4 -5.5 -2" {...fine} strokeDasharray="1.4 2" />
+    </>
+  ),
+
+  pining: (
+    <>
+      <Tone d="M52 2.5 A7 7 0 1 0 60.5 13 A6 6 0 0 1 52 2.5 Z" />
+      <Head />
+      <path d="M17 22 Q23 19.5 29 23 M35 23 Q41 19.5 47 22" {...fine} strokeWidth={1.5} />
+      <Shiny x={24} y={29} r={5.6} />
+      <Shiny x={42} y={29} r={5.6} />
+      <Blush x={17} y={38} />
+      <Blush x={47} y={38} />
+      <ellipse cx="32" cy="43" rx="2" ry="2.4" {...ink} strokeWidth={1.5} fill={PAPER} />
+      <Mitt x={26} y={52} />
+      <Mitt x={38} y={52} />
+      <path d={heart(9, 12, 2.6)} fill="currentColor" />
+      <path d="M44 9 q2 -3 4 0" {...fine} />
+      <path d={sparkle(6, 26, 2)} fill="currentColor" />
+    </>
+  ),
+
+  "enemies-lovers": (
+    <>
+      <path d="M43 2.5 L61 20.5 M61 2.5 L43 20.5" {...ink} strokeWidth={2} />
+      <path d="M45.5 9 l-3 3 M58.5 9 l3 3" {...ink} strokeWidth={2.4} />
+      <Head />
+      <path d="M16 22 L28 25 M48 22 L36 25" {...ink} />
+      <Lids y={29} dx={1.4} />
+      <Blush x={18} y={39} />
+      <Blush x={46} y={39} />
+      <path d="M26 45 Q32 48 38.5 42.5" {...ink} />
+      <Tone d={heart(52, 13, 3.4)} />
+      <path d="M7 6 L11.5 12 L8 12 L12 18.5" {...fine} strokeWidth={1.4} />
+    </>
+  ),
+
+  confused: (
+    <>
+      <Head />
+      <path d="M16 23 Q22 17 29 21 M36 25.5 L47 25.5" {...ink} />
+      <Eye x={23} y={31} r={6.2} p={0.34} shine={false} />
+      <Eye x={41} y={32} r={4.2} p={0.45} shine={false} />
+      <path d="M24 45 q2 -2.6 4 0 t4 0 t4 0 t4 0" {...ink} />
+      <path d={question(48, 4, 1.2)} {...ink} />
+      <circle cx="51.4" cy="16.6" r="1.2" fill="currentColor" />
+      <path d={question(6, 8, 0.9)} {...fine} strokeWidth={1.5} />
+      <circle cx="9.1" cy="18" r="1" fill="currentColor" />
+      <Tone d={drop(55, 30, 0.9)} />
+    </>
+  ),
+
+  "morally-grey": (
+    <>
+      <Head />
+      <path d="M32 12.5 C19.5 13 10 21.5 10 34 C10 46.5 19.5 56 32 56 Z" fill="currentColor" fillOpacity="0.2" />
+      <ellipse cx="22" cy="7" rx="9" ry="2.6" {...fine} strokeWidth={1.4} transform="rotate(-10 22 7)" />
+      <Tone d="M43 17.5 L50.5 4.5 L49 19 Z" w={1.4} />
+      <path d="M16 23 L28 25 M48 21 L36 25" {...ink} />
+      <Lids y={29.5} dx={-1.6} />
+      <path d="M25 44 Q32 47 39 41" {...ink} />
+      <path d={sparkle(6, 22, 2.4)} fill="currentColor" />
+      <path d={flame(57, 30, 7)} {...fine} fill="currentColor" fillOpacity="0.22" />
+    </>
+  ),
+
+  winter: (
+    <>
+      <Head />
+      <Tone d="M11 31 C10 12 54 12 53 31 Z" w={1.7} />
+      <rect x="9.5" y="27" width="45" height="7" rx="3" {...ink} strokeWidth={1.6} fill={PAPER} />
+      <path d="M15 27.5 v6 M21 27.5 v6 M27 27.5 v6 M33 27.5 v6 M39 27.5 v6 M45 27.5 v6 M51 28 v5" {...fine} strokeWidth={1} />
+      <circle cx="32" cy="9.5" r="4.4" {...ink} strokeWidth={1.6} fill={PAPER} />
+      <path d={happy(40)} {...ink} />
+      <Blush x={17} y={46} />
+      <Blush x={47} y={46} />
+      <path d={smile(48, 3.6, 3)} {...ink} />
+      <path d={flake(6, 12, 3.4)} {...fine} />
+      <path d={flake(58, 15, 3)} {...fine} />
+      <path d={flake(58, 50, 2.4)} {...fine} />
+      <path d={flake(6, 47, 2.4)} {...fine} />
+    </>
+  ),
+
+  spooky: (
+    <>
+      <Head />
+      <path d="M17 24 L28 27 M47 24 L36 27" {...ink} />
+      <Shiny x={23} y={33} r={5.6} />
+      <Shiny x={41} y={33} r={5.6} />
+      <ellipse cx="32" cy="45" rx="3.6" ry="4.4" fill="currentColor" />
+      <g transform="rotate(10 53 11)">
+        <path d={ghost(48, 3)} {...ink} strokeWidth={1.5} fill={PAPER} />
+        <circle cx="51" cy="9" r="0.9" fill="currentColor" />
+        <circle cx="54" cy="9" r="0.9" fill="currentColor" />
+      </g>
+      <Tone d="M3 57 C3 50 9.5 49 11 52 C12.5 49 19 50 19 57 C19 63 12 63.5 11 61.6 C10 63.5 3 63 3 57 Z" w={1.4} />
+      <path d="M11 52 q-0.4 -2.6 1.6 -3.6 M7 56 l1.6 -1.4 l1.4 1.4 M12 56 l1.6 -1.4 l1.4 1.4" {...fine} strokeWidth={1} />
+      <path d="M3 13 q2.4 -3 4.6 0 q1.2 -2 2.4 -0.4 q1.2 -1.6 2.4 0.4 q2.2 -3 4.6 0 q-3.6 -0.8 -4.6 2.4 q-1.4 -1 -2.4 0 q-1 -1 -2.4 0 q-1 -3.2 -4.6 -2.4 Z" fill="currentColor" />
+    </>
+  ),
+
+  wholesome: (
+    <>
+      <path d="M32 2.5 v5 M2.5 34 h4 M61.5 34 h-4 M11 13 l3.4 3.4 M53 13 l-3.4 3.4 M11 55 l3.4 -3.4 M53 55 l-3.4 -3.4 M20 5 l1.6 4 M44 5 l-1.6 4 M4.5 22 l4 1.6 M59.5 22 l-4 1.6" {...ink} strokeWidth={1.7} />
+      <Head />
+      <path d={happy(31)} {...ink} />
+      <Blush x={17.5} y={38} />
+      <Blush x={46.5} y={38} />
+      <path d="M25 42 Q32 51 39 42 Z" {...ink} fill={PAPER} />
+      <path d="M28.6 46.4 Q32 44.4 35.4 46.4" {...fine} strokeWidth={1} />
+    </>
+  ),
+
+  dreamy: (
+    <>
+      <Head />
+      <path d="M17 22.5 Q23 20 29 22.5 M35 22.5 Q41 20 47 22.5" {...fine} strokeWidth={1.5} />
+      <Lids y={30} />
+      <path d="M17 30 l-1.6 -1.8 M47 30 l1.6 -1.8" {...fine} strokeWidth={1} />
+      <Blush x={18} y={39} />
+      <Blush x={46} y={39} />
+      <path d={smile(43, 4, 3)} {...ink} />
+      <Tone d={cloud(3, 62, 22)} w={1.5} />
+      <Tone d={cloud(39, 62, 22)} w={1.5} />
+      <Tone d={cloud(45, 16, 15)} w={1.3} />
+      <polygon points={star(9, 10, 3.4, 1.4)} fill="currentColor" />
+      <path d={sparkle(17, 4, 1.8)} fill="currentColor" />
+      <path d={sparkle(59, 28, 2.2)} fill="currentColor" />
+    </>
+  ),
+
+  worldbuilding: (
+    <>
+      <Head />
+      <polygon points={star(23, 30, 6.4, 2.8)} fill="currentColor" />
+      <polygon points={star(41, 30, 6.4, 2.8)} fill="currentColor" />
+      <ellipse cx="32" cy="41.5" rx="2.6" ry="3" fill="currentColor" />
+      <Tone d="M11 48 L53 48 L53 61 L11 61 Z" w={1.6} />
+      <path d="M8.5 47 C8.5 44 13.5 44 13.5 47 L13.5 62 C13.5 64.5 8.5 64.5 8.5 62 Z M50.5 47 C50.5 44 55.5 44 55.5 47 L55.5 62 C55.5 64.5 50.5 64.5 50.5 62 Z" {...ink} strokeWidth={1.5} fill={PAPER} />
+      <path d="M17 58 l4 -6 l3 3.4 l3 -5 l4 7.6 M36 52 q4 3 8 0 q2 4 -1 6" {...fine} strokeWidth={1.1} />
+      <path d="M44.5 54 l2.4 2.4 M46.9 54 l-2.4 2.4" {...fine} strokeWidth={1.2} />
+      <path d={sparkle(6, 12, 3)} fill="currentColor" />
+      <path d={sparkle(58, 12, 3)} fill="currentColor" />
+    </>
+  ),
+
+  "hidden-gem": (
+    <>
+      <Head />
+      <Shiny x={23} y={29} r={5.8} />
+      <Shiny x={41} y={29} r={5.8} />
+      <Blush x={16.5} y={37} />
+      <Blush x={47.5} y={37} />
+      <ellipse cx="32" cy="38.5" rx="2.2" ry="2.6" {...ink} strokeWidth={1.5} fill={PAPER} />
+      <Tone d="M21 49 L26.5 43.5 L37.5 43.5 L43 49 L32 61.5 Z" w={1.6} />
+      <path d="M21 49 L43 49 M26.5 43.5 L29 49 L32 61.5 L35 49 L37.5 43.5" {...fine} strokeWidth={1.1} />
+      <Mitt x={18.5} y={52} />
+      <Mitt x={45.5} y={52} />
+      <path d={sparkle(52, 44, 2.6)} fill="currentColor" />
+      <path d={sparkle(8, 12, 3.2)} fill="currentColor" />
+      <path d={sparkle(56, 11, 2.2)} fill="currentColor" />
+    </>
+  ),
+
+  "found-family": (
+    <>
+      <Tone d={heart(32, 14, 6)} />
+      <path d={sparkle(14, 12, 2.6)} fill="currentColor" />
+      <path d={sparkle(50, 12, 2.6)} fill="currentColor" />
+      <Buddy x={14} y={41} r={8.5} />
+      <Buddy x={50} y={41} r={8.5} />
+      <Buddy x={32} y={36} r={10} />
+      <path d="M8 52 Q14 60 22 54 M42 54 Q50 60 56 52" {...ink} strokeWidth={1.6} />
+      <path d="M22 50.5 Q32 57 42 50.5" {...ink} strokeWidth={1.6} />
+      <Mitt x={22} y={52} rx={2.8} ry={2.4} />
+      <Mitt x={42} y={52} rx={2.8} ry={2.4} />
+    </>
+  ),
+
+  discuss: (
+    <>
+      <Head />
+      <Eye x={23} y={32} r={5.6} p={0.5} />
+      <Eye x={41} y={32} r={5.6} p={0.5} />
+      <path d="M17 23 L28 21 M47 23 L36 21" {...ink} />
+      <path d={grin(41)} fill="currentColor" />
+      <Tone d="M2 4.5 Q2 1.5 5 1.5 L19 1.5 Q22 1.5 22 4.5 L22 10 Q22 13 19 13 L13 13 L10 17.5 L9.6 13 L5 13 Q2 13 2 10 Z" w={1.4} />
+      <path d="M9 4.2 v3.8 M15 4.2 v3.8" {...ink} strokeWidth={1.8} />
+      <circle cx="9" cy="10.4" r="0.8" fill="currentColor" />
+      <circle cx="15" cy="10.4" r="0.8" fill="currentColor" />
+      <Tone d="M42 4.5 Q42 1.5 45 1.5 L59 1.5 Q62 1.5 62 4.5 L62 10 Q62 13 59 13 L54.4 13 L54 17.5 L51 13 L45 13 Q42 13 42 10 Z" w={1.4} />
+      <path d="M46.5 7.4 h1 M51.5 7.4 h1 M56.5 7.4 h1" {...ink} strokeWidth={2.2} />
+    </>
+  ),
+
+  "made-me-think": (
+    <>
+      <circle cx="50" cy="12" r="9" {...ink} strokeWidth={1.5} fill={PAPER} />
+      <circle cx="41" cy="24" r="2" {...fine} />
+      <circle cx="37" cy="28.5" r="1.2" fill="currentColor" />
+      <path d="M47 15.5 C44 13 45.5 6.5 50 6.5 C54.5 6.5 56 13 53 15.5 Z" {...fine} fill="currentColor" fillOpacity="0.22" />
+      <path d="M47.6 17.6 h4.8 M48.4 19.6 h3.2" {...fine} strokeWidth={1.1} />
+      <Head />
+      <path d="M17 22 Q23 18 29 22 M35 25 L46 25" {...ink} />
+      <Eye x={23} y={31} r={5.6} p={0.5} dx={1.8} dy={-1.8} shine={false} />
+      <path d="M35 31 L47 31" {...ink} />
+      <path d="M26 45 L36 43.5" {...ink} />
+      <Mitt x={37} y={51} rx={4.4} ry={3.8} />
+      <path d="M33.6 49 q1.6 -2 3.4 -2.4" {...fine} strokeWidth={1} />
+      <path d={sparkle(7, 12, 2.8)} fill="currentColor" />
+    </>
+  ),
+
+  inspired: (
+    <>
+      <Head />
+      <path d="M16 23 L28 21.5 M48 23 L36 21.5" {...ink} />
+      <polygon points={star(23, 31, 5.8, 2.6)} fill="currentColor" />
+      <polygon points={star(41, 31, 5.8, 2.6)} fill="currentColor" />
+      <path d={smile(42, 5.5, 4.5)} {...ink} />
+      <g transform="rotate(40 49 47)">
+        <rect x="46.5" y="34" width="5" height="20" rx="1.2" {...ink} strokeWidth={1.6} fill={PAPER} />
+        <path d="M46.5 54 L49 59.5 L51.5 54 Z" {...fine} fill="currentColor" />
+        <path d="M46.5 38 h5" {...fine} />
+      </g>
+      <path d="M9 55 q4 -4 8 0 t8 0" {...fine} />
+      <path d={sparkle(58, 6, 3.4)} fill="currentColor" />
+      <path d={sparkle(6, 10, 2.4)} fill="currentColor" />
+      <path d={sparkle(12, 4, 1.6)} fill="currentColor" />
+    </>
+  ),
+
+  "one-sitting": (
+    <>
+      <Head />
+      <Eye x={23} y={29} r={6.6} p={0.3} dy={1.6} shine={false} />
+      <Eye x={41} y={29} r={6.6} p={0.3} dy={1.6} shine={false} />
+      <path d="M29 39.5 L35 39.5" {...ink} />
+      <Tone d="M12 49 Q22 44.5 32 49 Q42 44.5 52 49 L52 60 Q42 55.5 32 60 Q22 55.5 12 60 Z" w={1.6} />
+      <path d="M32 49 L32 60 M16 51.5 q7 -2.6 12 0 M36 51.5 q6 -2.6 12 0 M16 54.5 q7 -2.6 12 0 M36 54.5 q6 -2.6 12 0" {...fine} strokeWidth={1} />
+      <path d="M53 2.5 h9 M53 17.5 h9 M54.5 2.5 C54.5 8 57.5 8 57.5 10 C57.5 12 54.5 12 54.5 17.5 M60.5 2.5 C60.5 8 57.5 8 57.5 10 C57.5 12 60.5 12 60.5 17.5" {...fine} strokeWidth={1.3} />
+      <path d="M55.5 17 L57.5 13.6 L59.5 17 Z" fill="currentColor" />
+      <path d={sparkle(7, 11, 2.6)} fill="currentColor" />
+    </>
+  ),
+
+  "slump-breaker": (
+    <>
+      <path d="M4.5 30 A28 28 0 0 1 59.5 30" {...ink} strokeWidth={1.8} />
+      <path d="M7.6 30 A24.8 24.8 0 0 1 56.4 30" {...fine} strokeWidth={4} strokeOpacity="0.22" />
+      <path d="M10.6 30 A21.6 21.6 0 0 1 53.4 30" {...fine} strokeWidth={1.4} />
+      <Head />
+      <path d={happy(32)} {...ink} strokeWidth={2.2} />
+      <path d={grin(40)} {...ink} fill={PAPER} />
+      <Mitt x={7.5} y={42} />
+      <Mitt x={56.5} y={42} />
+      <path d="M4 50 l-1.6 2.6 M7.6 51 v3 M60 50 l1.6 2.6 M56.4 51 v3" {...fine} />
+      <path d={sparkle(32, 4, 3)} fill="currentColor" />
+    </>
+  ),
+
+  overhyped: (
+    <>
+      <Head />
+      <path d="M17 26 L29 26 M35 26 L47 26" {...ink} />
+      <Lids y={30.5} dx={2} />
+      <path d="M26 44.5 L38 44.5" {...ink} />
+      <Tone d="M43 12 L56.5 4.5 L56.5 21 L43 15.5 Z" w={1.5} />
+      <rect x="39" y="11.5" width="4" height="4.6" rx="1" {...fine} fill={PAPER} />
+      <path d="M44 15.6 l1 4.6 l2.4 -0.4 l-0.6 -3.4" {...fine} strokeWidth={1.1} />
+      <path d="M59 9 q1.6 1 0 2 M59 14 q1.6 1 0 2" {...fine} strokeWidth={1} strokeDasharray="1 1.4" />
+      <circle cx="7" cy="16" r="1.1" fill="currentColor" />
+      <circle cx="11" cy="16" r="1.1" fill="currentColor" />
+      <circle cx="15" cy="16" r="1.1" fill="currentColor" />
+    </>
+  ),
+
+  "almost-dnf": (
+    <>
+      <Head />
+      <path d={worry(23)} {...ink} />
+      <Lids y={30} dx={-1.6} />
+      <path d="M25 46 q2.3 -2.6 4.6 0 t4.6 0 t4.6 0" {...ink} />
+      <Tone d={drop(50, 17, 1.2)} />
+      <g transform="rotate(-12 11 11)">
+        <rect x="3.5" y="4" width="14" height="11" rx="1.2" {...ink} strokeWidth={1.6} fill={PAPER} />
+        <path d="M7 4 L7 15 M10.5 8 h4.4" {...fine} strokeWidth={1.1} />
+        <path d="M13 15 L13 23 L14.6 21.4 L16.2 23 L16.2 15" {...fine} fill="currentColor" fillOpacity="0.22" />
+      </g>
+      <path d="M53 32 l4 -1 M54 37 l4 0.4" {...fine} />
     </>
   ),
 };

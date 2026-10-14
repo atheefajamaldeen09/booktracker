@@ -31,8 +31,8 @@ import styles from "@/components/scrapbook/Scrapbook.module.css";
 // Handwriting for the scrapbook page
 const hand = Caveat({ subsets: ["latin"], variable: "--font-hand" });
 
-// Washi tape colours for the genre labels
-const TAPES = ["#f2b8a8", "#c9d8b6", "#f1d893", "#bcd4e6", "#e3c6dc"];
+// Washi tape colours for the genre labels (each theme sets its own roll)
+const TAPES = ["var(--tape-1)", "var(--tape-2)", "var(--tape-3)", "var(--tape-4)", "var(--tape-5)"];
 
 export default async function BookDetailPage({
   params,

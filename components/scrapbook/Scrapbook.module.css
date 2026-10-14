@@ -8,29 +8,44 @@
 }
 
 .sheet {
-  --paper: #f7f0e2;
+  /* ☕ Café au Lait: latte-cream paper, espresso ink, caramel accents.
+     Each theme below swaps in its own paper so the page reads as part of it. */
+  --paper: #f6ead8;
+  --paper-edge: rgba(130, 85, 40, 0.14);
+  --under-1: #eadbc3;
+  --under-2: #d9c4a4;
+  --hole: rgba(59, 42, 34, 0.35);
   --ink: #3b2a22;
-  --ink-soft: rgba(59, 42, 34, 0.62);
+  --ink-soft: rgba(59, 42, 34, 0.68);
   --ink-faint: rgba(59, 42, 34, 0.3);
   --hand: var(--font-hand), "Segoe Print", "Bradley Hand", cursive;
+  /* the theme's pastel and its deeper shade, for little touches */
+  --tint: #f2d6b8;
+  --tint-deep: #a8652f;
+  --tape-1: #f2b8a8;
+  --tape-2: #c9d8b6;
+  --tape-3: #f1d893;
+  --tape-4: #bcd4e6;
+  --tape-5: #e3c6dc;
 
   /* Everything placed on the sheet reads the theme tokens, so here they
      become paper and ink; the accent is the theme's deeper shade. */
   --text: #3b2a22;
   --text-muted: #57443a;
   --text-faint: #7a6657;
-  --surface: #fffaf0;
-  --raised: #efe5d0;
-  --bg: #fffdf7;
-  --bg-deep: #ece2cf;
-  --border: #dccdb0;
-  --border-soft: #e8dcc4;
-  --primary: var(--primary-deep);
+  --surface: #fffaf1;
+  --raised: #efe2cc;
+  --bg: #fffcf6;
+  --bg-deep: #ecdec6;
+  --border: #d9c6a6;
+  --border-soft: #e8dac2;
+  --primary: #94531f;
+  --primary-rgb: 148 83 31;
+  --primary-hover: #94531f;
   /* the pastel accent is too pale to read on paper */
   --accent: #2f6f8a;
-  --primary-hover: var(--primary-deep);
   --on-primary: #fffaf0;
-  --star: #d99a2b;
+  --star: #c98a1b;
   --success: #4f8a45;
   --success-bg: #e3eedb;
   --success-border: #a9c79a;
@@ -40,6 +55,7 @@
   --on-danger: #ffffff;
   --shadow-sm: 0 1px 2px rgba(60, 50, 30, 0.08);
   --shadow-md: 0 6px 18px rgba(60, 50, 30, 0.12);
+  --page-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
   color-scheme: light;
 
   position: relative;
@@ -49,12 +65,144 @@
   color: var(--ink);
   background-color: var(--paper);
   /* plain paper, a touch darker towards the edges */
-  background-image: radial-gradient(ellipse at 50% 30%, transparent 55%, rgba(120, 90, 50, 0.1));
+  background-image: radial-gradient(ellipse at 50% 30%, transparent 55%, var(--paper-edge));
   /* a couple more pages underneath */
   box-shadow:
-    3px 3px 0 #ebe1cd,
-    6px 6px 0 #dfd3bb,
-    0 18px 40px rgba(0, 0, 0, 0.35);
+    3px 3px 0 var(--under-1),
+    6px 6px 0 var(--under-2),
+    var(--page-shadow);
+}
+
+/* 🕯️ Enchanted Library: lavender parchment, plum ink, antique gold */
+:global(:root[data-theme="enchanted"]) .sheet {
+  --paper: #f1e9f8;
+  --paper-edge: rgba(90, 60, 130, 0.16);
+  --under-1: #e2d5ef;
+  --under-2: #cdbbe2;
+  --hole: rgba(45, 34, 66, 0.4);
+  --ink: #2d2442;
+  --ink-soft: rgba(45, 36, 66, 0.68);
+  --ink-faint: rgba(45, 36, 66, 0.3);
+  --tint: #e2d0f3;
+  --tint-deep: #7d55b0;
+  --tape-1: #d9c2ef;
+  --tape-2: #f0d79a;
+  --tape-3: #c7d6f2;
+  --tape-4: #efc3d6;
+  --tape-5: #bfe0cf;
+  --text: #2d2442;
+  --text-muted: #51456a;
+  --text-faint: #7b6e93;
+  --surface: #fcf9ff;
+  --raised: #e7dcf3;
+  --bg: #fdfbff;
+  --bg-deep: #e4d9f0;
+  --border: #cfbfe3;
+  --border-soft: #e2d7ef;
+  --primary: #77571a;
+  --primary-rgb: 119 87 26;
+  --primary-hover: #77571a;
+  --accent: #6c47a3;
+  --star: #b8891c;
+}
+
+/* 🌙 Midnight Ocean: sea-glass paper, deep navy ink, teal */
+:global(:root[data-theme="ocean"]) .sheet {
+  --paper: #e6f1f6;
+  --paper-edge: rgba(40, 90, 130, 0.15);
+  --under-1: #d3e4ee;
+  --under-2: #bcd3e3;
+  --hole: rgba(27, 42, 61, 0.4);
+  --ink: #1b2a3d;
+  --ink-soft: rgba(27, 42, 61, 0.68);
+  --ink-faint: rgba(27, 42, 61, 0.3);
+  --tint: #c9e6ea;
+  --tint-deep: #2f7f86;
+  --tape-1: #a9dcdc;
+  --tape-2: #c3d4f0;
+  --tape-3: #f3dc9c;
+  --tape-4: #f0c4bd;
+  --tape-5: #cbe3c3;
+  --text: #1b2a3d;
+  --text-muted: #3d526b;
+  --text-faint: #677d96;
+  --surface: #f7fbfd;
+  --raised: #d8e8f1;
+  --bg: #fafdfe;
+  --bg-deep: #d6e6ef;
+  --border: #b7cfdf;
+  --border-soft: #d1e1eb;
+  --primary: #1f6268;
+  --primary-rgb: 31 98 104;
+  --primary-hover: #1f6268;
+  --accent: #34588f;
+  --star: #c4901c;
+}
+
+/* 🌿 Botanical: the room is already linen, so the page is pressed-sage paper */
+:global(:root[data-theme="botanical"]) .sheet {
+  --paper: #e5eed9;
+  --paper-edge: rgba(70, 100, 50, 0.16);
+  --under-1: #d3e0c3;
+  --under-2: #bfd0aa;
+  --hole: rgba(38, 48, 31, 0.38);
+  --ink: #26301f;
+  --ink-soft: rgba(38, 48, 31, 0.7);
+  --ink-faint: rgba(38, 48, 31, 0.3);
+  --tint: #d3e4c2;
+  --tint-deep: #4f7a4a;
+  --tape-1: #f0c3a4;
+  --tape-2: #fbe8a9;
+  --tape-3: #c6dcae;
+  --tape-4: #e9c8d6;
+  --tape-5: #bcd6dd;
+  --text: #26301f;
+  --text-muted: #48543f;
+  --text-faint: #6e7a63;
+  --surface: #f7faf1;
+  --raised: #d9e5cb;
+  --bg: #fbfdf7;
+  --bg-deep: #d6e2c8;
+  --border: #b7c8a2;
+  --border-soft: #cfdcbf;
+  --primary: #3b5e37;
+  --primary-rgb: 59 94 55;
+  --primary-hover: #3b5e37;
+  --accent: #9c5630;
+  --page-shadow: 0 1px 0 rgba(60, 80, 40, 0.15), 0 16px 34px rgba(60, 70, 40, 0.22);
+}
+
+/* 🧁 Sugar & Ink: the room is blush, so the page is a deeper strawberry-milk pink */
+:global(:root[data-theme="sugar"]) .sheet {
+  --paper: #fbdfe8;
+  --paper-edge: rgba(170, 70, 110, 0.14);
+  --under-1: #f2c9d7;
+  --under-2: #e6b2c5;
+  --hole: rgba(43, 33, 51, 0.36);
+  --ink: #2b2133;
+  --ink-soft: rgba(43, 33, 51, 0.7);
+  --ink-faint: rgba(43, 33, 51, 0.3);
+  --tint: #f8c9d8;
+  --tint-deep: #c2577a;
+  --tape-1: #fff1b8;
+  --tape-2: #c9e4f6;
+  --tape-3: #d8f0d4;
+  --tape-4: #e3d3f7;
+  --tape-5: #ffffff;
+  --text: #2b2133;
+  --text-muted: #574658;
+  --text-faint: #8a7488;
+  --surface: #fff7f9;
+  --raised: #f6d2de;
+  --bg: #fffafc;
+  --bg-deep: #f3cfdb;
+  --border: #e5b6c7;
+  --border-soft: #f0cad7;
+  --primary: #8f3657;
+  --primary-rgb: 143 54 87;
+  --primary-hover: #8f3657;
+  --accent: #3d3768;
+  --page-shadow: 0 1px 0 rgba(140, 60, 90, 0.15), 0 16px 34px rgba(120, 50, 80, 0.2);
 }
 
 /* Ring-binder holes down the left edge */
@@ -66,7 +214,7 @@
   left: 12px;
   width: 20px;
   background-image:
-    radial-gradient(circle at 10px 36px, var(--desk) 6px, rgba(59, 42, 34, 0.35) 6.5px, transparent 7.5px);
+    radial-gradient(circle at 10px 36px, var(--desk) 6px, var(--hole) 6.5px, transparent 7.5px);
   background-size: 20px 72px;
   pointer-events: none;
 }
@@ -105,6 +253,8 @@
   transform: rotate(-3deg);
 }
 .polaroid .tape {
+  --tape: var(--tint-deep);
+  opacity: 0.55;
   top: -13px;
   left: 50%;
   width: 86px;
@@ -154,10 +304,10 @@
   padding: 3px 11px;
   border: 1.5px dashed currentColor;
   border-radius: 6px;
-  background: #fffaf0;
-  box-shadow: 0 0 0 3px #fffaf0, 0 1px 3px 3px rgba(60, 40, 20, 0.12);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--surface), 0 1px 3px 3px rgba(60, 40, 20, 0.12);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 3px 3px 16px;
 }
 
@@ -168,6 +318,7 @@
 }
 .meta p {
   color: var(--text-muted);
+  font-weight: 500;
   font-size: 13px;
   margin: 0;
 }
@@ -205,6 +356,7 @@
 .sectionLabel {
   color: var(--text-muted);
   font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0 0 10px;
