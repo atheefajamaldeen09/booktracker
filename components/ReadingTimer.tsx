@@ -9,6 +9,8 @@ import CosyScene from "@/components/CosyScene";
 // A stopwatch for a reading session. It keeps running if you leave the page
 // or close the app (the start time is saved on this device), and when you
 // stop it asks which page you reached and logs pages and minutes together.
+// A session has to move you past the page you were on, and reaching the last
+// page (or pressing "I finished the book") moves the book to your Read shelf.
 
 type Timer = { startedAt: number | null; elapsed: number }; // elapsed in ms, not counting the running stretch
 
@@ -80,6 +82,10 @@ export default function ReadingTimer({
 
   const elapsed = timer ? timer.elapsed + (timer.startedAt ? now - timer.startedAt : 0) : 0;
 
+  // Typing the last page finishes the book when you save
+  const typedPage = parseInt(page);
+  const reachesEnd = Boolean(pageCount) && !isNaN(typedPage) && typedPage >= (pageCount ?? 0);
+
   const start = () => {
     setNow(Date.now());
     write(bookId, { startedAt: Date.now(), elapsed: timer?.elapsed ?? 0 });
@@ -99,27 +105,45 @@ export default function ReadingTimer({
     setFinishing(false);
   };
 
-  const save = async () => {
-    const newPage = parseInt(page);
-    if (isNaN(newPage) || newPage < currentPage) {
-      setError(`Enter the page you reached (at least ${currentPage})`);
-      return;
+  // bookFinished: the "I finished the book" button, which ends the book even
+  // when the page isn't the last one
+  const save = async (bookFinished = false) => {
+    if (!bookFinished) {
+      if (isNaN(typedPage)) {
+        setError("Enter the page you reached.");
+        return;
+      }
+      if (typedPage <= currentPage) {
+        setError(
+          `You're still on page ${currentPage}. Enter the page you actually reached, or discard this session if you didn't get to read.`
+        );
+        return;
+      }
+      if (pageCount && typedPage > pageCount) {
+        setError(`This book only has ${pageCount} pages`);
+        return;
+      }
     }
-    if (pageCount && newPage > pageCount) {
-      setError(`This book only has ${pageCount} pages`);
-      return;
-    }
+
     setSaving(true);
+    setError(null);
     const minutes = Math.max(1, Math.round(elapsed / 60000));
-    const result = await updateReadingProgress(bookId, newPage, currentPage, minutes);
+    const reached = bookFinished
+      ? pageCount || (isNaN(typedPage) ? currentPage : typedPage)
+      : typedPage;
+    const result = await updateReadingProgress(bookId, reached, minutes, bookFinished);
     setSaving(false);
     if (!result.success) {
-      setError("Couldn't save the session — try again");
+      setError(result.error || "Couldn't save the session — try again");
       return;
     }
     write(bookId, null);
     setFinishing(false);
-    router.refresh();
+    if (result.finished) {
+      router.push(result.goalReached ? `/book/${bookId}?goalReached=1` : `/book/${bookId}`);
+    } else {
+      router.refresh();
+    }
   };
 
   const button = (primary: boolean): React.CSSProperties => ({
@@ -135,6 +159,13 @@ export default function ReadingTimer({
     fontSize: "14px",
     cursor: "pointer",
   });
+
+  const finishedButton: React.CSSProperties = {
+    ...button(false),
+    backgroundColor: "var(--success-bg)",
+    border: "1px solid var(--success-border)",
+    color: "var(--success)",
+  };
 
   return (
     <div
@@ -198,16 +229,23 @@ export default function ReadingTimer({
 
         {finishing && (
           <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
-            <p style={{ color: "var(--text)", fontSize: "14px", margin: "0 0 10px" }}>
+            <p style={{ color: "var(--text)", fontSize: "14px", margin: "0 0 4px" }}>
               Nice session — {Math.max(1, Math.round(elapsed / 60000))} min. What page are you on now?
+            </p>
+            <p style={{ color: "var(--text-muted)", fontSize: "12px", margin: "0 0 10px" }}>
+              You were on page {currentPage}
+              {pageCount ? ` of ${pageCount}` : ""} when you started.
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <input
                 type="number"
                 value={page}
-                min={currentPage}
+                min={currentPage + 1}
                 max={pageCount || undefined}
-                onChange={(e) => setPage(e.target.value)}
+                onChange={(e) => {
+                  setPage(e.target.value);
+                  setError(null);
+                }}
                 aria-label="Page you reached"
                 style={{
                   width: "110px",
@@ -220,9 +258,14 @@ export default function ReadingTimer({
                 }}
               />
               {pageCount ? <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>of {pageCount}</span> : null}
-              <button type="button" onClick={save} disabled={saving} style={button(true)}>
-                {saving ? "Saving…" : "Save session"}
+              <button type="button" onClick={() => save()} disabled={saving} style={button(true)}>
+                {saving ? "Saving…" : reachesEnd ? "Save & finish book" : "Save session"}
               </button>
+              {!reachesEnd && (
+                <button type="button" onClick={() => save(true)} disabled={saving} style={finishedButton}>
+                  🎉 I finished the book
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -243,6 +286,11 @@ export default function ReadingTimer({
                 Discard
               </button>
             </div>
+            {reachesEnd && (
+              <p style={{ color: "var(--success)", fontSize: "13px", margin: "10px 0 0" }}>
+                🎉 That&apos;s the last page — saving will move this book to your Read shelf.
+              </p>
+            )}
             {error && <p style={{ color: "var(--danger)", fontSize: "13px", margin: "10px 0 0" }}>{error}</p>}
           </div>
         )}

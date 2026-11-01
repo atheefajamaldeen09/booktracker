@@ -50,6 +50,9 @@ export default function ReadingProgress({ book, sessions }: Props) {
 
   const pageCount = book.pageCount || 0;
   const currentPageNum = book.currentPage || 0;
+  // Typing the last page marks the book as read when you press the button
+  const typedPage = parseInt(currentPage);
+  const reachesEnd = pageCount > 0 && !isNaN(typedPage) && typedPage >= pageCount;
 
   const handleUpdateProgress = async () => {
     const newPage = parseInt(currentPage);
@@ -64,21 +67,29 @@ export default function ReadingProgress({ book, sessions }: Props) {
       return;
     }
 
+    if (newPage === currentPageNum) {
+      setError(`You're already on page ${currentPageNum}`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    const result = await updateReadingProgress(
-      book.id,
-      newPage,
-      currentPageNum
-    );
+    const result = await updateReadingProgress(book.id, newPage);
 
     if (result.success) {
+      if (result.finished) {
+        // Reached the last page: the book is now on the Read shelf
+        router.push(
+          result.goalReached ? `/book/${book.id}?goalReached=1` : `/book/${book.id}`
+        );
+        return;
+      }
       setSuccessMessage(`Progress updated to page ${newPage}`);
       setTimeout(() => setSuccessMessage(null), 3000);
       router.refresh();
     } else {
-      setError("Failed to update progress");
+      setError(result.error || "Failed to update progress");
     }
 
     setLoading(false);
@@ -241,9 +252,22 @@ export default function ReadingProgress({ book, sessions }: Props) {
               transition: "all 0.2s",
             }}
           >
-            {loading ? "Saving..." : "Update"}
+            {loading ? "Saving..." : reachesEnd ? "Update & finish" : "Update"}
           </button>
         </div>
+
+        {reachesEnd && (
+          <p
+            style={{
+              color: "var(--success)",
+              fontSize: "13px",
+              marginTop: "10px",
+            }}
+          >
+            🎉 That&apos;s the last page — updating will move this book to your
+            Read shelf.
+          </p>
+        )}
 
         {/* Error */}
         {error && (

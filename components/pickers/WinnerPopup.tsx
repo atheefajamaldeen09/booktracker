@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import BookCover from "@/components/BookCover";
 import Button from "@/components/Button";
-import { startReading } from "@/lib/actions/books";
+import { startReading, queueBook } from "@/lib/actions/books";
 import { useState } from "react";
 import { useCanEdit } from "@/components/Viewer";
 import ThemeText from "@/components/ThemeText";
@@ -35,12 +35,22 @@ type Props = {
 export default function WinnerPopup({ book, onClose, onRespin, respinLabel = "🔄 Pick again" }: Props) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
+  const [queueState, setQueueState] = useState<"idle" | "saving" | "queued" | "error">("idle");
   const canEdit = useCanEdit();
 
   const handleStartReading = async () => {
     setStarting(true);
     await startReading(book.id);
     router.push(`/book/${book.id}`);
+  };
+
+  // "Read this next": it goes on the home page's Up Next list without being started
+  const handleQueue = async () => {
+    setQueueState("saving");
+    const result = await queueBook(book.id);
+    setQueueState(result.success ? "queued" : "error");
+    // Refresh so the Up Next list is up to date when you go back to the home page
+    if (result.success) router.refresh();
   };
 
   return (
@@ -223,6 +233,33 @@ export default function WinnerPopup({ book, onClose, onRespin, respinLabel = "�
             <Button onClick={handleStartReading} disabled={starting} fullWidth>
               {starting ? "Starting..." : "📖 Start Reading This Book"}
             </Button>
+          )}
+
+          {canEdit && (
+            <>
+              <Button
+                variant="secondary"
+                onClick={handleQueue}
+                disabled={starting || queueState === "saving" || queueState === "queued"}
+                fullWidth
+              >
+                {queueState === "saving"
+                  ? "Adding..."
+                  : queueState === "queued"
+                    ? "✅ Up next"
+                    : "📌 Read This Next"}
+              </Button>
+              {queueState === "queued" && (
+                <p style={{ color: "var(--success)", fontSize: "13px", textAlign: "center", margin: "-4px 0 0" }}>
+                  Saved. You&apos;ll find it under Up Next on the home page.
+                </p>
+              )}
+              {queueState === "error" && (
+                <p style={{ color: "var(--danger)", fontSize: "13px", textAlign: "center", margin: "-4px 0 0" }}>
+                  Couldn&apos;t add it to Up Next — try again.
+                </p>
+              )}
+            </>
           )}
 
           <button

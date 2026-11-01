@@ -38,6 +38,9 @@ export const books = pgTable("books", {
   shelfOrder: integer("shelf_order"),
   // Books you've marked as favourites
   favorite: boolean("favorite").notNull().default(false),
+  // Set when you've picked this as a next read but haven't started it yet. The
+  // time is kept so the queue stays in the order you added books (null = not queued)
+  queuedAt: timestamp("queued_at"),
 });
 
 // Series table — stores series information

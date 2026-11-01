@@ -5,9 +5,11 @@ import {
   getRecentlyAdded,
   getRecentlyCompleted,
   getLooseEnds,
+  getQueuedBooks,
 } from "@/lib/actions/books";
 import { getRole } from "@/lib/auth/server";
 import LooseEnds from "@/components/LooseEnds";
+import UpNextQueue from "@/components/UpNextQueue";
 import { getGoalProgress } from "@/lib/actions/goals";
 import { getReadingStats } from "@/lib/actions/stats";
 import { getSeriesReminders } from "@/lib/actions/reminders";
@@ -26,6 +28,7 @@ export default async function HomePage() {
   const [
     { stats },
     { books: currentlyReading },
+    { books: queuedBooks },
     { books: recentlyAdded },
     { books: recentlyCompleted },
     goal,
@@ -35,6 +38,7 @@ export default async function HomePage() {
   ] = await Promise.all([
     getDashboardStats(),
     getCurrentlyReading(),
+    getQueuedBooks(),
     getRecentlyAdded(8),
     getRecentlyCompleted(8),
     getGoalProgress(),
@@ -227,6 +231,14 @@ export default async function HomePage() {
               </div>
             </div>
           </section>
+
+          {/* Books you've picked to read next, ready to start in one tap */}
+          {queuedBooks.length > 0 && (
+            <section style={{ marginBottom: "36px" }}>
+              <h2 className="section-title">📌 Up Next</h2>
+              <UpNextQueue books={queuedBooks} />
+            </section>
+          )}
 
           {looseEnds.length > 0 && (
             <section style={{ marginBottom: "36px" }}>

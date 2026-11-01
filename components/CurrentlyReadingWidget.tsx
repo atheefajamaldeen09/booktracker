@@ -26,19 +26,30 @@ export default function CurrentlyReadingWidget({ books }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [newPage, setNewPage] = useState<{ [key: number]: string }>({});
   const [updating, setUpdating] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleQuickUpdate = async (bookId: number, currentPage: number, pageCount: number) => {
     const pageValue = newPage[bookId];
     if (!pageValue) return;
 
     const page = parseInt(pageValue);
-    if (isNaN(page) || page < currentPage || page > pageCount) return;
+    if (isNaN(page) || page <= currentPage || page > pageCount) return;
 
     setUpdating(bookId);
-    await updateReadingProgress(bookId, page, currentPage);
+    setError(null);
+    const result = await updateReadingProgress(bookId, page);
+    setUpdating(null);
+    if (!result.success) {
+      setError(result.error || "Couldn't update the page — try again");
+      return;
+    }
     setNewPage({ ...newPage, [bookId]: "" });
     setExpandedId(null);
-    setUpdating(null);
+    if (result.finished) {
+      // Reached the last page: the book moved to the Read shelf
+      router.push(result.goalReached ? `/book/${bookId}?goalReached=1` : `/book/${bookId}`);
+      return;
+    }
     router.refresh();
   };
 
@@ -312,7 +323,11 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                               : 1,
                         }}
                       >
-                        {updating === book.id ? "Updating..." : "Update"}
+                        {updating === book.id
+                          ? "Updating..."
+                          : parseInt(newPage[book.id]) >= (book.pageCount ?? Infinity)
+                            ? "Update & finish"
+                            : "Update"}
                       </button>
                       <button
                         onClick={() => {
@@ -335,6 +350,14 @@ export default function CurrentlyReadingWidget({ books }: Props) {
                         Cancel
                       </button>
                     </div>
+                    {parseInt(newPage[book.id]) >= (book.pageCount ?? Infinity) && (
+                      <p style={{ color: "var(--success)", fontSize: "12px", margin: "8px 0 0" }}>
+                        🎉 That&apos;s the last page — this will move the book to your Read shelf.
+                      </p>
+                    )}
+                    {error && expandedId === book.id && (
+                      <p style={{ color: "var(--danger)", fontSize: "12px", margin: "8px 0 0" }}>{error}</p>
+                    )}
                   </div>
                 )}
               </>

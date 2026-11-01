@@ -3,7 +3,7 @@
 import { requireOwner, requireViewer } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { books, series, bookSeries, tags, bookTags, readingSessions, goals, quotes } from "@/lib/db/schema";
-import { eq, and, or, desc, isNull, sql } from "drizzle-orm";
+import { eq, and, or, asc, desc, isNull, isNotNull, sql } from "drizzle-orm";
 import { pickToDate, type FinishPick } from "@/lib/finishDate";
 import { isMainBook, seriesProblem, totalProblem } from "@/lib/series";
 import { isReaction } from "@/lib/reactions";
@@ -44,6 +44,21 @@ function cleanRating(rating?: number | null) {
   if (!rating || !Number.isFinite(rating)) return null;
   const halves = Math.round(rating * 2) / 2;
   return halves >= 0.5 && halves <= 5 ? halves : null;
+}
+
+// Did the books finished so far this year just hit this year's reading goal exactly?
+async function hasJustReachedGoal() {
+  const year = new Date().getFullYear();
+  const [goal] = await db.select().from(goals).where(eq(goals.year, year)).limit(1);
+  if (!goal) return false;
+  const readBooks = await db
+    .select({ dateCompleted: books.dateCompleted })
+    .from(books)
+    .where(eq(books.shelf, "read"));
+  const readThisYear = readBooks.filter(
+    (b) => b.dateCompleted && new Date(b.dateCompleted).getFullYear() === year
+  ).length;
+  return readThisYear === goal.targetBooks;
 }
 
 type SeriesPlan = { id: number | null; name: string; position: number; setTotal: number | null };
@@ -183,6 +198,8 @@ export async function moveBookToShelf(
         ...(newShelf === "read" ? finishFields() : {}),
         dateStarted: newShelf === "reading" ? new Date() : undefined,
         currentPage: newShelf === "reading" ? 0 : undefined,
+        // Moving a book anywhere takes it out of the Up Next queue
+        queuedAt: null,
       })
       .where(eq(books.id, bookId));
     return { success: true };
@@ -514,6 +531,8 @@ export async function startReading(bookId: number) {
         shelf: "reading",
         dateStarted: new Date(),
         currentPage: 0,
+        // Started now, so it leaves the Up Next queue
+        queuedAt: null,
       })
       .where(eq(books.id, bookId));
     return { success: true };
@@ -523,33 +542,137 @@ export async function startReading(bookId: number) {
   }
 }
 
+// Put a TBR book in the Up Next queue: "I want to read this next" without
+// starting it. Queueing a book that's already queued keeps its place in line.
+export async function queueBook(bookId: number) {
+  await requireOwner();
+  try {
+    const [book] = await db
+      .select({ shelf: books.shelf, queuedAt: books.queuedAt })
+      .from(books)
+      .where(eq(books.id, bookId))
+      .limit(1);
+    if (!book) return { success: false, error: "That book couldn't be found." };
+    if (book.shelf !== "tbr") {
+      return { success: false, error: "Only books on your TBR can go in the Up Next queue." };
+    }
+    if (!book.queuedAt) {
+      await db.update(books).set({ queuedAt: new Date() }).where(eq(books.id, bookId));
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error queueing book:", error);
+    return { success: false, error: "Failed to add the book to Up Next" };
+  }
+}
+
+// Take a book out of the Up Next queue; it stays on your TBR
+export async function unqueueBook(bookId: number) {
+  await requireOwner();
+  try {
+    await db.update(books).set({ queuedAt: null }).where(eq(books.id, bookId));
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing book from the queue:", error);
+    return { success: false, error: "Failed to remove the book from Up Next" };
+  }
+}
+
+// The Up Next queue, in the order books were added (the first one is next)
+export async function getQueuedBooks() {
+  await requireViewer();
+  try {
+    const queued = await db
+      .select()
+      .from(books)
+      .where(and(eq(books.shelf, "tbr"), isNotNull(books.queuedAt)))
+      .orderBy(asc(books.queuedAt));
+    return { success: true, books: queued };
+  } catch (error) {
+    console.error("Error fetching the queue:", error);
+    return { success: false, books: [] };
+  }
+}
+
+// Log how far you got. The server works out where you were from the database
+// (it doesn't trust the browser), and:
+//  - a session has to move you forward: landing on the page you were already on
+//    is refused, so a session never counts as reading when no page was read
+//  - reaching the last page of a book with a known page count marks it as read
+//  - markFinished marks it as read even if the page isn't the last one (for
+//    "I finished the book"); with a known page count that sets the last page
+// Going back to an earlier page is treated as a correction: the page changes,
+// but no reading session is logged.
 export async function updateReadingProgress(
   bookId: number,
   currentPage: number,
-  previousPage: number,
   // From the reading timer, when the session was timed
-  minutes?: number
-) {
+  minutes?: number,
+  markFinished?: boolean
+): Promise<
+  | { success: true; finished: boolean; goalReached: boolean }
+  | { success: false; error: string }
+> {
   await requireOwner();
   try {
-    const pagesRead = Math.max(0, currentPage - previousPage);
+    const [book] = await db
+      .select({ shelf: books.shelf, currentPage: books.currentPage, pageCount: books.pageCount })
+      .from(books)
+      .where(eq(books.id, bookId))
+      .limit(1);
+    if (!book) return { success: false, error: "That book couldn't be found." };
+    if (book.shelf !== "reading") {
+      return { success: false, error: "This book isn't on your Currently Reading shelf." };
+    }
 
-    // Update the book's current page
-    await db
-      .update(books)
-      .set({ currentPage })
-      .where(eq(books.id, bookId));
+    const previousPage = book.currentPage ?? 0;
+    const pageCount = book.pageCount ?? 0;
 
-    // Log the reading session
-    await db.insert(readingSessions).values({
-      bookId,
-      pagesRead,
-      currentPageAfter: currentPage,
-      date: new Date(),
-      minutes: minutes && minutes > 0 ? Math.round(minutes) : null,
-    });
+    if (!Number.isInteger(currentPage) || currentPage < 0) {
+      return { success: false, error: "Please enter a valid page number." };
+    }
+    if (pageCount > 0 && currentPage > pageCount) {
+      return { success: false, error: `This book only has ${pageCount} pages.` };
+    }
+    if (!markFinished && currentPage === previousPage) {
+      return {
+        success: false,
+        error: `You're already on page ${previousPage}. Enter the page you actually reached.`,
+      };
+    }
 
-    return { success: true };
+    const finished = Boolean(markFinished) || (pageCount > 0 && currentPage >= pageCount);
+    // Finishing a book with a known length lands on its last page
+    const newPage = finished
+      ? pageCount > 0
+        ? pageCount
+        : Math.max(currentPage, previousPage)
+      : currentPage;
+    const pagesRead = Math.max(0, newPage - previousPage);
+
+    const changes: Partial<typeof books.$inferInsert> = finished
+      ? { shelf: "read", ...finishFields(), currentPage: newPage, queuedAt: null }
+      : { currentPage: newPage };
+    const updateBookRow = db.update(books).set(changes).where(eq(books.id, bookId));
+
+    if (pagesRead > 0) {
+      // One batch, so the page and the session are saved together or not at all
+      await db.batch([
+        updateBookRow,
+        db.insert(readingSessions).values({
+          bookId,
+          pagesRead,
+          currentPageAfter: newPage,
+          date: new Date(),
+          minutes: minutes && minutes > 0 ? Math.round(minutes) : null,
+        }),
+      ]);
+    } else {
+      await updateBookRow;
+    }
+
+    const goalReached = finished ? await hasJustReachedGoal() : false;
+    return { success: true, finished, goalReached };
   } catch (error) {
     console.error("Error updating progress:", error);
     return { success: false, error: "Failed to update progress" };
@@ -573,23 +696,12 @@ export async function completeBook(
         ...finishFields(finished),
         ...(cleanRating(rating) ? { rating: cleanRating(rating) } : {}),
         currentPage: pageCount || 0,
+        queuedAt: null,
       })
       .where(eq(books.id, bookId));
 
     // Did finishing this book hit this year's reading goal exactly?
-    const year = new Date().getFullYear();
-    const [goal] = await db.select().from(goals).where(eq(goals.year, year)).limit(1);
-    let goalReached = false;
-    if (goal) {
-      const readBooks = await db
-        .select({ dateCompleted: books.dateCompleted })
-        .from(books)
-        .where(eq(books.shelf, "read"));
-      const readThisYear = readBooks.filter(
-        (b) => b.dateCompleted && new Date(b.dateCompleted).getFullYear() === year
-      ).length;
-      goalReached = readThisYear === goal.targetBooks;
-    }
+    const goalReached = await hasJustReachedGoal();
 
     return { success: true, goalReached };
   } catch (error) {
@@ -612,6 +724,7 @@ export async function markDNF(
         shelf: "dnf",
         dnfPage: currentPage,
         dnfReason: reason?.trim() || null,
+        queuedAt: null,
       })
       .where(eq(books.id, bookId));
     return { success: true };
