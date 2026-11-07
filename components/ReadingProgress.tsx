@@ -6,7 +6,10 @@ import {
   updateReadingProgress,
   completeBook,
   markDNF,
+  deleteReadingSession,
+  updateReadingSession,
 } from "@/lib/actions/books";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import ProgressBar from "@/components/ProgressBar";
 import ReadingTimer from "@/components/ReadingTimer";
 import FinishDateSelect from "@/components/FinishDateSelect";
@@ -47,6 +50,13 @@ export default function ReadingProgress({ book, sessions }: Props) {
   const [showSessions, setShowSessions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Editing or deleting a logged session (handy for testing)
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editPage, setEditPage] = useState("");
+  const [editMinutes, setEditMinutes] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   const pageCount = book.pageCount || 0;
   const currentPageNum = book.currentPage || 0;
@@ -93,6 +103,55 @@ export default function ReadingProgress({ book, sessions }: Props) {
     }
 
     setLoading(false);
+  };
+
+  const startEditing = (session: Session) => {
+    setEditingId(session.id);
+    setEditPage(String(session.currentPageAfter));
+    setEditMinutes(session.minutes ? String(session.minutes) : "");
+    setSessionError(null);
+  };
+
+  const handleSaveSession = async () => {
+    if (editingId === null) return;
+    const pageReached = parseInt(editPage);
+    const trimmed = editMinutes.trim();
+    const minutes = trimmed === "" ? null : parseInt(trimmed);
+    if (isNaN(pageReached)) {
+      setSessionError("Enter the page you reached.");
+      return;
+    }
+    if (minutes !== null && isNaN(minutes)) {
+      setSessionError("Minutes should be a number, or left empty.");
+      return;
+    }
+    setSessionBusy(true);
+    setSessionError(null);
+    const result = await updateReadingSession(editingId, { pageReached, minutes });
+    setSessionBusy(false);
+    if (!result.success) {
+      setSessionError(result.error);
+      return;
+    }
+    if (result.currentPage !== null) setCurrentPage(String(result.currentPage));
+    setEditingId(null);
+    router.refresh();
+  };
+
+  const handleDeleteSession = async () => {
+    if (deletingId === null) return;
+    setSessionBusy(true);
+    const result = await deleteReadingSession(deletingId);
+    setSessionBusy(false);
+    setDeletingId(null);
+    if (!result.success) {
+      setSessionError(result.error);
+      return;
+    }
+    // The page may have gone back to where the deleted session started
+    if (result.currentPage !== null) setCurrentPage(String(result.currentPage));
+    setSessionError(null);
+    router.refresh();
   };
 
   const handleComplete = async () => {
@@ -515,6 +574,17 @@ export default function ReadingProgress({ book, sessions }: Props) {
         </div>
       )}
 
+      <ConfirmDialog
+        open={deletingId !== null}
+        title="Delete this session?"
+        message="It's removed from your reading history and stats. If it was your latest session, your page goes back to where it started."
+        confirmLabel="Delete session"
+        danger
+        busy={sessionBusy}
+        onConfirm={handleDeleteSession}
+        onCancel={() => setDeletingId(null)}
+      />
+
       {/* Reading Sessions History */}
       {sessions.length > 0 && (
         <div
@@ -553,9 +623,6 @@ export default function ReadingProgress({ book, sessions }: Props) {
                 <div
                   key={session.id}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
                     padding: "12px 20px",
                     borderBottom:
                       index < sessions.length - 1
@@ -563,46 +630,174 @@ export default function ReadingProgress({ book, sessions }: Props) {
                         : "none",
                   }}
                 >
-                  <div>
-                    <p
-                      style={{
-                        color: "var(--text)",
-                        fontSize: "13px",
-                        margin: 0,
-                      }}
-                    >
-                      {session.pagesRead > 0
-                        ? `Read ${session.pagesRead} pages`
-                        : "Started reading"}
-                      {session.minutes ? ` · ${session.minutes} min` : ""}
-                    </p>
-                    <p
-                      style={{
-                        color: "var(--text-muted)",
-                        fontSize: "11px",
-                        margin: "2px 0 0 0",
-                      }}
-                    >
-                      Up to page {session.currentPageAfter}
-                    </p>
-                  </div>
-                  <p
+                  <div
                     style={{
-                      color: "var(--text-muted)",
-                      fontSize: "11px",
-                      margin: 0,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "12px",
                     }}
                   >
-                    {session.date
-                      ? new Date(session.date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : ""}
-                  </p>
+                    <div style={{ minWidth: 0 }}>
+                      <p
+                        style={{
+                          color: "var(--text)",
+                          fontSize: "13px",
+                          margin: 0,
+                        }}
+                      >
+                        {session.pagesRead > 0
+                          ? `Read ${session.pagesRead} pages`
+                          : "Started reading"}
+                        {session.minutes ? ` · ${session.minutes} min` : ""}
+                      </p>
+                      <p
+                        style={{
+                          color: "var(--text-muted)",
+                          fontSize: "11px",
+                          margin: "2px 0 0 0",
+                        }}
+                      >
+                        Up to page {session.currentPageAfter}
+                        {session.date
+                          ? ` · ${new Date(session.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}`
+                          : ""}
+                      </p>
+                    </div>
+
+                    {editingId !== session.id && (
+                      <div data-owner-only style={{ display: "flex", gap: "6px", flex: "none" }}>
+                        <button
+                          type="button"
+                          onClick={() => startEditing(session)}
+                          disabled={sessionBusy}
+                          aria-label="Edit this session"
+                          style={{
+                            padding: "5px 10px",
+                            backgroundColor: "var(--raised)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "8px",
+                            color: "var(--text-muted)",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSessionError(null);
+                            setDeletingId(session.id);
+                          }}
+                          disabled={sessionBusy}
+                          aria-label="Delete this session"
+                          style={{
+                            padding: "5px 10px",
+                            backgroundColor: "transparent",
+                            border: "1px solid var(--danger-border)",
+                            borderRadius: "8px",
+                            color: "var(--danger)",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {editingId === session.id && (
+                    <div
+                      data-owner-only
+                      style={{
+                        marginTop: "10px",
+                        padding: "12px",
+                        backgroundColor: "var(--bg)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-end" }}>
+                        <label style={{ color: "var(--text-muted)", fontSize: "12px" }}>
+                          Page reached
+                          <input
+                            type="number"
+                            value={editPage}
+                            onChange={(e) => setEditPage(e.target.value)}
+                            min={1}
+                            max={pageCount || undefined}
+                            style={{ ...inputStyle, display: "block", width: "110px", marginTop: "4px" }}
+                          />
+                        </label>
+                        <label style={{ color: "var(--text-muted)", fontSize: "12px" }}>
+                          Minutes
+                          <input
+                            type="number"
+                            value={editMinutes}
+                            onChange={(e) => setEditMinutes(e.target.value)}
+                            min={1}
+                            placeholder="optional"
+                            style={{ ...inputStyle, display: "block", width: "110px", marginTop: "4px" }}
+                          />
+                        </label>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={handleSaveSession}
+                            disabled={sessionBusy}
+                            style={{
+                              padding: "10px 16px",
+                              backgroundColor: "var(--primary)",
+                              color: "var(--on-primary)",
+                              border: "none",
+                              borderRadius: "10px",
+                              fontWeight: 600,
+                              fontSize: "13px",
+                              cursor: sessionBusy ? "not-allowed" : "pointer",
+                              opacity: sessionBusy ? 0.6 : 1,
+                            }}
+                          >
+                            {sessionBusy ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingId(null);
+                              setSessionError(null);
+                            }}
+                            disabled={sessionBusy}
+                            style={{
+                              padding: "10px 14px",
+                              backgroundColor: "var(--raised)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "10px",
+                              color: "var(--text-muted)",
+                              fontSize: "13px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
+
+              {sessionError && (
+                <p style={{ color: "var(--danger)", fontSize: "13px", margin: 0, padding: "0 20px 14px" }}>
+                  {sessionError}
+                </p>
+              )}
             </div>
           )}
         </div>

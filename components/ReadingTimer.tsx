@@ -35,6 +35,12 @@ function write(bookId: number, timer: Timer | null) {
   window.dispatchEvent(new Event(TIMER_EVENT));
 }
 
+// Forget this device's timer for a book, e.g. when it goes back to TBR so a
+// fresh start doesn't pick up the old stopwatch
+export function clearReadingTimer(bookId: number) {
+  write(bookId, null);
+}
+
 const subscribe = (onChange: () => void) => {
   window.addEventListener(TIMER_EVENT, onChange);
   window.addEventListener("storage", onChange);

@@ -191,17 +191,32 @@ export async function moveBookToShelf(
 ) {
   await requireOwner();
   try {
-    await db
-      .update(books)
-      .set({
-        shelf: newShelf,
-        ...(newShelf === "read" ? finishFields() : {}),
-        dateStarted: newShelf === "reading" ? new Date() : undefined,
-        currentPage: newShelf === "reading" ? 0 : undefined,
-        // Moving a book anywhere takes it out of the Up Next queue
-        queuedAt: null,
-      })
-      .where(eq(books.id, bookId));
+    const [current] = await db
+      .select({ shelf: books.shelf })
+      .from(books)
+      .where(eq(books.id, bookId))
+      .limit(1);
+    // A book you were reading that goes back to TBR (or the wishlist) counts as
+    // not started: its reading sessions and progress are deleted, not kept
+    const backToNotStarted =
+      current?.shelf === "reading" && (newShelf === "tbr" || newShelf === "wishlist");
+
+    const changes: Partial<typeof books.$inferInsert> = {
+      shelf: newShelf,
+      ...(newShelf === "read" ? finishFields() : {}),
+      dateStarted: newShelf === "reading" ? new Date() : backToNotStarted ? null : undefined,
+      currentPage: newShelf === "reading" || backToNotStarted ? 0 : undefined,
+      // Moving a book anywhere takes it out of the Up Next queue
+      queuedAt: null,
+    };
+    const moveRow = db.update(books).set(changes).where(eq(books.id, bookId));
+
+    if (backToNotStarted) {
+      // One batch, so the book never ends up moved with its sessions still there
+      await db.batch([moveRow, db.delete(readingSessions).where(eq(readingSessions.bookId, bookId))]);
+    } else {
+      await moveRow;
+    }
     return { success: true };
   } catch (error) {
     console.error("Error moving book:", error);
@@ -746,6 +761,118 @@ export async function getReadingSessions(bookId: number) {
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return { success: false, sessions: [] };
+  }
+}
+
+type SessionChange =
+  | { success: true; currentPage: number | null }
+  | { success: false; error: string };
+
+// Remove one logged reading session. If it was the latest thing that moved your
+// page, the book goes back to the page you were on before that session.
+export async function deleteReadingSession(sessionId: number): Promise<SessionChange> {
+  await requireOwner();
+  try {
+    const [session] = await db
+      .select()
+      .from(readingSessions)
+      .where(eq(readingSessions.id, sessionId))
+      .limit(1);
+    if (!session) return { success: false, error: "That session couldn't be found." };
+
+    let book: { shelf: string; currentPage: number | null } | undefined;
+    if (session.bookId !== null) {
+      const rows = await db
+        .select({ shelf: books.shelf, currentPage: books.currentPage })
+        .from(books)
+        .where(eq(books.id, session.bookId))
+        .limit(1);
+      book = rows[0];
+    }
+
+    const startPage = Math.max(0, session.currentPageAfter - session.pagesRead);
+    const goBack = book?.shelf === "reading" && (book.currentPage ?? 0) === session.currentPageAfter;
+    const deleteRow = db.delete(readingSessions).where(eq(readingSessions.id, sessionId));
+
+    if (goBack && session.bookId !== null) {
+      await db.batch([
+        deleteRow,
+        db.update(books).set({ currentPage: startPage }).where(eq(books.id, session.bookId)),
+      ]);
+    } else {
+      await deleteRow;
+    }
+    return { success: true, currentPage: goBack ? startPage : book?.currentPage ?? null };
+  } catch (error) {
+    console.error("Error deleting session:", error);
+    return { success: false, error: "Failed to delete the session" };
+  }
+}
+
+// Fix a logged session: the page you reached and how long it took. The session
+// keeps the page it started on, so pages read is worked out from the new page.
+// If it's the latest session, your current page follows the change.
+export async function updateReadingSession(
+  sessionId: number,
+  input: { pageReached: number; minutes: number | null }
+): Promise<SessionChange> {
+  await requireOwner();
+  try {
+    const { pageReached, minutes } = input;
+    if (!Number.isInteger(pageReached) || pageReached < 1) {
+      return { success: false, error: "Enter the page you reached." };
+    }
+    if (minutes !== null && (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440)) {
+      return { success: false, error: "Minutes should be a whole number from 1 to 1440, or left empty." };
+    }
+
+    const [session] = await db
+      .select()
+      .from(readingSessions)
+      .where(eq(readingSessions.id, sessionId))
+      .limit(1);
+    if (!session) return { success: false, error: "That session couldn't be found." };
+
+    const startPage = Math.max(0, session.currentPageAfter - session.pagesRead);
+    if (pageReached <= startPage) {
+      return {
+        success: false,
+        error: `This session started on page ${startPage}, so the page you reached has to be higher.`,
+      };
+    }
+
+    let book: { shelf: string; currentPage: number | null; pageCount: number | null } | undefined;
+    if (session.bookId !== null) {
+      const rows = await db
+        .select({ shelf: books.shelf, currentPage: books.currentPage, pageCount: books.pageCount })
+        .from(books)
+        .where(eq(books.id, session.bookId))
+        .limit(1);
+      book = rows[0];
+    }
+    if (book?.pageCount && pageReached > book.pageCount) {
+      return { success: false, error: `This book only has ${book.pageCount} pages.` };
+    }
+
+    const followBook =
+      book?.shelf === "reading" && (book.currentPage ?? 0) === session.currentPageAfter;
+    const updateRow = db
+      .update(readingSessions)
+      .set({ pagesRead: pageReached - startPage, currentPageAfter: pageReached, minutes })
+      .where(eq(readingSessions.id, sessionId));
+
+    if (followBook && session.bookId !== null) {
+      await db.batch([
+        updateRow,
+        db.update(books).set({ currentPage: pageReached }).where(eq(books.id, session.bookId)),
+      ]);
+    } else {
+      await updateRow;
+    }
+    return { success: true, currentPage: followBook ? pageReached : book?.currentPage ?? null };
+  } catch (error) {
+    console.error("Error updating session:", error);
+    return { success: false, error: "Failed to update the session" };
   }
 }
 

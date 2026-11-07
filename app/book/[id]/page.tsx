@@ -20,6 +20,7 @@ import { getQuotes } from "@/lib/actions/quotes";
 import MoodPicker from "@/components/MoodPicker";
 import BookQuotes from "@/components/BookQuotes";
 import FavoriteButton from "@/components/FavoriteButton";
+import QueueButton from "@/components/QueueButton";
 import FinishDateEditor from "@/components/FinishDateEditor";
 import DnfNote from "@/components/DnfNote";
 import BookSeriesEditor from "@/components/BookSeriesEditor";
@@ -90,7 +91,7 @@ export default async function BookDetailPage({
 
   // The handwritten line under the cover photo
   const snapCaptions: Record<string, string> = {
-    tbr: "soon, I promise",
+    tbr: book.queuedAt ? "up next ♡" : "soon, I promise",
     reading: "in the middle of it…",
     read: "the end ♡",
     wishlist: "one day ♡",
@@ -174,6 +175,7 @@ export default async function BookDetailPage({
               {shelfLabels[book.shelf] || book.shelf}
             </span>
             <FavoriteButton bookId={book.id} initial={book.favorite} />
+            {book.shelf === "tbr" && <QueueButton bookId={book.id} initial={Boolean(book.queuedAt)} />}
 
             {/* Book Meta */}
             <div className={styles.meta}>

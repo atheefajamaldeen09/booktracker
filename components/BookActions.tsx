@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { moveBookToShelf, deleteBook, markDNF } from "@/lib/actions/books";
 import DnfFields, { parsePage } from "@/components/DnfFields";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { clearReadingTimer } from "@/components/ReadingTimer";
 
 type Props = {
   book: {
@@ -25,6 +27,8 @@ export default function BookActions({ book }: Props) {
   const [dnfOpen, setDnfOpen] = useState(false);
   const [dnfPage, setDnfPage] = useState(book.currentPage ? String(book.currentPage) : "");
   const [dnfReason, setDnfReason] = useState("");
+  // Sending a book you're reading back to TBR deletes its sessions, so it asks first
+  const [confirmShelf, setConfirmShelf] = useState<Shelf | null>(null);
 
   const handleDnf = async () => {
     setLoading(true);
@@ -36,10 +40,17 @@ export default function BookActions({ book }: Props) {
 
   const handleMove = async (shelf: Shelf) => {
     setLoading(true);
-    await moveBookToShelf(book.id, shelf);
+    const result = await moveBookToShelf(book.id, shelf);
+    // Leaving the reading shelf: forget this device's stopwatch for the book
+    if (result.success && book.shelf === "reading") clearReadingTimer(book.id);
+    setConfirmShelf(null);
     router.refresh();
     setLoading(false);
   };
+
+  // Moving a book you're reading back to TBR or the wishlist deletes its sessions
+  const losesSessions = (shelf: Shelf) =>
+    book.shelf === "reading" && (shelf === "tbr" || shelf === "wishlist");
 
   const handleDelete = async () => {
     setLoading(true);
@@ -61,6 +72,22 @@ export default function BookActions({ book }: Props) {
 
   return (
     <div>
+      <ConfirmDialog
+        open={confirmShelf !== null}
+        title={confirmShelf === "wishlist" ? "Move back to your wishlist?" : "Move back to your TBR?"}
+        message={
+          <>
+            You haven&apos;t finished <strong>{book.title}</strong>, so its reading sessions and page progress will be
+            deleted. This can&apos;t be undone.
+          </>
+        }
+        confirmLabel="Move and delete sessions"
+        danger
+        busy={loading}
+        onConfirm={() => confirmShelf && handleMove(confirmShelf)}
+        onCancel={() => setConfirmShelf(null)}
+      />
+
       {/* Move Shelf Section */}
       <div style={{ marginBottom: "24px" }}>
         <p
@@ -84,7 +111,13 @@ export default function BookActions({ book }: Props) {
           {shelfOptions.map((option) => (
             <button
               key={option.shelf}
-              onClick={() => (option.shelf === "dnf" ? setDnfOpen(true) : handleMove(option.shelf))}
+              onClick={() =>
+                option.shelf === "dnf"
+                  ? setDnfOpen(true)
+                  : losesSessions(option.shelf)
+                    ? setConfirmShelf(option.shelf)
+                    : handleMove(option.shelf)
+              }
               disabled={loading}
               style={{
                 padding: "12px 16px",
